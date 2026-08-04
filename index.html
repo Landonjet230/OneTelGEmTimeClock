@@ -13,6 +13,7 @@
     --ink:#000000; --paper:#F7F5F9; --card:#FFFFFF;
     --line:#E9E4EF; --muted:#756E80; --text:#1A1522;
     --warn:#B67A1E;
+    --danger:#C0281F; --danger-tint:#FDECEC;
     --shadow:0 1px 2px rgba(20,16,25,.05),0 10px 28px rgba(20,16,25,.06);
   }
   *{box-sizing:border-box}
@@ -168,30 +169,73 @@
   .sched-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
   .chip.on-sched{background:#E7F3E9;color:#2C7A39}
   .chip.on-sched .dot{background:#2C7A39}
-  .chip.off-sched{background:#FBF0DE;color:var(--warn)}
-  .chip.off-sched .dot{background:var(--warn)}
-  .notice-warn{background:#FBF0DE;border:1px solid #F0DBAE;border-left:3px solid var(--warn);border-radius:8px;padding:11px 14px;font-size:12.5px;color:#6B4E14;text-align:left}
+  .chip.off-sched{background:var(--danger-tint);color:var(--danger)}
+  .chip.off-sched .dot{background:var(--danger)}
+  .notice-warn{background:var(--danger-tint);border:1px solid #F5C6C2;border-left:3px solid var(--danger);border-radius:8px;padding:11px 14px;font-size:12.5px;color:#7A211B;text-align:left}
+  .tag-outside{font-size:10.5px;color:var(--danger);font-weight:600;margin-left:6px}
+  .live-timer{font-family:"IBM Plex Mono";font-size:42px;font-weight:600;line-height:1;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:1px;margin:2px 0 4px}
+  .live-cap{font-size:12px;color:var(--muted);margin-bottom:18px}
+  .dot-danger{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--danger);margin-right:9px;vertical-align:middle}
 
-  /* ---------- Calendar ---------- */
-  .cal-add{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
-  .cal-add .field{margin:0}
-  .cal-group{margin-top:18px}
-  .cal-group:first-child{margin-top:0}
-  .cal-group-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 8px}
-  .cal-item{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+  /* ---------- Desktop two-column layouts ---------- */
+  .emp-grid{display:grid;grid-template-columns:minmax(300px,360px) 1fr;gap:16px;align-items:start}
+  .emp-grid > .card{margin-top:0}
+  @media (max-width:820px){ .emp-grid{grid-template-columns:1fr} }
+
+  /* ---------- Calendar: month grid ---------- */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .cal-nav{display:flex;align-items:center;gap:10px}
+  .cal-month-title{font-family:"Space Grotesk";font-weight:700;font-size:20px;letter-spacing:-.01em;min-width:170px;text-align:center}
+  .cal-nav-btn{background:#fff;border:1px solid var(--line);border-radius:9px;width:36px;height:36px;font-size:18px;line-height:1;color:var(--text);display:grid;place-items:center;padding:0}
+  .cal-nav-btn:hover{border-color:var(--brand);color:var(--brand-dark)}
+  .cal-today-btn{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 14px;font-weight:600;font-size:13px;color:var(--brand-dark)}
+  .cal-today-btn:hover{border-color:var(--brand)}
+
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .cal-dow{background:#FAF8FC;padding:10px 8px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:center}
+  .cal-cell{background:#fff;min-height:110px;padding:8px;cursor:pointer;display:flex;flex-direction:column;gap:5px;transition:background .12s}
+  .cal-cell:hover{background:#FAF8FC}
+  .cal-cell.other{background:#FCFBFD}
+  .cal-cell.other .cal-num{color:#C7C0D1}
+  .cal-num{font-size:13px;font-weight:600;font-family:"IBM Plex Mono";color:var(--text);align-self:flex-start}
+  .cal-cell.today .cal-num{background:var(--brand);color:#fff;border-radius:50%;width:25px;height:25px;display:grid;place-items:center}
+  .cal-pills{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .cal-pill{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+  .cal-pill.meeting{background:var(--brand-tint);color:var(--brand-dark)}
+  .cal-pill.event{background:#EEECF1;color:var(--text)}
+  .cal-pill.timeoff{background:#FBF0DE;color:var(--warn)}
+  .cal-more{font-size:10.5px;color:var(--muted);font-weight:600;padding-left:2px}
+  .cal-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px}
+  .cal-key{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);font-weight:600}
+  .cal-key:before{content:"";width:11px;height:11px;border-radius:3px}
+  .cal-key.meeting:before{background:var(--brand)}
+  .cal-key.event:before{background:var(--muted)}
+  .cal-key.timeoff:before{background:var(--warn)}
+
+  /* Calendar day detail (modal) */
+  .cal-item{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
   .cal-item:last-child{border-bottom:none}
-  .cal-date{width:46px;flex:none;text-align:center}
-  .cal-date .d{font-family:"Space Grotesk";font-weight:700;font-size:19px;line-height:1.1}
-  .cal-date .m{font-size:10.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
   .cal-body{flex:1;min-width:0}
   .cal-title{font-weight:600;font-size:13.5px}
   .cal-sub{font-size:12px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cal-add{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+  .cal-add .field{margin:0}
+  .cal-add .t-text{flex:1;min-width:180px}
   .chip.meeting{background:var(--brand-tint);color:var(--brand-dark)}
   .chip.meeting .dot{background:var(--brand)}
   .chip.event{background:#EEECF1;color:var(--text)}
   .chip.event .dot{background:var(--muted)}
   .chip.timeoff{background:#FBF0DE;color:var(--warn)}
   .chip.timeoff .dot{background:var(--warn)}
+
+  @media (max-width:560px){
+    .cal-cell{min-height:64px;padding:5px 4px;gap:3px}
+    .cal-num{font-size:12px}
+    .cal-pills{flex-direction:row;flex-wrap:wrap;gap:3px}
+    .cal-pill{font-size:0;padding:0;width:8px;height:8px;border-radius:50%}
+    .cal-more{display:none}
+    .cal-dow{padding:8px 2px;font-size:10px}
+  }
 
   /* ---------- Clock-out confirmation ---------- */
   .check-row{display:flex;align-items:flex-start;gap:10px;background:var(--brand-tint);border-radius:9px;padding:12px 13px;margin-top:14px}
@@ -329,6 +373,7 @@ let calendarEvents = [
 
 /* ============================================================ STATE */
 let currentUser=null, selectedEmpId=null, activeTab='today';
+let calYear=null, calMonth=null; // month shown in the calendar grid
 let tick=null, breakTimer=null, breakEndsAt=null, breakActive=false;
 let audioCtx=null, alarmLoop=null;
 let openDay=null; // only one dropdown open at a time
@@ -422,7 +467,7 @@ function dayList(empId,{logEditable=false,canCorrect=false}={}){
     const out = s.clockOut?fmtTime(s.clockOut):'<span class="chip in"><span class="dot"></span>active</span>';
     const correct = canCorrect?`<td style="text-align:right"><button class="edit-btn" onclick="event.stopPropagation();openEdit('${s.id}')">Correct</button></td>`:'';
     const main=`<tr class="day-row" onclick="toggleDay('${ek}')">
-        <td><span class="day-cell"><span class="caret ${open?'open':''}">&rsaquo;</span>${fmtDay(s.clockIn)}${s.edited?'<span class="edited-tag">edited</span>':''}${s.onSchedule===false?'<span class="edited-tag">outside hours</span>':''}</span></td>
+        <td><span class="day-cell"><span class="caret ${open?'open':''}">&rsaquo;</span>${fmtDay(s.clockIn)}${s.edited?'<span class="edited-tag">edited</span>':''}${s.onSchedule===false?'<span class="tag-outside">outside hours</span>':''}</span></td>
         <td class="num">${fmtTime(s.clockIn)}</td>
         <td class="num">${out}</td>
         <td class="num">${fmtDur(netMs(s))}</td>${correct}</tr>`;
@@ -438,8 +483,11 @@ function renderEmployee(){
   const tabs=[{id:'today',label:'Today'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}];
   if(activeTab==='today'){
     const dk=dateKey(now);
-    return tabsBar(tabs)+clockCard(currentUser.id)+
-      `<div class="card"><h2>Today's work log</h2><p class="hint">Add what you worked on as you go. Your manager can read this.</p>${logPanel(currentUser.id,dk,true)}</div>`;
+    return tabsBar(tabs)+
+      `<div class="emp-grid">
+        ${clockCard(currentUser.id)}
+        <div class="card"><h2>Today's work log</h2><p class="hint">Add what you worked on as you go. Your manager can read this.</p>${logPanel(currentUser.id,dk,true)}</div>
+      </div>`;
   }
   if(activeTab==='schedule') return tabsBar(tabs)+scheduleTab(currentUser.id);
   if(activeTab==='calendar') return tabsBar(tabs)+calendarTab();
@@ -491,51 +539,99 @@ function calChip(ev){ const cls=ev.type==='meeting'?'meeting':ev.type==='time-of
 function calWho(ev){ if(!ev.empId) return 'Whole team';
   const e=employees.find(x=>x.id===ev.empId); if(!e) return '';
   return e.id===currentUser.id ? 'You' : e.name; }
+function calPillClass(ev){ return ev.type==='meeting'?'meeting':ev.type==='time-off'?'timeoff':'event'; }
 function calendarTab(){
   const isManager=currentUser.role==='manager';
-  const sorted=[...calendarEvents].sort((a,b)=> a.date===b.date ? (a.time||'').localeCompare(b.time||'') : a.date.localeCompare(b.date));
-  const byDate={}; sorted.forEach(ev=>{ (byDate[ev.date]=byDate[ev.date]||[]).push(ev); });
-  const groups=Object.keys(byDate).sort();
-  const body = groups.length ? groups.map(dk=>{
-      const d=keyToDate(dk);
-      const items=byDate[dk].map(ev=>`<div class="cal-item">
-          <div class="cal-date"><div class="d">${d.getDate()}</div><div class="m">${d.toLocaleDateString(undefined,{month:'short'})}</div></div>
-          <div class="cal-body"><div class="cal-title">${escapeHtml(ev.title)}</div>
-            <div class="cal-sub">${calChip(ev)}<span class="mini">${ev.time?fmtHM(ev.time)+' · ':''}${calWho(ev)}${ev.notes?' · '+escapeHtml(ev.notes):''}</span></div></div>
-          ${isManager?`<button class="x-btn" title="Remove" onclick="removeCalEvent('${ev.id}')">&times;</button>`:''}
-        </div>`).join('');
-      return `<div class="cal-group"><div class="cal-group-label">${fmtDayKey(dk)}</div>${items}</div>`;
-    }).join('') : '<div class="empty">Nothing on the calendar yet.</div>';
-  const addForm = isManager ? `
-    <div class="card"><h2>Add to calendar</h2><p class="hint">Meetings, events, and time off — visible to the whole team.</p>
+  if(calMonth==null){ const d=new Date(now); calYear=d.getFullYear(); calMonth=d.getMonth(); }
+  const first=new Date(calYear,calMonth,1);
+  const startDay=first.getDay();                        // 0=Sun
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const weeks=Math.ceil((startDay+daysInMonth)/7);
+  const gridStart=new Date(calYear,calMonth,1-startDay);
+  const todayKey=dateKey(Date.now());
+  const monthTitle=first.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const dowRow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  let cells='';
+  for(let i=0;i<weeks*7;i++){
+    const d=new Date(gridStart); d.setDate(gridStart.getDate()+i);
+    const dk=dateKey(d);
+    const other=d.getMonth()!==calMonth;
+    const isToday=dk===todayKey;
+    const evs=calendarEvents.filter(e=>e.date===dk).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const shown=evs.slice(0,3).map(ev=>{
+      const t=ev.time?fmtHM(ev.time).replace(':00','')+' ':'';
+      return `<span class="cal-pill ${calPillClass(ev)}" title="${escapeHtml(ev.title)}">${t}${escapeHtml(ev.title)}</span>`;
+    }).join('');
+    const more=evs.length>3?`<span class="cal-more">+${evs.length-3} more</span>`:'';
+    cells+=`<div class="cal-cell${other?' other':''}${isToday?' today':''}" onclick="openCalDay('${dk}')">
+        <span class="cal-num">${d.getDate()}</span>
+        <div class="cal-pills">${shown}${more}</div></div>`;
+  }
+  const hint=isManager?'Tap any day to add or manage events. Everyone on the team sees this calendar.':'Tap a day to see what\'s scheduled.';
+  return `<div class="card">
+    <div class="cal-head">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calStep(-1)" aria-label="Previous month">&lsaquo;</button>
+        <div class="cal-month-title">${monthTitle}</div>
+        <button class="cal-nav-btn" onclick="calStep(1)" aria-label="Next month">&rsaquo;</button>
+      </div>
+      <button class="cal-today-btn" onclick="calToday()">Today</button>
+    </div>
+    <p class="hint" style="margin:-6px 0 16px">${hint}</p>
+    <div class="cal-grid">${dowRow}${cells}</div>
+    <div class="cal-legend">
+      <span class="cal-key meeting">Meeting</span>
+      <span class="cal-key event">Event</span>
+      <span class="cal-key timeoff">Time off</span>
+    </div>
+  </div>`;
+}
+function calStep(n){ let m=calMonth+n, y=calYear; if(m<0){m=11;y--;} if(m>11){m=0;y++;} calMonth=m; calYear=y; render(); }
+function calToday(){ const d=new Date(); calYear=d.getFullYear(); calMonth=d.getMonth(); render(); }
+
+/* ---------- Calendar: single-day detail (view + manage) ---------- */
+function openCalDay(dk){
+  const isManager=currentUser.role==='manager';
+  const d=keyToDate(dk);
+  const evs=calendarEvents.filter(e=>e.date===dk).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const list = evs.length ? evs.map(ev=>`<div class="cal-item">
+      <div class="cal-body"><div class="cal-title">${escapeHtml(ev.title)}</div>
+        <div class="cal-sub">${calChip(ev)}<span class="mini">${ev.time?fmtHM(ev.time)+' · ':''}${calWho(ev)}${ev.notes?' · '+escapeHtml(ev.notes):''}</span></div></div>
+      ${isManager?`<button class="x-btn" title="Remove" onclick="removeCalEventDay('${ev.id}','${dk}')">&times;</button>`:''}
+    </div>`).join('') : '<div class="empty">Nothing scheduled this day.</div>';
+  const addBlock = isManager ? `
+    <div style="margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)">
       <div class="cal-add">
         <div class="field"><label>Type</label><select id="calType"><option value="meeting">Meeting</option><option value="event">Event</option><option value="time-off">Time off</option></select></div>
-        <div class="field"><label>Title</label><input type="text" id="calTitle" placeholder="e.g. Weekly team sync"></div>
-        <div class="field"><label>Date</label><input type="date" id="calDate" value="${dateKey(now)}"></div>
+        <div class="field t-text"><label>Title</label><input type="text" id="calTitle" placeholder="e.g. Weekly team sync"></div>
         <div class="field"><label>Time (optional)</label><input type="time" id="calTime"></div>
         <div class="field"><label>For</label><select id="calWho"><option value="">Whole team</option>${employees.filter(e=>e.role==='employee').map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}</select></div>
       </div>
       <div class="field"><label>Notes (optional)</label><input type="text" id="calNotes" placeholder="Location, details..."></div>
       <div class="err" id="calErr"></div>
-      <button class="btn-brand" onclick="addCalEvent()">Add to calendar</button>
+      <button class="btn-brand" onclick="addCalEventDay('${dk}')">Add event</button>
     </div>` : '';
-  return `${addForm}<div class="card"><h2>Calendar</h2><p class="hint">Meetings, events, and time off — everyone can see what's coming up.</p>${body}</div>`;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeCalModal()"><div class="modal" style="max-width:520px">
+    <h3>${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</h3>
+    <p class="hint">${isManager?'Add or remove events for this day.':'What\'s on the schedule.'}</p>
+    ${list}${addBlock}
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeCalModal()">Close</button></div>
+  </div></div>`;
 }
-function addCalEvent(){
+function closeCalModal(){ closeModal(); render(); }  // refresh the grid behind on close
+function addCalEventDay(dk){
   const type=document.getElementById('calType').value;
   const title=document.getElementById('calTitle').value.trim();
-  const date=document.getElementById('calDate').value;
   const time=document.getElementById('calTime').value||null;
   const empId=document.getElementById('calWho').value||null;
   const notes=document.getElementById('calNotes').value.trim();
   const err=document.getElementById('calErr');
   if(!title){ err.textContent='Give it a title.'; return; }
-  if(!date){ err.textContent='Pick a date.'; return; }
-  calendarEvents.push({id:calId(),type,title,date,time,empId,notes});
-  err.textContent='';
-  render(); toast('Added to calendar');
+  calendarEvents.push({id:calId(),type,title,date:dk,time,empId,notes});
+  openCalDay(dk); toast('Added to calendar');   // reopen modal with the new event, inputs cleared
 }
-function removeCalEvent(id){ calendarEvents=calendarEvents.filter(e=>e.id!==id); render(); }
+function removeCalEventDay(id,dk){ calendarEvents=calendarEvents.filter(e=>e.id!==id); openCalDay(dk); }
 
 function clockCard(empId){
   const s=openShift(empId), on=!!s;
@@ -566,6 +662,7 @@ function clockCard(empId){
   }
   return `<div class="card clock-card">
     <div class="status-line" style="${on?'margin-bottom:10px':''}"><span class="dot ${on?'live':''}"></span>${statusTxt}</div>
+    ${on?`<div class="live-timer mono" id="liveTimer">${fmtWatch(Date.now()-s.clockIn)}</div><div class="live-cap">since ${fmtTime(s.clockIn)}</div>`:''}
     ${schedChip}
     <div class="clock-actions">${actions}</div>${brk}${schedBanner}</div>`;
 }
@@ -728,7 +825,20 @@ function saveAdd(empId){
 }
 
 /* ============================================================ CLOCK ACTIONS */
-function clockIn(){ const ts=Date.now(); shifts.push({id:nid(),empId:currentUser.id,clockIn:ts,clockOut:null,edited:false,onSchedule:isOnSchedule(currentUser.id,ts),notified:false}); render(); }
+function clockIn(){
+  const ts=Date.now();
+  const onSched=isOnSchedule(currentUser.id,ts);
+  const s={id:nid(),empId:currentUser.id,clockIn:ts,clockOut:null,edited:false,onSchedule:onSched,notified:false};
+  shifts.push(s); render();
+  if(!onSched) openOutsideHoursPopup(s.id);
+}
+function openOutsideHoursPopup(id){
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:420px">
+    <h3><span class="dot-danger"></span>Working outside your hours</h3>
+    <p class="hint" style="margin:0 0 20px">You've clocked in outside your normal schedule. Please let your manager know you're working outside of your scheduled hours.</p>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Dismiss</button><button class="btn-brand" onclick="notifyOutsideHours('${id}');closeModal()">Notify manager</button></div>
+  </div></div>`;
+}
 function clockOut(){ const s=openShift(currentUser.id); if(!s)return; s.clockOut=Date.now(); if(breakActive)endBreak(true); render(); }
 
 /* ---------- Clock-out confirmation (final notes required) ---------- */
@@ -774,7 +884,12 @@ function startCountdown(){ clearInterval(breakTimer); breakTimer=setInterval(()=
 },250); }
 
 /* ============================================================ TICK (guarded) */
-function startTick(){ clearInterval(tick); tick=setInterval(()=>{}, 1000); }
+function startTick(){ clearInterval(tick); tick=setInterval(updateLiveTimer, 1000); }
+function updateLiveTimer(){
+  const el=document.getElementById('liveTimer'); if(!el||!currentUser) return;
+  const s=openShift(currentUser.id); if(!s) return;
+  el.textContent=fmtWatch(Date.now()-s.clockIn);
+}
 
 /* ============================================================ ALARM */
 function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
