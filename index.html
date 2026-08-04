@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>otg — Timecard</title>
+<title>otg · Timecard</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23000000'/%3E%3Ctext x='50' y='68' font-family='Space Grotesk,Arial,sans-serif' font-weight='700' font-size='54' text-anchor='middle' fill='%23FFFFFF'%3Eot%3Ctspan fill='%239B64B1'%3Eg%3C/tspan%3E%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,6 +16,8 @@
     --warn:#B67A1E;
     --danger:#C0281F; --danger-tint:#FDECEC;
     --shadow:0 1px 2px rgba(20,16,25,.05),0 10px 28px rgba(20,16,25,.06);
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+    --radius:14px; --radius-sm:9px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -212,6 +215,34 @@
   .cal-key.event:before{background:var(--muted)}
   .cal-key.timeoff:before{background:var(--warn)}
 
+  /* ---------- Calendar + Priorities two-column ---------- */
+  .cal-layout{display:grid;grid-template-columns:1fr minmax(280px,320px);gap:var(--s4);align-items:start}
+  .cal-layout > .card{margin-top:0}
+  @media (max-width:900px){ .cal-layout{grid-template-columns:1fr} }
+
+  /* ---------- Priorities panel ---------- */
+  .prio-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s2);margin-bottom:var(--s1)}
+  .prio-eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-dark);font-weight:600}
+  .prio-list{list-style:none;margin:var(--s4) 0 0;padding:0;counter-reset:prio}
+  .prio-item{display:flex;gap:var(--s3);align-items:flex-start;padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+  .prio-item:last-child{border-bottom:none}
+  .prio-rank{counter-increment:prio;flex:none;width:24px;height:24px;border-radius:50%;background:var(--brand-tint);color:var(--brand-dark);font-family:"IBM Plex Mono";font-size:12px;font-weight:600;display:grid;place-items:center;margin-top:1px}
+  .prio-rank:before{content:counter(prio)}
+  .prio-body{flex:1;min-width:0}
+  .prio-title{font-weight:600;font-size:13.5px;line-height:1.35}
+  .prio-due{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px;display:inline-flex;align-items:center;gap:5px}
+  .prio-due.overdue{color:var(--danger)}
+  .prio-due.soon{color:var(--brand-dark)}
+  .prio-ctrls{display:flex;flex-direction:column;gap:2px;flex:none}
+  .prio-mini{background:none;border:none;color:var(--muted);font-size:13px;line-height:1;padding:2px 4px;border-radius:5px}
+  .prio-mini:hover{color:var(--brand-dark);background:var(--brand-tint)}
+  .prio-mini:disabled{opacity:.3;cursor:default}
+  .prio-mini.rm:hover{color:var(--danger);background:var(--danger-tint)}
+  .prio-add{margin-top:var(--s4);padding-top:var(--s4);border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:var(--s2)}
+  .prio-add input[type=text]{width:100%}
+  .prio-add-row{display:flex;gap:var(--s2);align-items:center}
+  .prio-add-row input[type=date]{flex:1}
+
   /* Calendar day detail (modal) */
   .cal-item{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
   .cal-item:last-child{border-bottom:none}
@@ -369,6 +400,14 @@ let calendarEvents = [
   {id:calId(), type:'meeting', title:'Weekly team sync', date:dateKey(now), time:'09:30', empId:null, notes:'Conference room'},
   {id:calId(), type:'time-off', title:'Time off', date:addDaysKey(dateKey(now),3), time:null, empId:'e3', notes:''},
   {id:calId(), type:'event', title:'Quarterly inventory count', date:addDaysKey(dateKey(now),6), time:null, empId:null, notes:'Store closes early at 6pm'},
+];
+
+/* ---------- Priority projects (manager sets; order = priority) ---------- */
+let prioSeq=1; const prioId=()=>'pr'+(prioSeq++);
+let priorities = [
+  {id:prioId(), title:'Q3 client analysis — final review', due:addDaysKey(dateKey(now),4)},
+  {id:prioId(), title:'Refresh the weekly KPI dashboard', due:null},
+  {id:prioId(), title:'Clean up onboarding documentation', due:addDaysKey(dateKey(now),11)},
 ];
 
 /* ============================================================ STATE */
@@ -569,7 +608,8 @@ function calendarTab(){
         <div class="cal-pills">${shown}${more}</div></div>`;
   }
   const hint=isManager?'Tap any day to add or manage events. Everyone on the team sees this calendar.':'Tap a day to see what\'s scheduled.';
-  return `<div class="card">
+  return `<div class="cal-layout">
+    <div class="card">
     <div class="cal-head">
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="calStep(-1)" aria-label="Previous month">&lsaquo;</button>
@@ -585,7 +625,58 @@ function calendarTab(){
       <span class="cal-key event">Event</span>
       <span class="cal-key timeoff">Time off</span>
     </div>
+    </div>
+    ${prioritiesPanel(isManager)}
   </div>`;
+}
+
+/* ---------- Priority projects panel ---------- */
+function prioDueMeta(due){
+  if(!due) return '';
+  const todayKey=dateKey(Date.now());
+  const label='Due '+fmtDayKey(due);
+  let cls='';
+  if(due<todayKey) cls='overdue';
+  else if(due<=addDaysKey(todayKey,3)) cls='soon';
+  const txt = due<todayKey ? 'Overdue · '+fmtDayKey(due) : label;
+  return `<span class="prio-due ${cls}">&#9873; ${txt}</span>`;
+}
+function prioritiesPanel(isManager){
+  const items = priorities.length ? '<ul class="prio-list">'+priorities.map((p,i)=>{
+      const ctrls = isManager ? `<div class="prio-ctrls">
+          <button class="prio-mini" title="Move up" onclick="movePriority('${p.id}',-1)" ${i===0?'disabled':''}>&#9650;</button>
+          <button class="prio-mini" title="Move down" onclick="movePriority('${p.id}',1)" ${i===priorities.length-1?'disabled':''}>&#9660;</button>
+          <button class="prio-mini rm" title="Remove" onclick="removePriority('${p.id}')">&times;</button>
+        </div>` : '';
+      return `<li class="prio-item"><span class="prio-rank"></span>
+        <div class="prio-body"><div class="prio-title">${escapeHtml(p.title)}</div>${prioDueMeta(p.due)}</div>${ctrls}</li>`;
+    }).join('')+'</ul>'
+    : '<div class="empty">No priorities set. '+(isManager?'Add the projects the team should focus on.':'Your manager hasn\'t set any yet.')+'</div>';
+  const add = isManager ? `<div class="prio-add">
+      <input type="text" id="prioTitle" placeholder="Add a priority project" onkeydown="if(event.key==='Enter')addPriority()">
+      <div class="prio-add-row">
+        <input type="date" id="prioDue" title="Optional due date">
+        <button class="btn-brand" onclick="addPriority()">Add</button>
+      </div>
+    </div>` : '';
+  const sub = isManager ? 'Set what the team should focus on, in order.' : 'What to focus on right now, top to bottom.';
+  return `<div class="card">
+    <div class="prio-head"><span class="prio-eyebrow">Priority projects</span></div>
+    <p class="hint" style="margin:0 0 2px">${sub}</p>
+    ${items}${add}
+  </div>`;
+}
+function addPriority(){
+  const el=document.getElementById('prioTitle'); const title=el.value.trim(); if(!title) return;
+  const due=document.getElementById('prioDue').value||null;
+  priorities.push({id:prioId(),title,due});
+  render(); toast('Priority added');
+}
+function removePriority(id){ priorities=priorities.filter(p=>p.id!==id); render(); }
+function movePriority(id,dir){
+  const i=priorities.findIndex(p=>p.id===id); const j=i+dir;
+  if(i<0||j<0||j>=priorities.length) return;
+  [priorities[i],priorities[j]]=[priorities[j],priorities[i]]; render();
 }
 function calStep(n){ let m=calMonth+n, y=calYear; if(m<0){m=11;y--;} if(m>11){m=0;y++;} calMonth=m; calYear=y; render(); }
 function calToday(){ const d=new Date(); calYear=d.getFullYear(); calMonth=d.getMonth(); render(); }
