@@ -200,8 +200,12 @@
   .period-title{font-family:"Archivo";font-weight:700;font-size:16px}
   .period.current .period-title{color:var(--purple-deep)}
   .period-tag{font-family:"IBM Plex Mono";font-size:9px;letter-spacing:.13em;text-transform:uppercase;
-    color:#fff;background:var(--purple);padding:2px 7px}
+    color:var(--purple);background:#fff;border:1px solid var(--purple);padding:2px 7px}
   .period-total{margin-left:auto;font-family:"IBM Plex Mono";font-size:19px;font-weight:600}
+  .dl-btn{margin-left:auto;background:#fff;border:1px solid var(--purple);color:var(--purple);
+    width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;
+    font-size:14px;line-height:1;align-self:center;cursor:pointer}
+  .dl-btn:hover{background:var(--purple-wash)}
   .x-btn{background:none;border:0;color:var(--muted);font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase}
   .x-btn:hover{color:#A81E27}
 
@@ -299,6 +303,30 @@
     letter-spacing:.13em;text-transform:uppercase;padding:0;margin-bottom:18px}
   .back:hover{color:var(--black)}
 
+  /* home widgets */
+  .widget-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;margin-top:8px}
+  .widget{border:1px solid var(--rule);background:#fff;display:flex;flex-direction:column}
+  .widget-head{display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--rule)}
+  .widget-title{font-family:"Archivo";font-weight:700;font-size:11px;letter-spacing:.09em;text-transform:uppercase}
+  .widget-x{margin-left:auto;background:none;border:0;color:#B9B6BE;font-size:17px;line-height:1;padding:0 2px;cursor:pointer}
+  .widget-x:hover{color:#A81E27}
+  .widget-body{padding:13px}
+  .w-time{font-family:"IBM Plex Mono";font-size:27px;font-weight:600;text-align:center;letter-spacing:.01em}
+  .w-sub{color:var(--muted);font-size:12px;text-align:center;margin-top:4px}
+  .w-line{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:7px 0;border-bottom:1px solid var(--rule-soft)}
+  .w-line:last-child{border-bottom:0}
+  .w-empty{color:var(--muted);font-size:12.5px;padding:4px 0}
+  .w-add{display:flex;gap:6px;margin-top:10px}
+  .w-add input{flex:1;min-width:0}
+  .w-chk{flex:none;width:19px;height:19px;border:1px solid var(--purple);background:#fff;color:var(--purple);
+    font-size:11px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .w-chk.on{background:var(--purple);color:#fff}
+  .w-del{margin-left:auto;background:none;border:0;color:#B9B6BE;font-size:15px;line-height:1;cursor:pointer}
+  .w-del:hover{color:#A81E27}
+  .w-clockbtn{margin-top:12px}
+  .cat-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--rule-soft);font-size:14px}
+  .cat-item:last-child{border-bottom:0}
+
   @media (max-width:600px){
     .wrap{padding:22px 16px 100px}
     .user-btn .nm{display:none}
@@ -376,10 +404,10 @@ function addDaysKey(k,n){const d=keyToDate(k);d.setDate(d.getDate()+n);return da
 function initials(n){return n.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();}
 
 const employees=[
-  {id:'m1',name:'Sarah Reed',role:'manager',rate:0},
-  {id:'e1',name:'Maya Torres',role:'employee',rate:22.00},
-  {id:'e2',name:'Devin Park',role:'employee',rate:19.50},
-  {id:'e3',name:'Aisha Nwosu',role:'employee',rate:24.00},
+  {id:'m1',name:'Sarah Vance',role:'manager',rate:0},
+  {id:'e1',name:'Ashlee Eller',role:'comanager',rate:19.00},
+  {id:'e2',name:'Mason Merrill',role:'employee',rate:17.00},
+  {id:'e3',name:'Connor Williams',role:'employee',rate:17.00},
 ];
 let seq=100; const nid=()=>'s'+(seq++);
 let shifts=[
@@ -425,6 +453,10 @@ let payPeriods=[];
   for(let i=0;i<6;i++){const st=addDaysKey(s,i*14);payPeriods.push({id:'p'+i,start:st,end:addDaysKey(st,13)});}})();
 let auditLog=[];
 
+/* home widgets: per-user layout + personal reminders/to-dos (in memory) */
+let homeWidgets={};   /* userId -> [widget keys] */
+let widgetStore={};   /* userId -> {reminders:[], todos:[]} */
+
 /* ================= STATE ================= */
 let currentUser=null, selectedEmpId=null, activeTab='today';
 let breakTimer=null, breakEndsAt=null, breakActive=false, breakUsed={};
@@ -447,6 +479,10 @@ function netMs(s){return (s.clockOut||Date.now())-s.clockIn;}
 function openShift(id){return shifts.find(s=>s.empId===id&&s.clockOut===null);}
 function daysFor(id){return shifts.filter(s=>s.empId===id).sort((a,b)=>b.clockIn-a.clockIn);}
 function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s.clockIn>=w).reduce((t,s)=>t+netMs(s),0);}
+/* role helpers — managers and co-managers share management powers; co-managers + employees clock in */
+function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager');}
+function clocksIn(u){return !!u&&u.role!=='manager';}
+function hourlyStaff(){return employees.filter(e=>e.role==='comanager'||e.role==='employee');}
 function periodMs(id,p){return shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
 function nameOf(id){const e=employees.find(x=>x.id===id);return e?e.name:'—';}
 function hmToMin(hm){const [h,m]=hm.split(':').map(Number);return h*60+m;}
@@ -492,12 +528,13 @@ function renderLogin(){
       <span class="rl ${e.role}">${e.role}</span></button>`).join('');
 }
 const TABS={
-  manager:[{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Pay periods'},{id:'audit',label:'Change log'}],
-  employee:[{id:'today',label:'Today'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}]
+  manager:[{id:'home',label:'Home'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  comanager:[{id:'home',label:'Home'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  employee:[{id:'home',label:'Home'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}]
 };
 function signIn(id){
   currentUser=employees.find(e=>e.id===id); selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false;
-  activeTab=currentUser.role==='manager'?'team':'today';
+  activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
   document.getElementById('tbAv').textContent=initials(currentUser.name);
@@ -527,14 +564,28 @@ document.addEventListener('click',()=>{if(menuOpen)closeMenu();closeUserMenu();}
 
 /* ================= RENDER ================= */
 function render(){
-  document.getElementById('view').innerHTML=currentUser.role==='manager'?renderManager():renderEmployee();
+  document.getElementById('view').innerHTML=renderBody();
   paintMenu();paintUserMenu();
+}
+function renderBody(){
+  if(activeTab==='home')return homeTab();
+  if(canManage(currentUser)&&selectedEmpId)return employeeDetail(selectedEmpId);
+  switch(activeTab){
+    case 'today':return timecardTab();
+    case 'hours':return hoursTab();
+    case 'schedule':return scheduleTab(currentUser.id,true);
+    case 'calendar':return calendarTab(canManage(currentUser)?null:currentUser.id,canManage(currentUser));
+    case 'team':return teamTab();
+    case 'pay':return payTab();
+    case 'audit':return auditTab();
+    default:return homeTab();
+  }
 }
 function paintUserMenu(){
   const panel=document.getElementById('userPanel'),dot=document.getElementById('notifDot');
   if(!currentUser)return;
   let inbox='';
-  if(currentUser.role==='manager'){
+  if(canManage(currentUser)){
     dot.classList.toggle('hide',notices.length===0);
     const items=notices.length
       ? notices.map(n=>`<div class="um-item"><b>${nameOf(n.empId)}</b> clocked in outside their schedule.
@@ -548,6 +599,106 @@ function paintUserMenu(){
       <button class="menu-item" onclick="signOut()">Sign out</button>`;
 }
 function pageHead(t,m){return `<div class="page-head"><h1>${t}</h1>${m?`<span class="ml meta">${m}</span>`:''}</div>`;}
+
+/* ================= HOME / WIDGETS ================= */
+const WIDGETS=[
+  {key:'clock',label:'Clock in / out',clockOnly:true},
+  {key:'priorities',label:'Priority list'},
+  {key:'calendar',label:'Calendar'},
+  {key:'notifications',label:'Notifications'},
+  {key:'time',label:'The time'},
+  {key:'reminders',label:'Reminders'},
+  {key:'todos',label:'To-do list'},
+];
+function defaultWidgets(u){return u.role==='manager'?['time','priorities','notifications']:['clock','time','priorities'];}
+function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u).slice();return homeWidgets[u.id];}
+function userStore(u){if(!widgetStore[u.id])widgetStore[u.id]={reminders:[],todos:[]};return widgetStore[u.id];}
+function availableWidgets(u){return WIDGETS.filter(w=>!w.clockOnly||clocksIn(u));}
+function homeTab(){
+  const u=currentUser,keys=userWidgets(u);
+  const cards=keys.length?keys.map(k=>widgetCard(k)).join(''):'<div class="empty">No widgets yet. Use “Add widget” to build your hub.</div>';
+  return pageHead('Home','Hi, '+esc(u.name.split(' ')[0]))
+    +`<div class="sec first"><div class="sec-head"><h2>Your hub</h2>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openWidgetCatalog()">Add widget</button></div>
+      <div class="widget-grid">${cards}</div></div>`;
+}
+function widgetCard(k){
+  const w=WIDGETS.find(x=>x.key===k);if(!w)return '';
+  if(w.clockOnly&&!clocksIn(currentUser))return '';
+  return `<div class="widget"><div class="widget-head"><span class="widget-title">${w.label}</span>
+      <button class="widget-x" onclick="removeWidget('${k}')" title="Remove widget">&times;</button></div>
+    <div class="widget-body">${widgetBody(k)}</div></div>`;
+}
+function widgetBody(k){
+  const u=currentUser;
+  if(k==='clock'){
+    const s=openShift(u.id);
+    const btn=s?`<button class="btn btn-primary btn-sm w-clockbtn" onclick="clockOut()">Clock out</button>`
+               :`<button class="btn btn-primary btn-sm w-clockbtn" onclick="clockIn()">Clock in</button>`;
+    return `<div class="w-time" id="wClock">${s?fmtWatch(netMs(s)):'00:00:00'}</div>
+      <div class="w-sub">${s?'Clocked in '+fmtTime(s.clockIn):'Not clocked in'}</div>
+      <div style="text-align:center">${btn}</div>`;
+  }
+  if(k==='time'){
+    const d=new Date();
+    return `<div class="w-time" id="wNow">${d.toLocaleTimeString()}</div>
+      <div class="w-sub">${d.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</div>`;
+  }
+  if(k==='priorities'){
+    const list=[...priorities].filter(p=>!p.done).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,5);
+    if(!list.length)return '<div class="w-empty">Nothing outstanding.</div>';
+    const todayK=dateKey(now);
+    return list.map(p=>`<div class="w-line"><span>${esc(p.title)}</span>
+      <span class="ml" style="margin-left:auto;color:${p.due<todayK?'#A81E27':'var(--muted)'}">${p.due<todayK?'Overdue':fmtDayKey(p.due)}</span></div>`).join('');
+  }
+  if(k==='calendar'){
+    const todayK=dateKey(now);
+    const up=[]
+      .concat(priorities.filter(p=>!p.done&&p.due>=todayK).map(p=>({d:p.due,t:p.title})))
+      .concat(timeOff.filter(t=>t.end>=todayK).map(t=>({d:t.start,t:nameOf(t.empId).split(' ')[0]+' · '+t.note})))
+      .sort((a,b)=>a.d.localeCompare(b.d)).slice(0,5);
+    if(!up.length)return '<div class="w-empty">Nothing upcoming.</div>';
+    return up.map(x=>`<div class="w-line"><span>${esc(x.t)}</span><span class="ml" style="margin-left:auto">${fmtDayKey(x.d)}</span></div>`).join('');
+  }
+  if(k==='notifications'){
+    if(canManage(u)){
+      if(!notices.length)return '<div class="w-empty">No new notifications.</div>';
+      return notices.map(n=>`<div class="w-line"><span>${esc(nameOf(n.empId).split(' ')[0])} clocked in off-schedule</span></div>`).join('');
+    }
+    return logReminder?'<div class="w-line"><span>Don\'t forget your work log today.</span></div>':'<div class="w-empty">You\'re all caught up.</div>';
+  }
+  if(k==='reminders'){
+    const arr=userStore(u).reminders;
+    const rows=arr.length?arr.map((r,i)=>`<div class="w-line"><span>${esc(r)}</span><button class="w-del" onclick="removeReminder(${i})" title="Remove">&times;</button></div>`).join(''):'<div class="w-empty">No reminders yet.</div>';
+    return rows+`<div class="w-add"><input type="text" id="wRem" placeholder="Add a reminder" onkeydown="if(event.key==='Enter')addReminder()"><button class="btn btn-dark btn-sm" onclick="addReminder()">Add</button></div>`;
+  }
+  if(k==='todos'){
+    const arr=userStore(u).todos;
+    const rows=arr.length?arr.map((t,i)=>`<div class="w-line"><button class="w-chk ${t.done?'on':''}" onclick="toggleTodo(${i})">${t.done?'&#10003;':''}</button><span style="${t.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(t.text)}</span><button class="w-del" onclick="removeTodo(${i})" title="Remove">&times;</button></div>`).join(''):'<div class="w-empty">Nothing to do yet.</div>';
+    return rows+`<div class="w-add"><input type="text" id="wTodo" placeholder="Add a to-do" onkeydown="if(event.key==='Enter')addTodo()"><button class="btn btn-dark btn-sm" onclick="addTodo()">Add</button></div>`;
+  }
+  return '';
+}
+function addWidget(k){const arr=userWidgets(currentUser);if(!arr.includes(k))arr.push(k);closeModal();render();}
+function removeWidget(k){homeWidgets[currentUser.id]=userWidgets(currentUser).filter(x=>x!==k);render();}
+function openWidgetCatalog(){
+  const have=userWidgets(currentUser);
+  const items=availableWidgets(currentUser).map(w=>{
+    const added=have.includes(w.key);
+    return `<div class="cat-item"><span>${w.label}</span>
+      <button class="btn ${added?'btn-line':'btn-primary'} btn-sm" style="margin-left:auto" ${added?'disabled':''} onclick="addWidget('${w.key}')">${added?'Added':'Add'}</button></div>`;
+  }).join('');
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Add a widget</h3><p class="sub">Pick what shows on your home hub.</p>
+    ${items}
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Done</button></div></div></div>`;
+}
+function addReminder(){const el=document.getElementById('wRem');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).reminders.push(v);render();}
+function removeReminder(i){userStore(currentUser).reminders.splice(i,1);render();}
+function addTodo(){const el=document.getElementById('wTodo');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).todos.push({text:v,done:false});render();}
+function toggleTodo(i){const t=userStore(currentUser).todos[i];if(t){t.done=!t.done;render();}}
+function removeTodo(i){userStore(currentUser).todos.splice(i,1);render();}
+
 
 /* ---------- work log ---------- */
 function logPanel(empId,dk,editable){
@@ -604,7 +755,7 @@ function calendarGrid(scopeId){
     const k=y+'-'+pad(m)+'-'+pad(d);
     const offs=offFor(k,scopeId).map(t=>`<span class="ev off">${esc(scopeId?t.note:nameOf(t.empId).split(' ')[0]+' · '+t.note)}</span>`).join('');
     const pris=priFor(k).map(p=>`<span class="ev pri ${p.done?'done':''}">${esc(p.title)}</span>`).join('');
-    const clickable=currentUser.role==='manager';
+    const clickable=canManage(currentUser);
     cells+=`<${clickable?'button':'div'} class="cell ${k===todayK?'today':''}" ${clickable?`onclick="openDayAdd('${k}')"`:''}>
       <span class="dnum">${d}</span>${offs}${pris}</${clickable?'button':'div'}>`;
   }
@@ -614,7 +765,7 @@ function calendarGrid(scopeId){
       <button class="btn-cell" onclick="shiftMonth(-1)">&lsaquo;</button>
       <button class="btn-cell" onclick="thisMonth()">Today</button>
       <button class="btn-cell" onclick="shiftMonth(1)">&rsaquo;</button>
-      ${currentUser.role==='manager'?'<span class="pri-meta" style="margin-left:auto">Select a day to add time off or a priority</span>':''}
+      ${canManage(currentUser)?'<span class="pri-meta" style="margin-left:auto">Select a day to add time off or a priority</span>':''}
     </div>
     <div class="cal-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="dow">${d}</div>`).join('')}${cells}</div>`;
 }
@@ -647,7 +798,7 @@ function addPri(){
 }
 function calendarTab(scopeId,editable){
   const open=priorities.filter(p=>!p.done).length;
-  return pageHead('Calendar',scopeId?'your time off · shared priorities':employees.filter(e=>e.role==='employee').length+' employees')
+  return pageHead('Calendar',scopeId?'your time off · shared priorities':hourlyStaff().length+' on payroll')
     +`<div class="sec first"><div class="cal-split">
         <div class="panel">${calendarGrid(scopeId)}</div>
         <div class="panel"><div class="panel-head"><h2>Priorities</h2><span class="ml meta">${open} open</span></div>
@@ -671,7 +822,7 @@ function daSwap(k){
   k=k||document.getElementById('daBody').dataset.k;
   const t=document.getElementById('daType').value,b=document.getElementById('daBody');
   b.dataset.k=k;
-  const people=employees.filter(e=>e.role==='employee').map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  const people=hourlyStaff().map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   b.innerHTML = t==='off'
     ? `<div class="field"><label>Employee</label><select id="daWho">${people}</select></div>
        <div class="field"><label>Reason</label><input type="text" id="daNote" placeholder="Vacation"></div>
@@ -700,15 +851,14 @@ function saveDayAdd(k){
 }
 
 /* ================= EMPLOYEE ================= */
-function renderEmployee(){
-  if(activeTab==='calendar')return calendarTab(currentUser.id,false);
-  if(activeTab==='schedule')return scheduleTab(currentUser.id,true);
-  if(activeTab==='hours')return pageHead('My hours','last 7 days')
+/* ================= TIMECARD / HOURS ================= */
+function hoursTab(){
+  return pageHead('My hours','last 7 days')
     +`<div class="sec first">${dayList(currentUser.id,{logEditable:true})}
       <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div></div></div>
       <div class="sec"><div class="note">Your times are read-only. If something is wrong, ask a manager — every correction is recorded.</div></div>`;
-
-  /* Today */
+}
+function timecardTab(){
   const dk=dateKey(now),s=openShift(currentUser.id);
   const sched=schedForDate(currentUser.id,now);
   const status=s?(breakActive?'On paid break':'On the clock'):'Clocked out';
@@ -731,7 +881,7 @@ function renderEmployee(){
       <span class="mini">30-minute daily break — end early and the rest stays for later today. An alarm sounds at zero; keep this tab open.</span></div>`;
   }
   const reminder=logReminder?`<div class="note warn" style="margin-top:22px">Don't forget to submit your work log for today.</div>`:'';
-  return pageHead('Today',new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))
+  return pageHead('TimeCard',new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))
     +`<div class="clockpanel">
         <span class="st ${s?'on':'off'}"><i></i>${status}</span>
         <span class="liveclock" id="liveClock">${s?fmtWatch(netMs(s)):'00:00:00'}</span>
@@ -783,15 +933,8 @@ function setSched(empId,day,field,val){
 }
 
 /* ================= MANAGER ================= */
-function renderManager(){
-  if(selectedEmpId)return employeeDetail(selectedEmpId);
-  if(activeTab==='calendar')return calendarTab(null,true);
-  if(activeTab==='pay')return payTab();
-  if(activeTab==='audit')return auditTab();
-  return teamTab();
-}
 function teamTab(){
-  const team=employees.filter(e=>e.role==='employee');
+  const team=hourlyStaff();
   const live=team.filter(e=>openShift(e.id)).length;
   const rows=team.map(e=>{
     const s=openShift(e.id);
@@ -827,7 +970,7 @@ function openEmp(id){selectedEmpId=id;openDay=null;render();}
 function closeEmp(){selectedEmpId=null;openDay=null;render();}
 
 function payTab(){
-  const team=employees.filter(e=>e.role==='employee');
+  const team=hourlyStaff();
   const rateRows=team.map(e=>`<tr><td>${e.name}</td>
     <td class="num"><input type="number" class="rate-in" min="0" step="0.25" value="${e.rate.toFixed(2)}" onchange="setRate('${e.id}',this.value)"></td>
     <td class="ml" style="text-align:left;width:60px">/ hr</td></tr>`).join('');
@@ -843,34 +986,66 @@ function payTab(){
       return `<tr><td>${e.name}</td><td class="num">${fmtDur(ms)}</td><td class="num">${money(e.rate)}</td><td class="num"><b>${money(amt)}</b></td></tr>`;}).join('');
     return `<div class="period ${current?'current':''}"><div class="period-head">
         <span class="period-title">${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</span>
-        ${current?'<span class="period-tag">Current</span>':''}</div>
+        ${current?'<span class="period-tag">Current</span>':''}
+        <button class="dl-btn" onclick="downloadPeriodPDF('${p.id}')" title="Download PDF for this period" aria-label="Download PDF">&#8595;</button></div>
       <table><thead><tr><th>Employee</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Est. pay</th></tr></thead><tbody>${rows}</tbody></table>
       <div style="margin-top:10px"><button class="pri-x" onclick="removePeriod('${p.id}')" title="Remove period">&times; Remove this period</button></div></div>`;
   }).join('');
-  return pageHead('Pay periods',payPeriods.length+' periods')
+  return pageHead('Payroll',payPeriods.length+' periods')
     +`<div class="sec first"><div class="sec-head"><h2>Pay rates</h2></div><table><tbody>${rateRows}</tbody></table></div>
       <div class="sec"><div class="sec-head"><h2>Schedule periods</h2></div>
         <div class="inline-form">
-          <div class="field"><label>Length</label><select id="genLen" style="width:130px">
-            <option value="14">Biweekly</option><option value="7">Weekly</option></select></div>
-          <div class="field"><label>Starting</label><input type="date" id="genStart" value="${dateKey(now)}"></div>
-          <div class="field"><label>How many</label><input type="number" id="genCount" min="1" max="26" value="6" style="width:74px"></div>
-          <button class="btn btn-primary btn-sm" onclick="genPeriods()">Generate</button>
+          <div class="field"><label>Start date</label><input type="date" id="genStart"></div>
+          <div class="field"><label>End date</label><input type="date" id="genEnd"></div>
+          <button class="btn btn-primary btn-sm" onclick="addPeriod()">Add Period</button>
         </div><div class="err" id="periodErr"></div></div>
       <div class="sec"><div class="sec-head"><h2>Estimated pay</h2><span class="ml meta">hours × rate · no overtime rules yet</span></div>
         ${periods||'<div class="empty">No pay periods yet.</div>'}</div>`;
 }
 function setRate(id,v){employees.find(x=>x.id===id).rate=parseFloat(v)||0;render();}
-function genPeriods(){
+function addPeriod(){
   const s=document.getElementById('genStart').value;
-  const len=parseInt(document.getElementById('genLen').value)||14;
-  const c=Math.min(26,Math.max(1,parseInt(document.getElementById('genCount').value)||1));
-  if(!s){document.getElementById('periodErr').textContent='Pick a start date first.';return;}
-  payPeriods=[];
-  for(let i=0;i<c;i++){const st=addDaysKey(s,i*len);payPeriods.push({id:'p'+Date.now()+'_'+i,start:st,end:addDaysKey(st,len-1)});}
+  const e=document.getElementById('genEnd').value;
+  const err=document.getElementById('periodErr');
+  if(!s||!e){err.textContent='Enter both a start and end date.';return;}
+  if(e<s){err.textContent='End date must be on or after the start date.';return;}
+  payPeriods.push({id:'p'+Date.now(),start:s,end:e});
   render();
 }
 function removePeriod(id){payPeriods=payPeriods.filter(p=>p.id!==id);render();}
+function downloadPeriodPDF(id){
+  const p=payPeriods.find(x=>x.id===id);if(!p)return;
+  const team=hourlyStaff();
+  const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
+  const rows=team.map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
+    return `<tr><td>${esc(e.name)}</td><td class="n">${fmtDur(ms)}</td><td class="n">${money(e.rate)}/hr</td><td class="n"><b>${money(amt)}</b></td></tr>`;}).join('');
+  const w=window.open('','_blank');
+  if(!w){toast('Allow pop-ups to download the PDF');return;}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OTG Payroll ${range}</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:"Barlow",Arial,sans-serif;color:#141218;margin:0;padding:40px;max-width:660px}
+      .mark{font-family:"Archivo",Arial,sans-serif;font-weight:700;letter-spacing:-.01em;font-size:13px;
+        text-transform:uppercase;letter-spacing:.14em;background:#000;color:#fff;display:inline-block;padding:5px 9px}
+      h1{font-family:"Archivo",Arial,sans-serif;font-size:22px;margin:16px 0 2px}
+      .sub{color:#6E6B77;font-size:13px;margin:0 0 22px}
+      table{width:100%;border-collapse:collapse;font-size:13.5px}
+      th{text-align:left;font-family:"Archivo",Arial,sans-serif;font-size:10px;letter-spacing:.08em;
+        text-transform:uppercase;color:#6E6B77;border-bottom:2px solid #141218;padding:8px 6px}
+      td{padding:11px 6px;border-bottom:1px solid #DEDCE2}
+      .n{text-align:right;font-family:"IBM Plex Mono",monospace}
+      .note{color:#8A8792;font-size:11px;margin-top:22px}
+    </style></head><body>
+    <span class="mark">OTG</span>
+    <h1>Payroll — pay period</h1>
+    <p class="sub">${range}</p>
+    <table><thead><tr><th>Employee</th><th class="n">Total time</th><th class="n">Rate</th><th class="n">Exact pay</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <p class="note">Exact pay = hours worked × hourly rate, to the minute. No overtime rules applied.</p>
+    <scr`+`ipt>window.onload=function(){setTimeout(function(){window.print();},200);}</scr`+`ipt>
+    </body></html>`);
+  w.document.close();
+}
 
 function auditTab(){
   if(!auditLog.length)return pageHead('Change log','0 corrections')
@@ -1005,9 +1180,10 @@ function stopAlarm(){if(alarmLoop){clearInterval(alarmLoop);alarmLoop=null;}docu
 /* ================= BOOT ================= */
 setInterval(()=>{
   if(!currentUser)return;
-  const el=document.getElementById('liveClock');if(!el)return;
   const s=openShift(currentUser.id);
-  if(s)el.textContent=fmtWatch(netMs(s));
+  const el=document.getElementById('liveClock');if(el&&s)el.textContent=fmtWatch(netMs(s));
+  const wc=document.getElementById('wClock');if(wc)wc.textContent=s?fmtWatch(netMs(s)):'00:00:00';
+  const wn=document.getElementById('wNow');if(wn)wn.textContent=new Date().toLocaleTimeString();
 },1000);
 renderLogin();
 </script>
