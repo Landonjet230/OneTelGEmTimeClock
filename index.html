@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --purple:#9B64B1; --purple-deep:#6F4783; --purple-wash:#F4EEF7;
@@ -36,6 +37,20 @@
   .login-inner .sub{font-family:"Archivo";font-weight:600;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#fff;margin:14px 0 0}
   .login-rule{height:1px;background:rgba(255,255,255,.18);margin:22px 0 0}
   .login-note{font-size:12.5px;color:#9A94A4;margin:16px 0 0;line-height:1.55}
+  .auth-tabs{display:flex;gap:0;margin:20px 0 16px;border:1px solid rgba(255,255,255,.22)}
+  .auth-tab{flex:1;background:transparent;border:0;color:#B9B2C4;font-family:"Archivo";font-weight:700;font-size:11px;
+    letter-spacing:.12em;text-transform:uppercase;padding:11px 6px;cursor:pointer}
+  .auth-tab.on{background:#fff;color:#000}
+  .afield{margin-bottom:14px}
+  .afield label{display:block;font-family:"IBM Plex Mono";font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:#9A94A4;margin-bottom:6px}
+  .afield input{width:100%;background:rgba(255,255,255,.06);border:0;border-bottom:1.5px solid rgba(255,255,255,.35);
+    color:#fff;font-family:"Barlow";font-size:15px;padding:9px 10px;outline:none}
+  .afield input:focus{border-bottom-color:var(--purple)}
+  .opt2{font-weight:400;letter-spacing:.06em;color:#7E7889}
+  .auth-go{width:100%;margin-top:6px;justify-content:center}
+  .auth-go:disabled{opacity:.6}
+  .auth-msg{font-size:13px;color:#C9F0D6;margin-top:14px;line-height:1.5}
+  .auth-msg.err{color:#FF9A9A}
   .demo-label{margin:30px 0 2px;color:#7E7889}
   .acct{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:none;border:0;
     border-bottom:1px solid rgba(255,255,255,.14);padding:15px 0;color:#fff;position:relative;transition:padding-left .14s}
@@ -316,6 +331,10 @@
   .modal .field{margin-bottom:20px}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:26px;flex-wrap:wrap}
   .req{color:var(--purple-deep)}
+  .role-row{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--rule-soft)}
+  .role-row:last-child{border-bottom:0}
+  .role-sel{border:1px solid var(--rule);background:#fff;font-family:"Barlow";font-size:13px;padding:7px 9px}
+  .role-sel:focus{border-color:var(--purple);outline:none}
   .toast{position:fixed;bottom:0;left:0;right:0;background:var(--black);color:#fff;padding:15px 22px;
     font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.12em;text-transform:uppercase;z-index:80;text-align:center}
   .alarm{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--purple);color:#fff;padding:16px 22px;
@@ -423,8 +442,7 @@
     </div>
     <p class="sub">OneTelGem</p>
     <div class="login-rule"></div>
-    <p class="login-note">Working prototype. Select an account to explore both roles — production sign-in will use individual credentials.</p>
-    <div class="ml demo-label">Select account</div>
+    <p class="login-note">Sign in with your OneTelGem account, or create one. New accounts start as Employee until leadership assigns your role.</p>
     <div id="acctList"></div>
   </div>
 </div>
@@ -467,56 +485,36 @@ function keyToDate(k){return new Date(k+'T00:00:00');}
 function addDaysKey(k,n){const d=keyToDate(k);d.setDate(d.getDate()+n);return dateKey(d);}
 function initials(n){return n.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();}
 
-const employees=[
-  {id:'m1',name:'Sarah Vance',role:'manager',rate:0},
-  {id:'e1',name:'Ashlee Eller',role:'comanager',rate:19.00},
-  {id:'e2',name:'Mason Merrill',role:'employee',rate:17.00},
-  {id:'e3',name:'Connor Williams',role:'employee',rate:17.00},
-];
+/* ---------- Supabase ---------- */
+const SUPABASE_URL='https://cfjuvyhyepxumgonuqsf.supabase.co';
+const SUPABASE_KEY='sb_publishable_pLqdSSmHVTPwEAi7pykS1A_BVdiF7mZ';
+let sb=null;
+try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ sb=null; }
+
+/* profiles are loaded from Supabase at sign-in (clean slate — no demo data) */
+let employees=[];
+let pendingRoles=[];
 let seq=100; const nid=()=>'s'+(seq++);
-let shifts=[
-  {id:nid(),empId:'e1',clockIn:at(4,8,58),clockOut:at(4,17,4),edited:false},
-  {id:nid(),empId:'e1',clockIn:at(2,9,1),clockOut:at(2,17,2),edited:false},
-  {id:nid(),empId:'e1',clockIn:at(1,9,3),clockOut:at(1,16,47),edited:false},
-  {id:nid(),empId:'e1',clockIn:at(0,8,55),clockOut:null,edited:false},
-  {id:nid(),empId:'e2',clockIn:at(3,7,30),clockOut:at(3,15,33),edited:true},
-  {id:nid(),empId:'e2',clockIn:at(1,7,28),clockOut:at(1,15,30),edited:false},
-  {id:nid(),empId:'e3',clockIn:at(2,10,1),clockOut:at(2,18,10),edited:false},
-  {id:nid(),empId:'e3',clockIn:at(0,9,58),clockOut:at(0,14,30),edited:false},
-];
+/* NOTE: shifts, logs, schedules, calendar, projects, notifications, payroll
+   are still in-memory in this phase — they migrate to Supabase next. */
+let shifts=[];
 let workLogs={};
-workLogs['e1|'+dateKey(at(1,0,0))]={items:[
-  {id:1,text:'Answered support queue (14 tickets)'},
-  {id:2,text:'Wrote the returns-process draft'},
-  {id:3,text:'Team sync and inventory count'}]};
-workLogs['e2|'+dateKey(at(3,0,0))]={items:[
-  {id:1,text:'Opened store, register setup'},
-  {id:2,text:'Restocked front displays'}]};
 
 /* weekly schedule — employee sets their own */
 const DOW=['sun','mon','tue','wed','thu','fri','sat'];
 const DOW_LABEL={sun:'Sunday',mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday'};
 function blankWeek(s,e){return {sun:{on:false,start:'09:00',end:'17:00'},mon:{on:true,start:s,end:e},tue:{on:true,start:s,end:e},
   wed:{on:true,start:s,end:e},thu:{on:true,start:s,end:e},fri:{on:true,start:s,end:e},sat:{on:false,start:'09:00',end:'17:00'}};}
-let schedules={e1:blankWeek('09:00','17:00'),e2:blankWeek('07:30','15:30'),e3:blankWeek('10:00','18:00')};
+let schedules={};
 
 /* time off + priorities */
-let timeOff=[
-  {id:'t1',empId:'e3',start:addDaysKey(dateKey(now),5),end:addDaysKey(dateKey(now),7),note:'Vacation'},
-  {id:'t2',empId:'e2',start:addDaysKey(dateKey(now),2),end:addDaysKey(dateKey(now),2),note:'Doctor'},
-];
-let priorities=[
-  {id:'pr1',title:'Quarterly inventory count',due:addDaysKey(dateKey(now),3),done:false,link:'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit'},
-  {id:'pr2',title:'Finish returns-process doc',due:addDaysKey(dateKey(now),1),done:false},
-  {id:'pr3',title:'Update supplier contacts',due:addDaysKey(dateKey(now),-2),done:false},
-];
+let timeOff=[];
+let priorities=[];
 let notices=[];   /* out-of-hours notices sent to the manager */
 let messages=[];  /* per-recipient notifications: {id,to,from,text,ts,read} */
 let msgSeq=0;      /* guarantees a unique id per recipient copy */
 
 let payPeriods=[];
-(function(){let s=addDaysKey(dateKey(now),-13);s=addDaysKey(s,-28);
-  for(let i=0;i<6;i++){const st=addDaysKey(s,i*14);payPeriods.push({id:'p'+i,start:st,end:addDaysKey(st,13)});}})();
 let auditLog=[];
 
 /* home widgets: per-user layout + personal reminders/to-dos (in memory) */
@@ -588,28 +586,96 @@ function parseRange(str){
 }
 
 /* ================= LOGIN ================= */
-function renderLogin(){
-  document.getElementById('acctList').innerHTML=employees.map(e=>`
-    <button class="acct" onclick="signIn('${e.id}')">
-      <span class="sq">${initials(e.name)}</span><span class="nm">${e.name}</span>
-      <span class="rl ${e.role}">${e.role}</span></button>`).join('');
+/* ================= AUTH (Supabase) ================= */
+let authMode='signin', authBusy=false;
+function renderLogin(msg,isErr){
+  const el=document.getElementById('acctList'); if(!el)return;
+  const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
+  const svcDown=!sb?`<div class="auth-msg err">Can't load the sign-in service. Check your internet connection and refresh.</div>`:'';
+  const form=authMode==='signin'
+    ? `<div class="afield"><label>Email</label><input type="email" id="auEmail" autocomplete="email" onkeydown="if(event.key==='Enter')authSignIn()"></div>
+       <div class="afield"><label>Password</label><input type="password" id="auPass" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSignIn()"></div>
+       <button class="btn btn-primary auth-go" id="authGo" onclick="authSignIn()">Sign in</button>`
+    : `<div class="afield"><label>Full name</label><input type="text" id="auName" autocomplete="name" placeholder="First Last"></div>
+       <div class="afield"><label>Email</label><input type="email" id="auEmail" autocomplete="email"></div>
+       <div class="afield"><label>Password <span class="opt2">8+ characters</span></label><input type="password" id="auPass" autocomplete="new-password" onkeydown="if(event.key==='Enter')authSignUp()"></div>
+       <button class="btn btn-primary auth-go" id="authGo" onclick="authSignUp()">Create account</button>`;
+  el.innerHTML=`<div class="auth-tabs">
+      <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
+      <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
+    </div>${svcDown}${form}${note}`;
 }
-const TABS={
-  manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}]
-};
-function signIn(id){
-  currentUser=employees.find(e=>e.id===id); selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false;
-  activeTab='home';
+function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
+async function authSignIn(){
+  if(authBusy||!sb)return;
+  const email=(document.getElementById('auEmail').value||'').trim().toLowerCase();
+  const pass=document.getElementById('auPass').value||'';
+  if(!email||!pass){renderLogin('Enter your email and password.',true);return;}
+  authBusyState(true,'Signing in…');
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){renderLogin(error.message,true);return;}
+    await enterApp(data.session);
+  }catch(e){renderLogin('Can\'t reach the server — check your internet and try again.',true);}
+  finally{authBusyState(false);}
+}
+async function authSignUp(){
+  if(authBusy||!sb)return;
+  const name=(document.getElementById('auName').value||'').trim();
+  const email=(document.getElementById('auEmail').value||'').trim().toLowerCase();
+  const pass=document.getElementById('auPass').value||'';
+  if(!name){renderLogin('Enter your full name.',true);return;}
+  if(!email){renderLogin('Enter your email.',true);return;}
+  if(pass.length<8){renderLogin('Password needs at least 8 characters.',true);return;}
+  authBusyState(true,'Creating account…');
+  try{
+    const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+    if(error){renderLogin(error.message,true);return;}
+    if(data.session){ await enterApp(data.session); }
+    else { authMode='signin'; renderLogin('Account created — confirm via the email we sent, then sign in.'); }
+  }catch(e){renderLogin('Can\'t reach the server — check your internet and try again.',true);}
+  finally{authBusyState(false);}
+}
+async function loadProfiles(){
+  const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
+  if(error)throw error;
+  employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role,rate:Number(p.rate)||0}));
+}
+async function loadPendingRoles(){
+  if(!canManage(currentUser)){pendingRoles=[];return;}
+  const {data}=await sb.from('pending_roles').select('*').order('email');
+  pendingRoles=data||[];
+}
+async function enterApp(session){
+  try{ await loadProfiles(); }
+  catch(e){ renderLogin('Could not load team profiles: '+(e.message||e),true); return; }
+  currentUser=employees.find(x=>x.id===session.user.id);
+  if(!currentUser){ renderLogin('Signed in, but no profile was found. Re-run the setup SQL, then sign in again.',true); await sb.auth.signOut(); return; }
+  await loadPendingRoles();
+  selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
   document.getElementById('tbAv').textContent=initials(currentUser.name);
   document.getElementById('tbName').textContent=currentUser.name;
   render();
 }
-function signOut(){stopAlarm();clearInterval(breakTimer);breakActive=false;currentUser=null;closeMenu();closeUserMenu();document.body.classList.remove('home-bg');
-  document.getElementById('app').classList.add('hide');document.getElementById('login').classList.remove('hide');}
+async function initAuth(){
+  renderLogin();
+  if(!sb)return;
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session) await enterApp(session);
+  }catch(e){ renderLogin('Can\'t reach the server — check your internet and refresh.',true); }
+}
+const TABS={
+  manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}]
+};
+function signOut(){
+  stopAlarm();clearInterval(breakTimer);breakActive=false;
+  if(sb){ sb.auth.signOut().finally(()=>location.reload()); } else { location.reload(); }
+}
 
 /* ================= MENUS ================= */
 function toggleMenu(ev){ev.stopPropagation();menuOpen=!menuOpen;closeUserMenu();paintMenu();}
@@ -711,7 +777,23 @@ function paintUserMenu(){
   panel.innerHTML=inbox
     +`<button class="menu-item" onclick="openProfile(event)">Profile<span class="soon">soon</span></button>`
     +(canManage(currentUser)?`<button class="menu-item" onclick="openSendNotif(event)">Send notification</button>`:'')
+    +`<button class="menu-item" onclick="openChangePass(event)">Change password</button>`
     +`<button class="menu-item" onclick="signOut()">Sign out</button>`;
+}
+function openChangePass(ev){ev.stopPropagation();closeUserMenu();
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Change password</h3><p class="sub">${esc(currentUser.name)}</p>
+    <div class="field"><label>New password <span class="opt">8+ characters</span></label><input type="password" id="cpPass" autocomplete="new-password"></div>
+    <div class="err" id="cpErr"></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="saveNewPass()">Update password</button></div></div></div>`;
+}
+async function saveNewPass(){
+  const p=document.getElementById('cpPass').value||'',err=document.getElementById('cpErr');
+  if(p.length<8){err.textContent='Password needs at least 8 characters.';return;}
+  const {error}=await sb.auth.updateUser({password:p});
+  if(error){err.textContent=error.message;return;}
+  closeModal();toast('Password updated');
 }
 function pageHead(t,m){return `<div class="page-head"><h1>${t}</h1>${m?`<span class="ml meta">${m}</span>`:''}</div>`;}
 
@@ -1210,9 +1292,61 @@ function teamTab(){
       <td class="num">${fmtHrs(weekHours(e.id))}</td>
       <td style="text-align:right"><button class="linkish">View</button></td></tr>`;
   }).join('');
+  const roster=team.length
+    ? `<table><thead><tr><th>Employee</th><th>Status</th>
+      <th class="num">Worked</th><th class="num">Scheduled</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+    : '<div class="empty">No hourly people yet — they\'ll appear here once they create accounts.</div>';
   return pageHead('Team',live+' of '+team.length+' on the clock')
-    +`<div class="sec first"><table><thead><tr><th>Employee</th><th>Status</th>
-      <th class="num">Worked</th><th class="num">Scheduled</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    +`<div class="sec first">${roster}</div>`
+    +rolesCard();
+}
+function rolesCard(){
+  const people=employees.map(e=>`<div class="role-row">
+      <span class="person"><span class="sq-av">${initials(e.name)}</span><span><b>${esc(e.name)}</b><span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
+      <select class="role-sel" onchange="changeRole('${e.id}',this.value)">
+        <option value="employee" ${e.role==='employee'?'selected':''}>Employee</option>
+        <option value="comanager" ${e.role==='comanager'?'selected':''}>Co-manager</option>
+        <option value="manager" ${e.role==='manager'?'selected':''}>Manager</option>
+      </select></div>`).join('');
+  const pend=pendingRoles.length?pendingRoles.map(p=>`<div class="role-row">
+      <span><b>${esc(p.email)}</b><span class="mini" style="display:block">hasn't signed up yet</span></span>
+      <span class="mini" style="text-transform:capitalize">${p.role==='comanager'?'Co-manager':p.role}</span>
+      <button class="pri-x" onclick="removePendingRole('${esc(p.email)}')" title="Remove">&times;</button></div>`).join('')
+    :'<div class="empty">No pre-assigned roles waiting.</div>';
+  return `<div class="sec"><div class="sec-head"><h2>People &amp; roles</h2><span class="ml meta">leadership only</span></div>
+      ${people||'<div class="empty">No accounts yet.</div>'}
+      <div class="role-pre">
+        <div class="sec-head" style="margin-top:22px"><h2>Pre-assign a role</h2></div>
+        <p class="mini" style="margin:0 0 12px">Set someone's role before they sign up. When they create their account with this email, the role applies automatically — then send them the site link.</p>
+        <div class="inline-form">
+          <div class="field grow"><label>Email</label><input type="email" id="prEmail" placeholder="name@onetelgem.org"></div>
+          <div class="field"><label>Role</label><select id="prRole"><option value="employee">Employee</option><option value="comanager">Co-manager</option><option value="manager">Manager</option></select></div>
+          <button class="btn btn-primary btn-sm" onclick="addPendingRole()">Pre-assign</button>
+        </div><div class="err" id="prErr"></div>
+        <div style="margin-top:14px">${pend}</div>
+      </div></div>`;
+}
+async function changeRole(id,role){
+  if(id===currentUser.id&&role==='employee'&&!confirm('This removes your own leadership access. Continue?')){render();return;}
+  const {error}=await sb.from('profiles').update({role}).eq('id',id);
+  if(error){toast('Could not change role: '+error.message);render();return;}
+  const e=employees.find(x=>x.id===id); if(e)e.role=role;
+  if(id===currentUser.id)currentUser.role=role;
+  toast('Role updated'); render();
+}
+async function addPendingRole(){
+  const email=(document.getElementById('prEmail').value||'').trim().toLowerCase();
+  const role=document.getElementById('prRole').value;
+  const err=document.getElementById('prErr');
+  if(!email||!email.includes('@')){err.textContent='Enter a valid email.';return;}
+  const rate=role==='manager'?0:role==='comanager'?19.00:17.00;
+  const {error}=await sb.from('pending_roles').upsert({email,role,rate});
+  if(error){err.textContent=error.message;return;}
+  await loadPendingRoles(); render(); toast('Role pre-assigned');
+}
+async function removePendingRole(email){
+  await sb.from('pending_roles').delete().eq('email',email);
+  await loadPendingRoles(); render();
 }
 function dismissNotice(id){notices=notices.filter(n=>n.id!==id);render();}
 function employeeDetail(id){
@@ -1266,7 +1400,12 @@ function payTab(){
       <div class="sec"><div class="sec-head"><h2>Estimated pay</h2><span class="ml meta">hours × rate · no overtime rules yet</span></div>
         ${periods||'<div class="empty">No pay periods yet.</div>'}</div>`;
 }
-function setRate(id,v){employees.find(x=>x.id===id).rate=parseFloat(v)||0;render();}
+function setRate(id,v){
+  const rate=parseFloat(v)||0;
+  const e=employees.find(x=>x.id===id); if(e)e.rate=rate;
+  if(sb) sb.from('profiles').update({rate}).eq('id',id).then(({error})=>{ if(error)toast('Rate not saved: '+error.message); });
+  render();
+}
 function addPeriod(){
   const s=document.getElementById('genStart').value;
   const e=document.getElementById('genEnd').value;
@@ -1475,7 +1614,7 @@ setInterval(()=>{
   const wc=document.getElementById('wClock');if(wc)wc.textContent=s?fmtWatch(netMs(s)):'00:00:00';
   const wn=document.getElementById('wNow');if(wn)wn.textContent=new Date().toLocaleTimeString();
 },1000);
-renderLogin();
+initAuth();
 </script>
 </body>
 </html>
