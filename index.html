@@ -83,6 +83,10 @@
   .um-item{border-top:1px solid rgba(255,255,255,.09);padding:9px 0;font-size:12px;color:#CFC9D8;line-height:1.4}
   .um-item b{color:#fff}
   .um-item .t{font-family:"IBM Plex Mono";font-size:10px;color:#8B8496;display:block;margin-top:2px}
+  .um-item.um-click{cursor:pointer}
+  .um-item.um-click:hover{color:#fff}
+  .um-tag{display:inline-block;font-family:"IBM Plex Mono";font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--purple);border:1px solid rgba(155,100,177,.55);border-radius:20px;padding:1px 7px;margin-right:6px}
   .um-item .dz{background:none;border:0;color:var(--purple);font-family:"IBM Plex Mono";font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 0 0}
   .um-empty{font-size:12px;color:#7E7889;padding:2px 0 6px}
   .um-div{height:1px;background:rgba(255,255,255,.12);margin:5px 0}
@@ -302,22 +306,56 @@
   .opt{font-family:"IBM Plex Mono";font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:400}
   .da-nodue{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:20px;cursor:pointer}
   .da-nodue input{width:16px;height:16px;accent-color:var(--purple)}
+  .nt-reim{display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:20px;cursor:pointer;font-weight:600}
+  .nt-reim input{width:16px;height:16px;accent-color:var(--purple)}
   .pri-add{margin-top:18px;padding-top:16px;border-top:1px solid var(--rule)}
   .pri-add .field{margin-bottom:12px}
 
-  /* schedule — checkbox + one compact range field */
+  /* schedule — horizontal time blocks per day */
   .sched-row{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--rule-soft)}
   .sched-row.off .sched-day{color:var(--muted);font-weight:500}
-  .sched-box{width:16px;height:16px;flex:none;border:1px solid #A9A5B0;background:#fff;display:grid;place-items:center;
-    font-family:"IBM Plex Mono";font-size:10px;color:#fff;padding:0;border-radius:6px}
-  .sched-box.on{background:var(--purple);border-color:var(--purple)}
-  .sched-day{width:96px;font-weight:600}
-  .range-in{width:180px;border:1px solid var(--rule);padding:8px 13px;border-radius:20px;
-    font-family:"Barlow";font-size:13.5px;background:#fff}
+  .sched-day{width:96px;flex:none;font-weight:600}
+  .slot-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex:1;min-width:0}
+  .slot{position:relative;display:inline-flex}
+  .range-in{width:140px;border:1px solid var(--rule);padding:7px 11px;border-radius:20px;text-align:center;
+    font-family:"Barlow";font-size:13px;background:#fff}
   .range-in:focus{border-color:var(--purple);box-shadow:none;outline:0}
   .range-in.bad{border-color:#A81E27}
-  .sched-hrs{margin-left:auto;font-family:"IBM Plex Mono";font-size:13px;color:var(--muted)}
+  .slot.ro .mono{display:inline-block;border:1px solid var(--rule-soft);padding:6px 11px;border-radius:20px;font-size:13px;text-align:center}
+  .slot-x{position:absolute;top:-6px;right:-6px;width:15px;height:15px;border:1px solid #C85560;border-radius:50%;
+    background:#fff;display:none;cursor:pointer;padding:0;font-size:0;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .slot-x::before,.slot-x::after{content:"";position:absolute;top:50%;left:50%;width:7px;height:1.25px;
+    background:#C85560;border-radius:1px}
+  .slot-x::before{transform:translate(-50%,-50%) rotate(45deg)}
+  .slot-x::after{transform:translate(-50%,-50%) rotate(-45deg)}
+  .slot:focus-within .slot-x{display:block}
+  .slot-add{position:relative;width:26px;height:26px;flex:none;border:0;border-radius:6px;background:var(--purple);
+    cursor:pointer;padding:0;font-size:0;transition:background .14s}
+  .slot-add:hover{background:var(--purple-deep)}
+  .slot-add::before,.slot-add::after{content:"";position:absolute;top:50%;left:50%;background:#fff;
+    border-radius:0;transform:translate(-50%,-50%)}
+  .slot-add::before{width:14px;height:3px}
+  .slot-add::after{width:3px;height:14px}
+  .sched-hrs{margin-left:auto;flex:none;font-family:"IBM Plex Mono";font-size:13px;color:var(--muted)}
   .sched-off{font-size:13px;color:var(--muted)}
+
+  /* payroll reimbursements */
+  .emp-link{background:none;border:0;padding:0;font:inherit;color:var(--text);cursor:pointer;text-align:left;border-bottom:1px dashed var(--rule)}
+  .emp-link:hover{color:var(--purple-deep);border-bottom-color:var(--purple)}
+  .rb-hint{font-size:11.5px;color:var(--muted);margin:8px 0 0}
+  .rb-list{margin:2px 0 6px}
+  .rb-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--rule-soft)}
+  .rb-lbl{flex:1;font-size:13.5px}
+  .rb-amt{font-family:"IBM Plex Mono";font-size:13px;color:var(--text)}
+  .rb-x{background:none;border:0;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;padding:0 2px}
+  .rb-x:hover{color:#C85560}
+  .rb-none{font-size:13px;color:var(--muted);padding:8px 0 4px}
+  .rb-pending{background:var(--purple-wash);border-radius:12px;padding:12px 14px;margin-bottom:18px}
+  .rb-pending .ml{margin-bottom:4px}
+  .rb-pending .rb-row{border-bottom-color:rgba(0,0,0,.07)}
+  .rb-pending .rb-row:last-child{border-bottom:0}
+  .btn-xs{padding:5px 11px;font-size:12px}
+  .rb-add{border-top:1px solid var(--rule);padding-top:16px;margin-top:10px}
 
   /* live shift clock */
   .liveclock{font-family:"IBM Plex Mono";font-weight:500;font-size:clamp(40px,11vw,58px);line-height:1;
@@ -503,8 +541,7 @@ let workLogs={};
 /* weekly schedule — employee sets their own */
 const DOW=['sun','mon','tue','wed','thu','fri','sat'];
 const DOW_LABEL={sun:'Sunday',mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday'};
-function blankWeek(s,e){return {sun:{on:false,start:'09:00',end:'17:00'},mon:{on:true,start:s,end:e},tue:{on:true,start:s,end:e},
-  wed:{on:true,start:s,end:e},thu:{on:true,start:s,end:e},fri:{on:true,start:s,end:e},sat:{on:false,start:'09:00',end:'17:00'}};}
+function blankWeek(){return {sun:[],mon:[],tue:[],wed:[],thu:[],fri:[],sat:[]};}
 let schedules={};
 
 /* time off + priorities */
@@ -513,8 +550,10 @@ let priorities=[];
 let notices=[];   /* out-of-hours notices sent to the manager */
 let messages=[];  /* per-recipient notifications: {id,to,from,text,ts,read} */
 let msgSeq=0;      /* guarantees a unique id per recipient copy */
+let reimbursements=[]; /* persistent reimbursement requests: {id,empId,byName,forText,amount,ts,status} */
 
 let payPeriods=[];
+let periodReimb=[]; /* manager-added reimbursements tied to a period+employee: {id,periodId,empId,label,amount} */
 let auditLog=[];
 
 /* home widgets: per-user layout + personal reminders/to-dos (in memory) */
@@ -551,11 +590,13 @@ function hourlyStaff(){return employees.filter(e=>e.role==='comanager'||e.role==
 function periodMs(id,p){return shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
 function nameOf(id){const e=employees.find(x=>x.id===id);return e?e.name:'—';}
 function hmToMin(hm){const [h,m]=hm.split(':').map(Number);return h*60+m;}
-function dayHours(d){if(!d||!d.on)return 0;const v=(hmToMin(d.end)-hmToMin(d.start))/60;return v>0?v:0;}
+function slotHours(sl){const v=(hmToMin(sl.end)-hmToMin(sl.start))/60;return v>0?v:0;}
+function dayHours(day){if(!Array.isArray(day)||!day.length)return 0;return day.reduce((t,sl)=>t+slotHours(sl),0);}
 function weekHours(id){const s=schedules[id];if(!s)return 0;return DOW.reduce((t,k)=>t+dayHours(s[k]),0);}
-function schedForDate(id,ts){const s=schedules[id];if(!s)return null;const d=s[DOW[new Date(ts).getDay()]];return (d&&d.on)?d:null;}
-function isOutsideSchedule(id,ts){const d=schedForDate(id,ts);if(!d)return true;
-  const m=new Date(ts).getHours()*60+new Date(ts).getMinutes();return m<hmToMin(d.start)||m>hmToMin(d.end);}
+function slotsForDate(id,ts){const s=schedules[id];if(!s)return [];const d=s[DOW[new Date(ts).getDay()]];return Array.isArray(d)?d:[];}
+function slotsOverlap(a,b){return hmToMin(a.start)<hmToMin(b.end)&&hmToMin(b.start)<hmToMin(a.end);}
+function isOutsideSchedule(id,ts){const slots=slotsForDate(id,ts);if(!slots.length)return true;
+  const m=new Date(ts).getHours()*60+new Date(ts).getMinutes();return !slots.some(sl=>m>=hmToMin(sl.start)&&m<=hmToMin(sl.end));}
 function weekStartKey(){const d=new Date(now);d.setDate(d.getDate()-d.getDay());return dateKey(d);}
 function workedThisWeek(id){const ws=weekStartKey();
   return shifts.filter(s=>s.empId===id&&dateKey(s.clockIn)>=ws).reduce((t,s)=>t+netMs(s),0);}
@@ -588,6 +629,24 @@ function parseRange(str){
 /* ================= LOGIN ================= */
 /* ================= AUTH (Supabase) ================= */
 let authMode='signin', authBusy=false;
+/* ===== TEMP PREVIEW BYPASS — remove this whole block when Supabase auth is back =====
+   Lets you click "Sign in" (no credentials) to preview. Seeds the team in memory; resets on refresh. */
+function demoEnter(){
+  employees=[
+    {id:'u_landon', name:'Landon Slocum',    email:'lslocum@onetelgem.org',   role:'comanager', rate:19.00},
+    {id:'u_sarah',  name:'Sarah Vance',       email:'svance@onetelgem.org',    role:'manager',   rate:0},
+    {id:'u_mason',  name:'Mason Merrill',     email:'mmerrill@onetelgem.org',  role:'employee',  rate:17.00},
+    {id:'u_connor', name:'Connor Williams',   email:'cwilliams@onetelgem.org', role:'employee',  rate:17.00}
+  ];
+  currentUser=employees.find(x=>x.id==='u_landon');
+  pendingRoles=[];
+  selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('tbAv').textContent=initials(currentUser.name);
+  document.getElementById('tbName').textContent=currentUser.name;
+  render();
+}
 function renderLogin(msg,isErr){
   const el=document.getElementById('acctList'); if(!el)return;
   const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
@@ -607,6 +666,7 @@ function renderLogin(msg,isErr){
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
+  return demoEnter(); // TEMP preview bypass — delete this line to restore real Supabase sign-in
   if(authBusy||!sb)return;
   const email=(document.getElementById('auEmail').value||'').trim().toLowerCase();
   const pass=document.getElementById('auPass').value||'';
@@ -650,7 +710,17 @@ async function enterApp(session){
   try{ await loadProfiles(); }
   catch(e){ renderLogin('Could not load team profiles: '+(e.message||e),true); return; }
   currentUser=employees.find(x=>x.id===session.user.id);
-  if(!currentUser){ renderLogin('Signed in, but no profile was found. Re-run the setup SQL, then sign in again.',true); await sb.auth.signOut(); return; }
+  if(!currentUser){
+    // self-heal: the trigger didn't create a profile — make one now (defaults to employee)
+    try{
+      const meta=session.user.user_metadata||{};
+      const {error:insErr}=await sb.from('profiles').insert({
+        id:session.user.id, email:(session.user.email||'').toLowerCase(), name:meta.full_name||''
+      });
+      if(!insErr){ await loadProfiles(); currentUser=employees.find(x=>x.id===session.user.id); }
+    }catch(e){/* fall through to message below */}
+  }
+  if(!currentUser){ renderLogin('Signed in, but your profile could not be created. Run supabase-fix-login.sql, then sign in again.',true); await sb.auth.signOut(); return; }
   await loadPendingRoles();
   selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
@@ -692,49 +762,89 @@ function paintMenu(){
 function goTab(id){activeTab=id;selectedEmpId=null;openDay=null;menuOpen=false;render();}
 function toggleUserMenu(ev){ev.stopPropagation();
   const p=document.getElementById('userPanel');const showing=p.classList.toggle('show');if(menuOpen)closeMenu();
-  if(showing){paintUserMenu();consumeMessages();}
+  if(showing)paintUserMenu();
 }
-function consumeMessages(){
+function readMessage(ev,id){
+  /* one at a time — clicking a single message marks just that one read and drops it, leaving the rest */
+  ev.stopPropagation();
   if(!currentUser)return;
-  const had=messages.some(m=>m.to===currentUser.id&&!m.read);
-  /* mark ONLY this user's own notifications read, then drop them — never affects anyone else's copy */
-  messages.forEach(m=>{if(m.to===currentUser.id)m.read=true;});
-  messages=messages.filter(m=>!(m.to===currentUser.id&&m.read));
-  const dot=document.getElementById('notifDot');
-  if(dot)dot.classList.toggle('hide',!(canManage(currentUser)&&notices.length>0));
-  /* refresh the Home widgets so the notifications widget clears too — leaves the open dropdown intact */
-  if(had&&activeTab==='home')document.getElementById('view').innerHTML=renderBody();
+  messages=messages.filter(m=>!(m.id===id&&m.to===currentUser.id));
+  paintUserMenu();
+  if(activeTab==='home')document.getElementById('view').innerHTML=renderBody();
 }
 function closeUserMenu(){const p=document.getElementById('userPanel');if(p)p.classList.remove('show');}
 function openProfile(ev){ev.stopPropagation();closeUserMenu();toast('Profile page coming soon');}
 function openSendNotif(ev){ev.stopPropagation();closeUserMenu();
-  const opts=employees.filter(e=>e.id!==currentUser.id).map(e=>`<option value="${esc(e.name)}"></option>`).join('');
+  const u=currentUser, role=u.role;
+  const canReq = role==='employee'||role==='comanager';
+  const leaders=employees.filter(e=>e.id!==u.id&&(e.role==='manager'||e.role==='comanager'));
+  const everyone=employees.filter(e=>e.id!==u.id);
+  const indiv = role==='employee' ? leaders : everyone;
+  const opts=indiv.map(e=>`<option value="${esc(e.name)}"></option>`).join('');
+  /* employees always send to one leader (no "Everyone"); leadership gets the Everyone/individual picker */
+  const toField = role==='employee' ? ''
+    : `<div class="field" id="ntToWrap"><label>To</label><select id="ntTo" onchange="ntSwap()">
+        <option value="all">Everyone</option><option value="one">An individual</option></select></div>`;
+  const whoHidden = role==='employee' ? '' : 'hide';
+  const reqField = canReq
+    ? `<label class="nt-reim"><input type="checkbox" id="ntReim" onchange="ntReimSwap()"> Reimbursement request</label>` : '';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Send a notification</h3><p class="sub">Appears in your team's notifications.</p>
-    <div class="field"><label>To</label><select id="ntTo" onchange="ntSwap()">
-      <option value="all">Everyone</option><option value="one">An individual</option></select></div>
-    <div class="field hide" id="ntWhoWrap"><label>Name</label>
+    <h3>New message</h3><p class="sub" id="ntSub">Appears in your team's notifications.</p>
+    ${reqField}
+    ${toField}
+    <div class="field ${whoHidden}" id="ntWhoWrap"><label>${role==='employee'?'To a manager or co-manager':'Name'}</label>
       <input type="text" id="ntWho" list="ntNames" placeholder="Type a name" autocomplete="off">
       <datalist id="ntNames">${opts}</datalist></div>
-    <div class="field"><label>Message</label><input type="text" id="ntMsg" placeholder="Team meeting moved to 3pm"></div>
+    <div class="field"><label id="ntMsgLbl">Message</label><input type="text" id="ntMsg" placeholder="Team meeting moved to 3pm"></div>
+    <div class="field hide" id="ntAmtWrap"><label>Amount ($) <span class="opt">enter 0 to let the manager set it</span></label>
+      <input type="number" id="ntAmt" min="0" step="0.01" placeholder="0.00"></div>
     <div class="err" id="ntErr"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="sendNotification()">Send</button></div></div></div>`;
 }
-function ntSwap(){const one=document.getElementById('ntTo').value==='one';document.getElementById('ntWhoWrap').classList.toggle('hide',!one);}
+function ntSwap(){
+  const reim=document.getElementById('ntReim'); if(reim&&reim.checked)return;
+  const sel=document.getElementById('ntTo'); if(!sel)return;
+  document.getElementById('ntWhoWrap').classList.toggle('hide',sel.value!=='one');
+}
+function ntReimSwap(){
+  const on=document.getElementById('ntReim').checked;
+  const toWrap=document.getElementById('ntToWrap'), whoWrap=document.getElementById('ntWhoWrap');
+  document.getElementById('ntAmtWrap').classList.toggle('hide',!on);
+  if(toWrap)toWrap.classList.toggle('hide',on);
+  const lbl=document.getElementById('ntMsgLbl'), sub=document.getElementById('ntSub'), msg=document.getElementById('ntMsg');
+  if(on){ whoWrap.classList.add('hide'); lbl.textContent="What it's for";
+    msg.placeholder='Parking at the downtown garage'; sub.textContent='Goes to the manager for approval.'; }
+  else{ lbl.textContent='Message'; msg.placeholder='Team meeting moved to 3pm';
+    sub.textContent="Appears in your team's notifications.";
+    const sel=document.getElementById('ntTo');
+    if(sel)whoWrap.classList.toggle('hide',sel.value!=='one'); else whoWrap.classList.remove('hide'); }
+}
 function sendNotification(){
-  const to=document.getElementById('ntTo').value,text=document.getElementById('ntMsg').value.trim(),err=document.getElementById('ntErr');
+  const u=currentUser, err=document.getElementById('ntErr');
+  const text=(document.getElementById('ntMsg').value||'').trim();
+  const reim=document.getElementById('ntReim'), isReim=reim&&reim.checked;
+  if(isReim){
+    if(!text){err.textContent='Say what the reimbursement is for.';return;}
+    const amt=Math.max(0,parseFloat(document.getElementById('ntAmt').value)||0);
+    const mgr=employees.find(e=>e.role==='manager');
+    if(!mgr){err.textContent="There's no manager account to send this to.";return;}
+    reimbursements.push({id:'rb'+(++msgSeq),empId:u.id,byName:u.name,forText:text,amount:amt,ts:Date.now(),status:'pending'});
+    closeModal();toast('Reimbursement request sent to the manager');return;
+  }
   if(!text){err.textContent='Write a message.';return;}
   let recips=[];
-  if(to==='all'){recips=employees.filter(e=>e.id!==currentUser.id);}
+  const toSel=document.getElementById('ntTo');
+  if(toSel&&toSel.value==='all'){ recips=employees.filter(e=>e.id!==u.id); }
   else{
-    const nm=document.getElementById('ntWho').value.trim().toLowerCase();
-    const who=employees.find(e=>e.id!==currentUser.id&&e.name.toLowerCase()===nm);
-    if(!who){err.textContent='Pick a valid name from your team.';return;}
+    const nm=(document.getElementById('ntWho').value||'').trim().toLowerCase();
+    let who=employees.find(e=>e.id!==u.id&&e.name.toLowerCase()===nm);
+    if(u.role==='employee'&&who&&!(who.role==='manager'||who.role==='comanager'))who=null;
+    if(!who){err.textContent=u.role==='employee'?'Pick a manager or co-manager.':'Pick a valid name from your team.';return;}
     recips=[who];
   }
-  recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:currentUser.name,text,ts:Date.now(),read:false}));
-  closeModal();toast(to==='all'?'Sent to everyone':'Notification sent');
+  recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:u.name,text,ts:Date.now(),read:false}));
+  closeModal();toast(toSel&&toSel.value==='all'?'Sent to everyone':'Message sent');
 }
 document.addEventListener('click',()=>{if(menuOpen)closeMenu();closeUserMenu();});
 
@@ -763,20 +873,22 @@ function paintUserMenu(){
   if(!currentUser)return;
   const myMsgs=messages.filter(m=>m.to===currentUser.id&&!m.read);
   const mgrNotices=canManage(currentUser)?notices:[];
-  dot.classList.toggle('hide',myMsgs.length===0&&mgrNotices.length===0);
+  const reimbPings=canManage(currentUser)?reimbursements.filter(r=>r.status==='pending'&&r.empId!==currentUser.id):[];
+  dot.classList.toggle('hide',myMsgs.length===0&&mgrNotices.length===0&&reimbPings.length===0);
   let inbox='';
   if(canManage(currentUser)||myMsgs.length){
-    const msgItems=myMsgs.map(m=>`<div class="um-item"><b>${esc(m.from)}</b> ${esc(m.text)}<span class="t">${fmtDay(m.ts)} · ${fmtTime(m.ts)}</span></div>`).join('');
+    const msgItems=myMsgs.map(m=>`<div class="um-item um-click" onclick="readMessage(event,'${m.id}')" title="Click to mark read"><b>${esc(m.from)}</b> ${esc(m.text)}<span class="t">${fmtDay(m.ts)} · ${fmtTime(m.ts)}</span></div>`).join('');
+    const reimItems=reimbPings.map(r=>`<div class="um-item"><span class="um-tag">Reimbursement</span><b>${esc(r.byName)}</b> ${esc(r.forText)}${r.amount>0?' · '+money(r.amount):' · amount TBD'}<span class="t">${fmtDay(r.ts)} · ${fmtTime(r.ts)} · resolve in Payroll</span></div>`).join('');
     const noticeItems=mgrNotices.map(n=>`<div class="um-item"><b>${nameOf(n.empId)}</b> clocked in outside their schedule.
           ${n.reason?'“'+esc(n.reason)+'”':''}<span class="t">${fmtDay(n.ts)} · ${fmtTime(n.ts)}</span>
           <button class="dz" onclick="event.stopPropagation();dismissNotice('${n.id}')">Dismiss</button></div>`).join('');
-    const body=(msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
-    const count=myMsgs.length+mgrNotices.length;
+    const body=(msgItems+reimItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
+    const count=myMsgs.length+reimbPings.length+mgrNotices.length;
     inbox=`<div class="um-notif"><div class="um-label"><span>Notifications</span><span>${count||''}</span></div>${body}</div><div class="um-div"></div>`;
   }
   panel.innerHTML=inbox
     +`<button class="menu-item" onclick="openProfile(event)">Profile<span class="soon">soon</span></button>`
-    +(canManage(currentUser)?`<button class="menu-item" onclick="openSendNotif(event)">Send notification</button>`:'')
+    +`<button class="menu-item" onclick="openSendNotif(event)">Send message</button>`
     +`<button class="menu-item" onclick="openChangePass(event)">Change password</button>`
     +`<button class="menu-item" onclick="signOut()">Sign out</button>`;
 }
@@ -957,7 +1069,11 @@ function widgetBody(k){
     const myMsgs=messages.filter(m=>m.to===u.id&&!m.read);
     const msgLines=myMsgs.map(m=>`<div class="w-line"><span><b>${esc(m.from)}</b> ${esc(m.text)}</span></div>`).join('');
     let rest='';
-    if(canManage(u)) rest=notices.map(n=>`<div class="w-line"><span>${esc(nameOf(n.empId).split(' ')[0])} clocked in off-schedule</span></div>`).join('');
+    if(canManage(u)){
+      const reimLines=reimbursements.filter(r=>r.status==='pending'&&r.empId!==u.id).map(r=>`<div class="w-line"><span><b>${esc(r.byName.split(' ')[0])}</b> reimbursement · ${r.amount>0?money(r.amount):'TBD'}</span></div>`).join('');
+      const noticeLines=notices.map(n=>`<div class="w-line"><span>${esc(nameOf(n.empId).split(' ')[0])} clocked in off-schedule</span></div>`).join('');
+      rest=reimLines+noticeLines;
+    }
     else if(logReminder) rest='<div class="w-line"><span>Don\'t forget your work log today.</span></div>';
     const body=msgLines+rest;
     if(body)return body;
@@ -1206,7 +1322,7 @@ function hoursTab(){
 }
 function timecardTab(){
   const dk=dateKey(now),s=openShift(currentUser.id);
-  const sched=schedForDate(currentUser.id,now);
+  const sched=slotsForDate(currentUser.id,now);
   const status=s?(breakActive?'On paid break':'On the clock'):'Clocked out';
   const rem=breakRemaining();
   let breakBtn='';
@@ -1234,7 +1350,7 @@ function timecardTab(){
         <span class="since">${s?'Clocked in '+fmtTime(s.clockIn):'Not clocked in'}</span>
         <div class="clock-actions">${actions}</div>
         ${breakNote}
-        <span class="sched-today">${sched?'Scheduled today '+fmtHM(sched.start)+' – '+fmtHM(sched.end):'Not scheduled today'}</span>
+        <span class="sched-today">${sched.length?'Scheduled today '+sched.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join(', '):'Not scheduled today'}</span>
       </div>${brk}${reminder}
       <div class="sec"><div class="sec-head"><h2>Work log</h2><span class="ml meta">visible to your manager</span></div>
       ${logPanel(currentUser.id,dk,true)}</div>
@@ -1243,39 +1359,47 @@ function timecardTab(){
 
 /* ---------- schedule ---------- */
 function scheduleTab(empId,editable){
-  const s=schedules[empId]||blankWeek('09:00','17:00');
+  const s=schedules[empId]||blankWeek();
   const rows=DOW.map(k=>{
-    const d=s[k];
-    const box=editable
-      ? `<button class="sched-box ${d.on?'on':''}" onclick="setSched('${empId}','${k}','on',${!d.on})" title="${d.on?'Working':'Day off'}">${d.on?'&#10003;':''}</button>`
-      : `<span class="sched-box ${d.on?'on':''}">${d.on?'&#10003;':''}</span>`;
-    const times=d.on
-      ? (editable
-         ? `<input class="range-in" id="rg_${k}" value="${fmtHM(d.start)} – ${fmtHM(d.end)}"
-             onblur="setRange('${empId}','${k}',this)" onkeydown="if(event.key==='Enter')this.blur()">`
-         : `<span class="mono">${fmtHM(d.start)} – ${fmtHM(d.end)}</span>`)
-      : `<span class="sched-off">Day off</span>`;
-    return `<div class="sched-row ${d.on?'':'off'}">${box}<span class="sched-day">${DOW_LABEL[k]}</span>${times}
-      <span class="sched-hrs">${d.on?fmtHrs(dayHours(d)):'—'}</span></div>`;
+    const day=Array.isArray(s[k])?s[k]:[];
+    let inner;
+    if(editable){
+      inner=day.map((sl,i)=>`<span class="slot"><input class="range-in" id="rg_${k}_${i}" value="${fmtHM(sl.start)} – ${fmtHM(sl.end)}"
+          onblur="setSlot('${empId}','${k}',${i},this)" onkeydown="if(event.key==='Enter')this.blur()">
+          <button class="slot-x" tabindex="-1" onmousedown="event.preventDefault()" onclick="removeSlot('${empId}','${k}',${i})" title="Remove block">&times;</button></span>`).join('')
+        +`<button class="slot-add" onclick="addSlot('${empId}','${k}')" aria-label="Add a time block" title="Add a time block">+</button>`;
+    }else{
+      inner=day.length
+        ? day.map(sl=>`<span class="slot ro"><span class="mono">${fmtHM(sl.start)} – ${fmtHM(sl.end)}</span></span>`).join('')
+        : `<span class="sched-off">Day off</span>`;
+    }
+    return `<div class="sched-row ${day.length?'':'off'}"><span class="sched-day">${DOW_LABEL[k]}</span>
+      <span class="slot-wrap">${inner}</span>
+      <span class="sched-hrs">${day.length?fmtHrs(dayHours(day)):'—'}</span></div>`;
   }).join('');
   const total=weekHours(empId);
   return pageHead(editable?'My schedule':'Schedule',editable?'visible to your manager':nameOf(empId))
-    +`<div class="sec first">${editable?'<p class="lede">Check the days you work, then type the hours — "9-5", "9am-5:30pm", and "09:00-17:00" all work.</p>':''}
+    +`<div class="sec first">${editable?'<p class="lede">Tap the purple + on a day to add a time block, then type the hours — "9-5", "9am-5:30pm", and "09:00-17:00" all work. Add as many blocks a day as you need; tap a block and hit the × to remove it.</p>':''}
       ${rows}
       <div class="totals"><div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(total)}</div></div>
         <div class="stat"><div class="k">Worked so far this week</div><div class="v">${fmtDur(workedThisWeek(empId))}</div></div>
-        <div class="stat"><div class="k">Days working</div><div class="v">${DOW.filter(k=>s[k].on).length}</div></div></div></div>`;
+        <div class="stat"><div class="k">Days working</div><div class="v">${DOW.filter(k=>Array.isArray(s[k])&&s[k].length).length}</div></div></div></div>`;
 }
-function setRange(empId,day,el){
+function ensureWeek(empId){if(!schedules[empId])schedules[empId]=blankWeek();
+  DOW.forEach(k=>{if(!Array.isArray(schedules[empId][k]))schedules[empId][k]=[];});return schedules[empId];}
+function addSlot(empId,day){const w=ensureWeek(empId);w[day].push({start:'09:00',end:'17:00'});render();
+  setTimeout(()=>{const el=document.getElementById('rg_'+day+'_'+(w[day].length-1));if(el){el.focus();el.select();}},0);}
+function removeSlot(empId,day,i){const w=ensureWeek(empId);w[day].splice(i,1);render();}
+function setSlot(empId,day,i,el){
   const r=parseRange(el.value);
   if(!r){el.classList.add('bad');toast('Try a range like 9-5 or 9:00am-5:30pm');return;}
   el.classList.remove('bad');
-  if(!schedules[empId])schedules[empId]=blankWeek('09:00','17:00');
-  schedules[empId][day].start=r.start;schedules[empId][day].end=r.end;render();
-}
-function setSched(empId,day,field,val){
-  if(!schedules[empId])schedules[empId]=blankWeek('09:00','17:00');
-  schedules[empId][day][field]=val;render();
+  const w=ensureWeek(empId);
+  if(!w[day][i]){render();return;}
+  w[day][i].start=r.start;w[day][i].end=r.end;
+  const clash=w[day].some((sl,j)=>j!==i&&slotsOverlap(sl,w[day][i]));
+  render();
+  if(clash)toast('Heads up — this block overlaps another one. Check the AM/PM.');
 }
 
 /* ================= MANAGER ================= */
@@ -1350,10 +1474,11 @@ async function removePendingRole(email){
 }
 function dismissNotice(id){notices=notices.filter(n=>n.id!==id);render();}
 function employeeDetail(id){
-  const e=employees.find(x=>x.id===id),s=schedules[id]||blankWeek('09:00','17:00');
-  const schedRows=DOW.map(k=>`<tr><td>${DOW_LABEL[k]}</td>
-    <td class="num">${s[k].on?fmtHM(s[k].start)+' – '+fmtHM(s[k].end):'<span class="sched-off">Off</span>'}</td>
-    <td class="num">${s[k].on?fmtHrs(dayHours(s[k])):'—'}</td></tr>`).join('');
+  const e=employees.find(x=>x.id===id),s=schedules[id]||blankWeek();
+  const schedRows=DOW.map(k=>{const day=Array.isArray(s[k])?s[k]:[];
+    return `<tr><td>${DOW_LABEL[k]}</td>
+    <td class="num">${day.length?day.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join('<br>'):'<span class="sched-off">Off</span>'}</td>
+    <td class="num">${day.length?fmtHrs(dayHours(day)):'—'}</td></tr>`;}).join('');
   return `<button class="back" onclick="closeEmp()">&larr; Team</button>`
     +pageHead(e.name,money(e.rate)+' / hr')
     +`<div class="sec first"><p class="lede">Select a day to read its work log.</p>
@@ -1381,12 +1506,14 @@ function payTab(){
   const periods=ordered.map(p=>{
     const current=todayK>=p.start&&todayK<=p.end;
     const rows=team.map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
-      return `<tr><td>${e.name}</td><td class="num">${fmtDur(ms)}</td><td class="num">${money(e.rate)}</td><td class="num"><b>${money(amt)}</b></td></tr>`;}).join('');
+      const rbTotal=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((t,r)=>t+r.amount,0);
+      return `<tr><td><button class="emp-link" onclick="openReimb('${p.id}','${e.id}')" title="Add a reimbursement">${esc(e.name)}</button></td><td class="num">${fmtDur(ms)}</td><td class="num">${money(e.rate)}</td><td class="num">${money(amt)}</td><td class="num">${rbTotal>0?money(rbTotal):'—'}</td><td class="num"><b>${money(amt+rbTotal)}</b></td></tr>`;}).join('');
     return `<div class="period ${current?'current':''}"><div class="period-head">
         <span class="period-title">${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</span>
         ${current?'<span class="period-tag">Current</span>':''}
         <button class="dl-btn" onclick="downloadPeriodPDF('${p.id}')" title="Download PDF for this period" aria-label="Download PDF">&#8595;</button></div>
-      <table><thead><tr><th>Employee</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Est. pay</th></tr></thead><tbody>${rows}</tbody></table>
+      <table><thead><tr><th>Employee</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Est. pay</th><th class="num">Reimb</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="rb-hint">Click a name to add a reimbursement.</p>
       <div style="margin-top:10px"><button class="pri-x" onclick="removePeriod('${p.id}')" title="Remove period">&times; Remove this period</button></div></div>`;
   }).join('');
   return pageHead('Payroll',payPeriods.length+' periods')
@@ -1416,6 +1543,39 @@ function addPeriod(){
   render();
 }
 function removePeriod(id){payPeriods=payPeriods.filter(p=>p.id!==id);render();}
+function openReimb(periodId,empId){if(payPeriods.find(x=>x.id===periodId)&&employees.find(x=>x.id===empId))renderReimbModal(periodId,empId);}
+function renderReimbModal(periodId,empId){
+  const p=payPeriods.find(x=>x.id===periodId),e=employees.find(x=>x.id===empId);if(!p||!e)return;
+  const rb=periodReimb.filter(r=>r.periodId===periodId&&r.empId===empId);
+  const list=rb.length
+    ? rb.map(r=>`<div class="rb-row"><span class="rb-lbl">${esc(r.label)}</span><span class="rb-amt">${money(r.amount)}</span><button class="rb-x" onclick="removeReimb('${r.id}')" title="Remove">&times;</button></div>`).join('')
+    : '<div class="rb-none">No reimbursements added yet.</div>';
+  const pending=reimbursements.filter(r=>r.status==='pending'&&r.empId===empId);
+  const pend=pending.length
+    ? `<div class="rb-pending"><div class="ml">Requested by ${esc(e.name.split(' ')[0])}</div>`+pending.map(r=>`<div class="rb-row"><span class="rb-lbl">${esc(r.forText)}</span><span class="rb-amt">${r.amount>0?money(r.amount):'TBD'}</span><button class="btn btn-line btn-xs" onclick="useRequest('${r.id}')">Use</button><button class="rb-x" onclick="dismissRequest('${r.id}','${periodId}','${empId}')" title="Dismiss request">&times;</button></div>`).join('')+`</div>`
+    : '';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Reimbursements</h3><p class="sub">${esc(e.name)} · ${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</p>
+    ${pend}
+    <div class="rb-list">${list}</div>
+    <div class="rb-add"><div class="field"><label>What it's for</label><input type="text" id="rbLabel" placeholder="Parking"></div>
+      <div class="field"><label>Amount ($)</label><input type="number" id="rbAmt" min="0" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter')addReimb('${periodId}','${empId}')"></div>
+      <div class="err" id="rbErr"></div>
+      <button class="btn btn-primary btn-sm" onclick="addReimb('${periodId}','${empId}')">Add reimbursement</button></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Done</button></div></div></div>`;
+}
+function addReimb(periodId,empId){
+  const label=(document.getElementById('rbLabel').value||'').trim();
+  const amt=Math.max(0,parseFloat(document.getElementById('rbAmt').value)||0);
+  const err=document.getElementById('rbErr');
+  if(!label){err.textContent='Add a label, like Parking.';return;}
+  if(amt<=0){err.textContent='Enter an amount greater than 0.';return;}
+  periodReimb.push({id:'pr'+(++msgSeq),periodId,empId,label,amount:amt});
+  render();renderReimbModal(periodId,empId);
+}
+function removeReimb(id){const r=periodReimb.find(x=>x.id===id);if(!r)return;periodReimb=periodReimb.filter(x=>x.id!==id);render();renderReimbModal(r.periodId,r.empId);}
+function useRequest(reqId){const r=reimbursements.find(x=>x.id===reqId);if(!r)return;document.getElementById('rbLabel').value=r.forText;if(r.amount>0)document.getElementById('rbAmt').value=r.amount.toFixed(2);document.getElementById('rbAmt').focus();}
+function dismissRequest(reqId,periodId,empId){const r=reimbursements.find(x=>x.id===reqId);if(!r)return;r.status='declined';render();renderReimbModal(periodId,empId);}
 function downloadPeriodPDF(id){
   const p=payPeriods.find(x=>x.id===id);if(!p)return;
   const team=hourlyStaff();
@@ -1524,8 +1684,8 @@ function clockIn(){
   if(isOutsideSchedule(currentUser.id,ts))askNotify(ts);
 }
 function askNotify(ts){
-  const d=schedForDate(currentUser.id,ts);
-  const line=d?`You're scheduled ${fmtHM(d.start)} – ${fmtHM(d.end)} today.`:`You're not scheduled to work today.`;
+  const slots=slotsForDate(currentUser.id,ts);
+  const line=slots.length?`You're scheduled ${slots.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join(', ')} today.`:`You're not scheduled to work today.`;
   document.getElementById('modalMount').innerHTML=`<div class="overlay"><div class="modal">
     <h3>Working outside your schedule</h3><p class="sub">Clocked in ${fmtTime(ts)}</p>
     <p style="margin:0 0 20px;font-size:14px">${line} Send your manager a notice so they know?</p>
