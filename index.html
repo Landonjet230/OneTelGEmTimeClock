@@ -90,6 +90,11 @@
   .um-item .dz{background:none;border:0;color:var(--purple);font-family:"IBM Plex Mono";font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 0 0}
   .um-empty{font-size:12px;color:#7E7889;padding:2px 0 6px}
   .um-div{height:1px;background:rgba(255,255,255,.12);margin:5px 0}
+  .um-notif .um-label{align-items:center;margin-bottom:10px}
+  .um-ct{display:inline-grid;place-items:center;min-width:16px;height:16px;padding:0 4px;background:var(--purple);color:#fff;border-radius:9px;font-size:9.5px;letter-spacing:0;vertical-align:middle}
+  .um-send{width:24px;height:24px;border-radius:6px;background:var(--purple);border:0;display:grid;place-items:center;cursor:pointer;flex:none;padding:0}
+  .um-send:hover{background:var(--purple-deep)}
+  .um-subj{color:#fff;font-weight:600}
   .user-panel{display:none;position:absolute;right:0;top:calc(100% + 10px);min-width:186px;background:#0B0A0D;
     border:1px solid rgba(255,255,255,.2);box-shadow:0 18px 44px rgba(0,0,0,.55);padding:5px 0;z-index:45}
   .usermenu:hover .user-panel,.user-panel.show{display:block}
@@ -367,6 +372,25 @@
   .modal h3{font-size:18px;margin-bottom:5px}
   .modal .sub{color:var(--muted);font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 22px}
   .modal .field{margin-bottom:20px}
+
+  /* profile modal */
+  .modal.dark{background:#0B0910;color:#EAE7F0;border-top-color:var(--purple)}
+  .modal.dark h3{color:#fff}
+  .modal.dark input[type=text],.modal.dark input[type=password]{font-family:"Barlow";font-size:14.5px;width:100%;background:#17131F;border:1px solid #2E2838;border-radius:8px;padding:9px 11px;color:#fff}
+  .modal.dark input:focus{border-color:var(--purple);box-shadow:none}
+  .modal.dark .field label{color:#9A93A8}
+  .pf-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:22px}
+  .pf-av{width:54px;height:54px;flex:none;display:grid;place-items:center;font-family:"IBM Plex Mono";font-weight:600;font-size:18px}
+  .pf-pick{flex:1;display:flex;flex-direction:column;gap:11px}
+  .pf-tabs{display:flex;gap:8px}
+  .pf-tab{display:flex;align-items:center;gap:7px;background:none;border:1px solid #2E2838;color:#B8B2C4;padding:6px 10px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px}
+  .pf-tab.active{border-color:var(--purple);color:#fff}
+  .pf-dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(255,255,255,.3)}
+  .pf-wheel{width:140px;height:140px;border-radius:50%;cursor:crosshair;
+    background:radial-gradient(circle,#fff 0%,rgba(255,255,255,0) 68%),conic-gradient(from 0deg,hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))}
+  .pf-presets{display:flex;gap:8px}
+  .pf-preset{width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
+  .pf-ro{font-family:"IBM Plex Mono";font-size:14px;color:#EAE7F0}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:26px;flex-wrap:wrap}
   .req{color:var(--purple-deep)}
   .role-row{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--rule-soft)}
@@ -550,7 +574,6 @@ let priorities=[];
 let notices=[];   /* out-of-hours notices sent to the manager */
 let messages=[];  /* per-recipient notifications: {id,to,from,text,ts,read} */
 let msgSeq=0;      /* guarantees a unique id per recipient copy */
-let reimbursements=[]; /* persistent reimbursement requests: {id,empId,byName,forText,amount,ts,status} */
 
 let payPeriods=[];
 let periodReimb=[]; /* manager-added reimbursements tied to a period+employee: {id,periodId,empId,label,amount} */
@@ -643,7 +666,7 @@ function demoEnter(){
   selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
-  document.getElementById('tbAv').textContent=initials(currentUser.name);
+  paintTopAvatar();
   document.getElementById('tbName').textContent=currentUser.name;
   render();
 }
@@ -725,7 +748,7 @@ async function enterApp(session){
   selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
-  document.getElementById('tbAv').textContent=initials(currentUser.name);
+  paintTopAvatar();
   document.getElementById('tbName').textContent=currentUser.name;
   render();
 }
@@ -773,10 +796,63 @@ function readMessage(ev,id){
   if(activeTab==='home')document.getElementById('view').innerHTML=renderBody();
 }
 function closeUserMenu(){const p=document.getElementById('userPanel');if(p)p.classList.remove('show');}
-function openProfile(ev){ev.stopPropagation();closeUserMenu();toast('Profile page coming soon');}
+let profileTarget='bg';
+function paintTopAvatar(){const av=document.getElementById('tbAv');if(!av||!currentUser)return;av.textContent=initials(currentUser.name);av.style.background=currentUser.avatarColor||'';av.style.color=currentUser.initialsColor||'';}
+function avatarStyle(u){return (u.avatarColor?`background:${u.avatarColor};`:'')+(u.initialsColor?`color:${u.initialsColor};`:'');}
+function openProfile(ev){ev.stopPropagation();closeUserMenu();profileTarget='bg';
+  const u=currentUser, showRate=(u.role==='employee'||u.role==='comanager');
+  const bg=u.avatarColor||'#2A2532', ini=u.initialsColor||'#ffffff';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal dark">
+    <h3>Profile</h3>
+    <div class="pf-top">
+      <span class="pf-av" id="pfAv" style="background:${bg};color:${ini}">${initials(u.name)}</span>
+      <div class="pf-pick">
+        <div class="pf-tabs">
+          <button class="pf-tab active" id="pfTabBg" onclick="pickProfileTarget('bg')"><span class="pf-dot" id="pfSwBg" style="background:${bg}"></span>Background</button>
+          <button class="pf-tab" id="pfTabIni" onclick="pickProfileTarget('ini')"><span class="pf-dot" id="pfSwIni" style="background:${ini}"></span>Initials</button>
+        </div>
+        <div class="pf-wheel" id="pfWheel" onclick="profileWheelPick(event)"></div>
+        <div class="pf-presets"><button class="pf-preset" style="background:#ffffff" onclick="setProfileColor('#ffffff')"></button><button class="pf-preset" style="background:#111111" onclick="setProfileColor('#111111')"></button></div>
+      </div>
+    </div>
+    <div class="field"><label>Name</label><input type="text" id="pfName" value="${esc(u.name)}"></div>
+    ${showRate?`<div class="field"><label>Hourly rate</label><div class="pf-ro">${money(u.rate||0)} / hr</div></div>`:''}
+    <div class="field"><label>New password <span class="opt">8+ characters, optional</span></label><input type="password" id="pfPass" autocomplete="new-password"></div>
+    <div class="err" id="pfErr"></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button>
+      <button class="btn btn-primary btn-sm" onclick="saveProfile()">Save</button></div></div></div>`;
+}
+function pickProfileTarget(which){profileTarget=which;
+  document.getElementById('pfTabBg').classList.toggle('active',which==='bg');
+  document.getElementById('pfTabIni').classList.toggle('active',which==='ini');
+}
+function profileWheelPick(ev){
+  const w=document.getElementById('pfWheel'), r=w.getBoundingClientRect();
+  const cx=r.width/2, cy=r.height/2, dx=ev.clientX-r.left-cx, dy=ev.clientY-r.top-cy;
+  const R=Math.min(cx,cy), dist=Math.min(Math.sqrt(dx*dx+dy*dy)/R,1);
+  let hue=Math.atan2(dx,-dy)*180/Math.PI; if(hue<0)hue+=360;
+  const sat=Math.round(dist*100), light=Math.round(100-dist*50);
+  setProfileColor(`hsl(${Math.round(hue)},${sat}%,${light}%)`);
+}
+function setProfileColor(color){
+  if(profileTarget==='bg'){currentUser.avatarColor=color;document.getElementById('pfSwBg').style.background=color;document.getElementById('pfAv').style.background=color;}
+  else{currentUser.initialsColor=color;document.getElementById('pfSwIni').style.background=color;document.getElementById('pfAv').style.color=color;}
+  paintTopAvatar();
+}
+async function saveProfile(){
+  const err=document.getElementById('pfErr');
+  const name=(document.getElementById('pfName').value||'').trim();
+  const pass=document.getElementById('pfPass').value||'';
+  if(!name){err.textContent='Name can\'t be blank.';return;}
+  if(pass&&pass.length<8){err.textContent='Password needs at least 8 characters.';return;}
+  currentUser.name=name;
+  document.getElementById('tbName').textContent=name;
+  paintTopAvatar();
+  if(pass){ try{ const {error}=await sb.auth.updateUser({password:pass}); if(error){err.textContent=error.message;return;} }catch(e){ err.textContent='Could not reach the server to update the password.';return; } }
+  closeModal();render();toast('Profile saved');
+}
 function openSendNotif(ev){ev.stopPropagation();closeUserMenu();
   const u=currentUser, role=u.role;
-  const canReq = role==='employee'||role==='comanager';
   const leaders=employees.filter(e=>e.id!==u.id&&(e.role==='manager'||e.role==='comanager'));
   const everyone=employees.filter(e=>e.id!==u.id);
   const indiv = role==='employee' ? leaders : everyone;
@@ -786,52 +862,26 @@ function openSendNotif(ev){ev.stopPropagation();closeUserMenu();
     : `<div class="field" id="ntToWrap"><label>To</label><select id="ntTo" onchange="ntSwap()">
         <option value="all">Everyone</option><option value="one">An individual</option></select></div>`;
   const whoHidden = role==='employee' ? '' : 'hide';
-  const reqField = canReq
-    ? `<label class="nt-reim"><input type="checkbox" id="ntReim" onchange="ntReimSwap()"> Reimbursement request</label>` : '';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>New message</h3><p class="sub" id="ntSub">Appears in your team's notifications.</p>
-    ${reqField}
     ${toField}
     <div class="field ${whoHidden}" id="ntWhoWrap"><label>${role==='employee'?'To a manager or co-manager':'Name'}</label>
       <input type="text" id="ntWho" list="ntNames" placeholder="Type a name" autocomplete="off">
       <datalist id="ntNames">${opts}</datalist></div>
-    <div class="field"><label id="ntMsgLbl">Message</label><input type="text" id="ntMsg" placeholder="Team meeting moved to 3pm"></div>
-    <div class="field hide" id="ntAmtWrap"><label>Amount ($) <span class="opt">enter 0 to let the manager set it</span></label>
-      <input type="number" id="ntAmt" min="0" step="0.01" placeholder="0.00"></div>
+    <div class="field"><label>Subject <span class="opt">optional</span></label><input type="text" id="ntSubj" placeholder="Time off, project question, reimbursement request…"></div>
+    <div class="field"><label>Message</label><input type="text" id="ntMsg" placeholder="Team meeting moved to 3pm"></div>
     <div class="err" id="ntErr"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="sendNotification()">Send</button></div></div></div>`;
 }
 function ntSwap(){
-  const reim=document.getElementById('ntReim'); if(reim&&reim.checked)return;
   const sel=document.getElementById('ntTo'); if(!sel)return;
   document.getElementById('ntWhoWrap').classList.toggle('hide',sel.value!=='one');
 }
-function ntReimSwap(){
-  const on=document.getElementById('ntReim').checked;
-  const toWrap=document.getElementById('ntToWrap'), whoWrap=document.getElementById('ntWhoWrap');
-  document.getElementById('ntAmtWrap').classList.toggle('hide',!on);
-  if(toWrap)toWrap.classList.toggle('hide',on);
-  const lbl=document.getElementById('ntMsgLbl'), sub=document.getElementById('ntSub'), msg=document.getElementById('ntMsg');
-  if(on){ whoWrap.classList.add('hide'); lbl.textContent="What it's for";
-    msg.placeholder='Parking at the downtown garage'; sub.textContent='Goes to the manager for approval.'; }
-  else{ lbl.textContent='Message'; msg.placeholder='Team meeting moved to 3pm';
-    sub.textContent="Appears in your team's notifications.";
-    const sel=document.getElementById('ntTo');
-    if(sel)whoWrap.classList.toggle('hide',sel.value!=='one'); else whoWrap.classList.remove('hide'); }
-}
 function sendNotification(){
   const u=currentUser, err=document.getElementById('ntErr');
+  const subject=(document.getElementById('ntSubj').value||'').trim();
   const text=(document.getElementById('ntMsg').value||'').trim();
-  const reim=document.getElementById('ntReim'), isReim=reim&&reim.checked;
-  if(isReim){
-    if(!text){err.textContent='Say what the reimbursement is for.';return;}
-    const amt=Math.max(0,parseFloat(document.getElementById('ntAmt').value)||0);
-    const mgr=employees.find(e=>e.role==='manager');
-    if(!mgr){err.textContent="There's no manager account to send this to.";return;}
-    reimbursements.push({id:'rb'+(++msgSeq),empId:u.id,byName:u.name,forText:text,amount:amt,ts:Date.now(),status:'pending'});
-    closeModal();toast('Reimbursement request sent to the manager');return;
-  }
   if(!text){err.textContent='Write a message.';return;}
   let recips=[];
   const toSel=document.getElementById('ntTo');
@@ -843,7 +893,7 @@ function sendNotification(){
     if(!who){err.textContent=u.role==='employee'?'Pick a manager or co-manager.':'Pick a valid name from your team.';return;}
     recips=[who];
   }
-  recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:u.name,text,ts:Date.now(),read:false}));
+  recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:u.name,subject,text,ts:Date.now(),read:false}));
   closeModal();toast(toSel&&toSel.value==='all'?'Sent to everyone':'Message sent');
 }
 document.addEventListener('click',()=>{if(menuOpen)closeMenu();closeUserMenu();});
@@ -873,39 +923,19 @@ function paintUserMenu(){
   if(!currentUser)return;
   const myMsgs=messages.filter(m=>m.to===currentUser.id&&!m.read);
   const mgrNotices=canManage(currentUser)?notices:[];
-  const reimbPings=canManage(currentUser)?reimbursements.filter(r=>r.status==='pending'&&r.empId!==currentUser.id):[];
-  dot.classList.toggle('hide',myMsgs.length===0&&mgrNotices.length===0&&reimbPings.length===0);
-  let inbox='';
-  if(canManage(currentUser)||myMsgs.length){
-    const msgItems=myMsgs.map(m=>`<div class="um-item um-click" onclick="readMessage(event,'${m.id}')" title="Click to mark read"><b>${esc(m.from)}</b> ${esc(m.text)}<span class="t">${fmtDay(m.ts)} · ${fmtTime(m.ts)}</span></div>`).join('');
-    const reimItems=reimbPings.map(r=>`<div class="um-item"><span class="um-tag">Reimbursement</span><b>${esc(r.byName)}</b> ${esc(r.forText)}${r.amount>0?' · '+money(r.amount):' · amount TBD'}<span class="t">${fmtDay(r.ts)} · ${fmtTime(r.ts)} · resolve in Payroll</span></div>`).join('');
-    const noticeItems=mgrNotices.map(n=>`<div class="um-item"><b>${nameOf(n.empId)}</b> clocked in outside their schedule.
-          ${n.reason?'“'+esc(n.reason)+'”':''}<span class="t">${fmtDay(n.ts)} · ${fmtTime(n.ts)}</span>
-          <button class="dz" onclick="event.stopPropagation();dismissNotice('${n.id}')">Dismiss</button></div>`).join('');
-    const body=(msgItems+reimItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
-    const count=myMsgs.length+reimbPings.length+mgrNotices.length;
-    inbox=`<div class="um-notif"><div class="um-label"><span>Notifications</span><span>${count||''}</span></div>${body}</div><div class="um-div"></div>`;
-  }
+  dot.classList.toggle('hide',myMsgs.length===0&&mgrNotices.length===0);
+  const msgItems=myMsgs.map(m=>`<div class="um-item um-click" onclick="readMessage(event,'${m.id}')" title="Click to mark read"><b>${esc(m.from)}</b>${m.subject?` <span class="um-subj">${esc(m.subject)}</span>`:''} ${esc(m.text)}<span class="t">${fmtDay(m.ts)} · ${fmtTime(m.ts)}</span></div>`).join('');
+  const noticeItems=mgrNotices.map(n=>`<div class="um-item"><b>${nameOf(n.empId)}</b> clocked in outside their schedule.
+        ${n.reason?'“'+esc(n.reason)+'”':''}<span class="t">${fmtDay(n.ts)} · ${fmtTime(n.ts)}</span>
+        <button class="dz" onclick="event.stopPropagation();dismissNotice('${n.id}')">Dismiss</button></div>`).join('');
+  const body=(msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
+  const count=myMsgs.length+mgrNotices.length;
+  const inbox=`<div class="um-notif"><div class="um-label"><span>Notifications${count?` <span class="um-ct">${count}</span>`:''}</span>`
+    +`<button class="um-send" onclick="openSendNotif(event)" title="Send a message" aria-label="Send a message"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M3 11.5 21 3l-8.5 18-2.2-7.3z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></button>`
+    +`</div>${body}</div><div class="um-div"></div>`;
   panel.innerHTML=inbox
-    +`<button class="menu-item" onclick="openProfile(event)">Profile<span class="soon">soon</span></button>`
-    +`<button class="menu-item" onclick="openSendNotif(event)">Send message</button>`
-    +`<button class="menu-item" onclick="openChangePass(event)">Change password</button>`
+    +`<button class="menu-item" onclick="openProfile(event)">Profile</button>`
     +`<button class="menu-item" onclick="signOut()">Sign out</button>`;
-}
-function openChangePass(ev){ev.stopPropagation();closeUserMenu();
-  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Change password</h3><p class="sub">${esc(currentUser.name)}</p>
-    <div class="field"><label>New password <span class="opt">8+ characters</span></label><input type="password" id="cpPass" autocomplete="new-password"></div>
-    <div class="err" id="cpErr"></div>
-    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-primary btn-sm" onclick="saveNewPass()">Update password</button></div></div></div>`;
-}
-async function saveNewPass(){
-  const p=document.getElementById('cpPass').value||'',err=document.getElementById('cpErr');
-  if(p.length<8){err.textContent='Password needs at least 8 characters.';return;}
-  const {error}=await sb.auth.updateUser({password:p});
-  if(error){err.textContent=error.message;return;}
-  closeModal();toast('Password updated');
 }
 function pageHead(t,m){return `<div class="page-head"><h1>${t}</h1>${m?`<span class="ml meta">${m}</span>`:''}</div>`;}
 
@@ -1070,9 +1100,8 @@ function widgetBody(k){
     const msgLines=myMsgs.map(m=>`<div class="w-line"><span><b>${esc(m.from)}</b> ${esc(m.text)}</span></div>`).join('');
     let rest='';
     if(canManage(u)){
-      const reimLines=reimbursements.filter(r=>r.status==='pending'&&r.empId!==u.id).map(r=>`<div class="w-line"><span><b>${esc(r.byName.split(' ')[0])}</b> reimbursement · ${r.amount>0?money(r.amount):'TBD'}</span></div>`).join('');
       const noticeLines=notices.map(n=>`<div class="w-line"><span>${esc(nameOf(n.empId).split(' ')[0])} clocked in off-schedule</span></div>`).join('');
-      rest=reimLines+noticeLines;
+      rest=noticeLines;
     }
     else if(logReminder) rest='<div class="w-line"><span>Don\'t forget your work log today.</span></div>';
     const body=msgLines+rest;
@@ -1411,7 +1440,7 @@ function teamTab(){
     const st=s?`<span class="st on"><i></i>On the clock</span>`:`<span class="st off"><i></i>Clocked out</span>`;
     const since=s?`<span class="mini mono" style="margin-left:10px">${fmtTime(s.clockIn)}</span>`:'';
     return `<tr class="rowlink" onclick="openEmp('${e.id}')">
-      <td><span class="person"><span class="sq-av">${initials(e.name)}</span>${e.name}</span></td>
+      <td><span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span>${e.name}</span></td>
       <td>${st}${since}</td><td class="num">${fmtDur(weekTotal(e.id))}</td>
       <td class="num">${fmtHrs(weekHours(e.id))}</td>
       <td style="text-align:right"><button class="linkish">View</button></td></tr>`;
@@ -1426,7 +1455,7 @@ function teamTab(){
 }
 function rolesCard(){
   const people=employees.map(e=>`<div class="role-row">
-      <span class="person"><span class="sq-av">${initials(e.name)}</span><span><b>${esc(e.name)}</b><span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
+      <span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b><span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
       <select class="role-sel" onchange="changeRole('${e.id}',this.value)">
         <option value="employee" ${e.role==='employee'?'selected':''}>Employee</option>
         <option value="comanager" ${e.role==='comanager'?'selected':''}>Co-manager</option>
@@ -1550,13 +1579,8 @@ function renderReimbModal(periodId,empId){
   const list=rb.length
     ? rb.map(r=>`<div class="rb-row"><span class="rb-lbl">${esc(r.label)}</span><span class="rb-amt">${money(r.amount)}</span><button class="rb-x" onclick="removeReimb('${r.id}')" title="Remove">&times;</button></div>`).join('')
     : '<div class="rb-none">No reimbursements added yet.</div>';
-  const pending=reimbursements.filter(r=>r.status==='pending'&&r.empId===empId);
-  const pend=pending.length
-    ? `<div class="rb-pending"><div class="ml">Requested by ${esc(e.name.split(' ')[0])}</div>`+pending.map(r=>`<div class="rb-row"><span class="rb-lbl">${esc(r.forText)}</span><span class="rb-amt">${r.amount>0?money(r.amount):'TBD'}</span><button class="btn btn-line btn-xs" onclick="useRequest('${r.id}')">Use</button><button class="rb-x" onclick="dismissRequest('${r.id}','${periodId}','${empId}')" title="Dismiss request">&times;</button></div>`).join('')+`</div>`
-    : '';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Reimbursements</h3><p class="sub">${esc(e.name)} · ${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</p>
-    ${pend}
     <div class="rb-list">${list}</div>
     <div class="rb-add"><div class="field"><label>What it's for</label><input type="text" id="rbLabel" placeholder="Parking"></div>
       <div class="field"><label>Amount ($)</label><input type="number" id="rbAmt" min="0" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter')addReimb('${periodId}','${empId}')"></div>
@@ -1574,8 +1598,6 @@ function addReimb(periodId,empId){
   render();renderReimbModal(periodId,empId);
 }
 function removeReimb(id){const r=periodReimb.find(x=>x.id===id);if(!r)return;periodReimb=periodReimb.filter(x=>x.id!==id);render();renderReimbModal(r.periodId,r.empId);}
-function useRequest(reqId){const r=reimbursements.find(x=>x.id===reqId);if(!r)return;document.getElementById('rbLabel').value=r.forText;if(r.amount>0)document.getElementById('rbAmt').value=r.amount.toFixed(2);document.getElementById('rbAmt').focus();}
-function dismissRequest(reqId,periodId,empId){const r=reimbursements.find(x=>x.id===reqId);if(!r)return;r.status='declined';render();renderReimbModal(periodId,empId);}
 function downloadPeriodPDF(id){
   const p=payPeriods.find(x=>x.id===id);if(!p)return;
   const team=hourlyStaff();
