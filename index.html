@@ -693,7 +693,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 4 · full live sync</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 5 · schema repair</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -740,7 +740,7 @@ async function loadPendingRoles(){
 async function loadShifts(){
   const {data,error}=await sb.from('shifts').select('*');
   if(error)throw error;
-  shifts=(data||[]).map(shiftFromRow);
+  shifts=(data||[]).filter(r=>r.clock_in&&r.user_id).map(shiftFromRow);
 }
 let shiftChannel=null;
 function subscribeShifts(){
@@ -757,7 +757,7 @@ async function loadSchedules(){
   const {data,error}=await sb.from('schedule_slots').select('*');
   if(error)throw error;
   const map={};
-  (data||[]).forEach(r=>{ if(!map[r.user_id])map[r.user_id]=blankWeek();
+  (data||[]).filter(r=>r.user_id&&r.dow&&r.start_t&&r.end_t).forEach(r=>{ if(!map[r.user_id])map[r.user_id]=blankWeek();
     if(!Array.isArray(map[r.user_id][r.dow]))map[r.user_id][r.dow]=[];
     map[r.user_id][r.dow].push({start:r.start_t,end:r.end_t}); });
   Object.values(map).forEach(wk=>DOW.forEach(d=>wk[d].sort((a,b)=>a.start.localeCompare(b.start))));
@@ -781,12 +781,12 @@ async function _saveScheduleNow(empId){
 async function loadPeriods(){
   const {data,error}=await sb.from('pay_periods').select('*');
   if(error)throw error;
-  payPeriods=(data||[]).map(r=>({id:r.id,start:r.start_date,end:r.end_date}));
+  payPeriods=(data||[]).filter(r=>r.start_date&&r.end_date).map(r=>({id:r.id,start:r.start_date,end:r.end_date}));
 }
 async function loadReimb(){
   const {data,error}=await sb.from('reimbursements').select('*');
   if(error)throw error;
-  periodReimb=(data||[]).map(r=>({id:r.id,periodId:r.period_id,empId:r.user_id,label:r.label,amount:Number(r.amount)}));
+  periodReimb=(data||[]).filter(r=>r.period_id&&r.user_id&&r.label!=null).map(r=>({id:r.id,periodId:r.period_id,empId:r.user_id,label:r.label,amount:Number(r.amount)}));
 }
 let payrollChannel=null;
 function subscribePayroll(){
@@ -824,28 +824,28 @@ function logAudit(e){
 async function loadMessages(){
   const {data,error}=await sb.from('messages').select('*').order('created_at',{ascending:true});
   if(error)throw error;
-  messages=(data||[]).map(msgFromRow);
+  messages=(data||[]).filter(r=>r.to_user&&r.body!=null).map(msgFromRow);
 }
 async function loadWorkLogs(){
   const {data,error}=await sb.from('work_logs').select('*').order('created_at',{ascending:true});
   if(error)throw error;
   workLogs={};
-  (data||[]).forEach(r=>{const k=r.user_id+'|'+r.day;if(!workLogs[k])workLogs[k]={items:[]};workLogs[k].items.push({id:r.id,text:r.text});});
+  (data||[]).filter(r=>r.user_id&&r.day&&r.text!=null).forEach(r=>{const k=r.user_id+'|'+r.day;if(!workLogs[k])workLogs[k]={items:[]};workLogs[k].items.push({id:r.id,text:r.text});});
 }
 async function loadTimeOff(){
   const {data,error}=await sb.from('time_off').select('*').order('start_date',{ascending:true});
   if(error)throw error;
-  timeOff=(data||[]).map(offFromRow);
+  timeOff=(data||[]).filter(r=>r.user_id&&r.start_date&&r.end_date).map(offFromRow);
 }
 async function loadPriorities(){
   const {data,error}=await sb.from('priorities').select('*').order('pos',{ascending:true}).order('created_at',{ascending:true});
   if(error)throw error;
-  priorities=(data||[]).map(priFromRow);
+  priorities=(data||[]).filter(r=>r.title!=null).map(priFromRow);
 }
 async function loadNotices(){
   const {data,error}=await sb.from('notices').select('*').order('ts',{ascending:true});
   if(error)throw error;
-  notices=(data||[]).map(noticeFromRow);
+  notices=(data||[]).filter(r=>r.user_id&&r.ts).map(noticeFromRow);
 }
 async function loadAudit(){
   if(!canManage(currentUser)){auditLog=[];return;}
