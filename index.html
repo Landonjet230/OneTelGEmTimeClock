@@ -750,6 +750,59 @@ function subscribeShifts(){
     })
     .subscribe();
 }
+async function loadSchedules(){
+  const {data,error}=await sb.from('schedule_slots').select('*');
+  if(error)throw error;
+  const map={};
+  (data||[]).forEach(r=>{ if(!map[r.user_id])map[r.user_id]=blankWeek();
+    if(!Array.isArray(map[r.user_id][r.dow]))map[r.user_id][r.dow]=[];
+    map[r.user_id][r.dow].push({start:r.start_t,end:r.end_t}); });
+  Object.values(map).forEach(wk=>DOW.forEach(d=>wk[d].sort((a,b)=>a.start.localeCompare(b.start))));
+  schedules=map;
+}
+let schedSaveTimer={};
+function saveSchedule(empId){
+  if(!live()||empId!==currentUser.id)return;
+  clearTimeout(schedSaveTimer[empId]);
+  schedSaveTimer[empId]=setTimeout(()=>_saveScheduleNow(empId),400);
+}
+async function _saveScheduleNow(empId){
+  const w=schedules[empId]||blankWeek();
+  const rows=[];
+  DOW.forEach(d=>(w[d]||[]).forEach(sl=>{ if(sl&&sl.start&&sl.end) rows.push({user_id:empId,dow:d,start_t:sl.start,end_t:sl.end}); }));
+  const {error:delErr}=await sb.from('schedule_slots').delete().eq('user_id',empId);
+  if(delErr){toast('Schedule not saved: '+delErr.message);return;}
+  if(rows.length){ const {error:insErr}=await sb.from('schedule_slots').insert(rows);
+    if(insErr)toast('Schedule not saved: '+insErr.message); }
+}
+async function loadPeriods(){
+  const {data,error}=await sb.from('pay_periods').select('*');
+  if(error)throw error;
+  payPeriods=(data||[]).map(r=>({id:r.id,start:r.start_date,end:r.end_date}));
+}
+async function loadReimb(){
+  const {data,error}=await sb.from('reimbursements').select('*');
+  if(error)throw error;
+  periodReimb=(data||[]).map(r=>({id:r.id,periodId:r.period_id,empId:r.user_id,label:r.label,amount:Number(r.amount)}));
+}
+let payrollChannel=null;
+function subscribePayroll(){
+  if(!sb||payrollChannel)return;
+  payrollChannel=sb.channel('payroll-rt')
+    .on('postgres_changes',{event:'*',schema:'public',table:'pay_periods'},payload=>{
+      if(payload.eventType==='DELETE'){ const id=payload.old&&payload.old.id; if(id){payPeriods=payPeriods.filter(p=>p.id!==id);periodReimb=periodReimb.filter(r=>r.periodId!==id);} }
+      else if(payload.new){ const row={id:payload.new.id,start:payload.new.start_date,end:payload.new.end_date};
+        const i=payPeriods.findIndex(p=>p.id===row.id); if(i>=0)payPeriods[i]=row; else payPeriods.push(row); }
+      render();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'reimbursements'},payload=>{
+      if(payload.eventType==='DELETE'){ const id=payload.old&&payload.old.id; if(id)periodReimb=periodReimb.filter(r=>r.id!==id); }
+      else if(payload.new){ const row={id:payload.new.id,periodId:payload.new.period_id,empId:payload.new.user_id,label:payload.new.label,amount:Number(payload.new.amount)};
+        const i=periodReimb.findIndex(r=>r.id===row.id); if(i>=0)periodReimb[i]=row; else periodReimb.push(row); }
+      render();
+    })
+    .subscribe();
+}
 async function enterApp(session){
   try{ await loadProfiles(); }
   catch(e){ renderLogin('Could not load team profiles: '+(e.message||e),true); return; }
@@ -768,7 +821,11 @@ async function enterApp(session){
   await loadPendingRoles();
   liveSession=true;
   try{ await loadShifts(); }catch(e){ toast('Could not load shifts: '+(e.message||e)); }
+  try{ await loadSchedules(); }catch(e){ toast('Could not load schedules: '+(e.message||e)); }
+  try{ await loadPeriods(); }catch(e){ toast('Could not load pay periods: '+(e.message||e)); }
+  try{ await loadReimb(); }catch(e){ toast('Could not load reimbursements: '+(e.message||e)); }
   subscribeShifts();
+  subscribePayroll();
   selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
@@ -1440,9 +1497,9 @@ function scheduleTab(empId,editable){
 }
 function ensureWeek(empId){if(!schedules[empId])schedules[empId]=blankWeek();
   DOW.forEach(k=>{if(!Array.isArray(schedules[empId][k]))schedules[empId][k]=[];});return schedules[empId];}
-function addSlot(empId,day){const w=ensureWeek(empId);w[day].push({start:'09:00',end:'17:00'});render();
+function addSlot(empId,day){const w=ensureWeek(empId);w[day].push({start:'09:00',end:'17:00'});render();saveSchedule(empId);
   setTimeout(()=>{const el=document.getElementById('rg_'+day+'_'+(w[day].length-1));if(el){el.focus();el.select();}},0);}
-function removeSlot(empId,day,i){const w=ensureWeek(empId);w[day].splice(i,1);render();}
+function removeSlot(empId,day,i){const w=ensureWeek(empId);w[day].splice(i,1);render();saveSchedule(empId);}
 function setSlot(empId,day,i,el){
   const r=parseRange(el.value);
   if(!r){el.classList.add('bad');toast('Try a range like 9-5 or 9:00am-5:30pm');return;}
@@ -1451,7 +1508,7 @@ function setSlot(empId,day,i,el){
   if(!w[day][i]){render();return;}
   w[day][i].start=r.start;w[day][i].end=r.end;
   const clash=w[day].some((sl,j)=>j!==i&&slotsOverlap(sl,w[day][i]));
-  render();
+  render();saveSchedule(empId);
   if(clash)toast('Heads up — this block overlaps another one. Check the AM/PM.');
 }
 
@@ -1586,16 +1643,27 @@ function setRate(id,v){
   if(sb) sb.from('profiles').update({rate}).eq('id',id).then(({error})=>{ if(error)toast('Rate not saved: '+error.message); });
   render();
 }
-function addPeriod(){
+async function addPeriod(){
   const s=document.getElementById('genStart').value;
   const e=document.getElementById('genEnd').value;
   const err=document.getElementById('periodErr');
   if(!s||!e){err.textContent='Enter both a start and end date.';return;}
   if(e<s){err.textContent='End date must be on or after the start date.';return;}
-  payPeriods.push({id:'p'+Date.now(),start:s,end:e});
+  if(live()){
+    const {data,error}=await sb.from('pay_periods').insert({start_date:s,end_date:e}).select().single();
+    if(error){err.textContent='Could not save: '+error.message;return;}
+    payPeriods.push({id:data.id,start:data.start_date,end:data.end_date});
+  }else{
+    payPeriods.push({id:'p'+Date.now(),start:s,end:e});
+  }
   render();
 }
-function removePeriod(id){payPeriods=payPeriods.filter(p=>p.id!==id);render();}
+async function removePeriod(id){
+  if(live()){ const {error}=await sb.from('pay_periods').delete().eq('id',id); if(error){toast('Could not remove: '+error.message);return;} }
+  payPeriods=payPeriods.filter(p=>p.id!==id);
+  periodReimb=periodReimb.filter(r=>r.periodId!==id);
+  render();
+}
 function openReimb(periodId,empId){if(payPeriods.find(x=>x.id===periodId)&&employees.find(x=>x.id===empId))renderReimbModal(periodId,empId);}
 function renderReimbModal(periodId,empId){
   const p=payPeriods.find(x=>x.id===periodId),e=employees.find(x=>x.id===empId);if(!p||!e)return;
@@ -1612,16 +1680,24 @@ function renderReimbModal(periodId,empId){
       <button class="btn btn-primary btn-sm" onclick="addReimb('${periodId}','${empId}')">Add reimbursement</button></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Done</button></div></div></div>`;
 }
-function addReimb(periodId,empId){
+async function addReimb(periodId,empId){
   const label=(document.getElementById('rbLabel').value||'').trim();
   const amt=Math.max(0,parseFloat(document.getElementById('rbAmt').value)||0);
   const err=document.getElementById('rbErr');
   if(!label){err.textContent='Add a label, like Parking.';return;}
   if(amt<=0){err.textContent='Enter an amount greater than 0.';return;}
-  periodReimb.push({id:'pr'+(++msgSeq),periodId,empId,label,amount:amt});
+  if(live()){
+    const {data,error}=await sb.from('reimbursements').insert({period_id:periodId,user_id:empId,label,amount:amt}).select().single();
+    if(error){err.textContent='Could not save: '+error.message;return;}
+    periodReimb.push({id:data.id,periodId:data.period_id,empId:data.user_id,label:data.label,amount:Number(data.amount)});
+  }else{
+    periodReimb.push({id:'pr'+(++msgSeq),periodId,empId,label,amount:amt});
+  }
   render();renderReimbModal(periodId,empId);
 }
-function removeReimb(id){const r=periodReimb.find(x=>x.id===id);if(!r)return;periodReimb=periodReimb.filter(x=>x.id!==id);render();renderReimbModal(r.periodId,r.empId);}
+async function removeReimb(id){const r=periodReimb.find(x=>x.id===id);if(!r)return;
+  if(live()){ const {error}=await sb.from('reimbursements').delete().eq('id',id); if(error){toast('Could not remove: '+error.message);return;} }
+  periodReimb=periodReimb.filter(x=>x.id!==id);render();renderReimbModal(r.periodId,r.empId);}
 function downloadPeriodPDF(id){
   const p=payPeriods.find(x=>x.id===id);if(!p)return;
   const team=hourlyStaff();
