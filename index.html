@@ -482,6 +482,7 @@
     .sched-row{gap:10px}
     .sched-hrs{margin-left:0;width:100%}
   }
+.build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
 <body>
@@ -551,7 +552,8 @@ function initials(n){return n.split(' ').map(p=>p[0]).slice(0,2).join('').toUppe
 const SUPABASE_URL='https://cfjuvyhyepxumgonuqsf.supabase.co';
 const SUPABASE_KEY='sb_publishable_pLqdSSmHVTPwEAi7pykS1A_BVdiF7mZ';
 let sb=null;
-try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ sb=null; }
+/* persistSession:false — the session lives only in memory, so every page load starts at the login screen (no automatic login) */
+try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:true}}); }catch(e){ sb=null; }
 
 /* profiles are loaded from Supabase at sign-in (clean slate — no demo data) */
 let employees=[];
@@ -691,7 +693,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 4 · full live sync</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -727,7 +729,8 @@ async function authSignUp(){
 async function loadProfiles(){
   const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
   if(error)throw error;
-  employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role,rate:Number(p.rate)||0}));
+  employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role,rate:Number(p.rate)||0,
+    avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||''}));
 }
 async function loadPendingRoles(){
   if(!canManage(currentUser)){pendingRoles=[];return;}
@@ -803,6 +806,114 @@ function subscribePayroll(){
     })
     .subscribe();
 }
+/* ---- row mappers for the remaining domains ---- */
+function msgFromRow(r){return {id:r.id,to:r.to_user,from:r.from_name,subject:r.subject||'',text:r.body,ts:new Date(r.created_at).getTime(),read:!!r.read};}
+function offFromRow(r){return {id:r.id,empId:r.user_id,start:r.start_date,end:r.end_date,note:r.note||''};}
+function priFromRow(r){return {id:r.id,title:r.title,due:r.due||'',done:!!r.done,link:r.link||'',pos:r.pos||0};}
+function noticeFromRow(r){return {id:r.id,empId:r.user_id,ts:new Date(r.ts).getTime(),reason:r.reason||''};}
+function auditFromRow(r){return {id:r.id,ts:new Date(r.created_at).getTime(),manager:r.manager,emp:r.emp,field:r.field,old:r.old_val||'—',new:r.new_val||'—',reason:r.reason||''};}
+function logAudit(e){
+  if(live()){
+    sb.from('audit_log').insert({manager:e.manager,emp:e.emp,field:e.field,old_val:e.old,new_val:e.new,reason:e.reason||''}).select().single()
+      .then(({data,error})=>{ if(error){toast('Change log not saved: '+error.message);return;}
+        if(!auditLog.some(a=>a.id===data.id)){auditLog.push(auditFromRow(data));render();} });
+  }else{
+    auditLog.push({id:'a'+Date.now(),...e});
+  }
+}
+async function loadMessages(){
+  const {data,error}=await sb.from('messages').select('*').order('created_at',{ascending:true});
+  if(error)throw error;
+  messages=(data||[]).map(msgFromRow);
+}
+async function loadWorkLogs(){
+  const {data,error}=await sb.from('work_logs').select('*').order('created_at',{ascending:true});
+  if(error)throw error;
+  workLogs={};
+  (data||[]).forEach(r=>{const k=r.user_id+'|'+r.day;if(!workLogs[k])workLogs[k]={items:[]};workLogs[k].items.push({id:r.id,text:r.text});});
+}
+async function loadTimeOff(){
+  const {data,error}=await sb.from('time_off').select('*').order('start_date',{ascending:true});
+  if(error)throw error;
+  timeOff=(data||[]).map(offFromRow);
+}
+async function loadPriorities(){
+  const {data,error}=await sb.from('priorities').select('*').order('pos',{ascending:true}).order('created_at',{ascending:true});
+  if(error)throw error;
+  priorities=(data||[]).map(priFromRow);
+}
+async function loadNotices(){
+  const {data,error}=await sb.from('notices').select('*').order('ts',{ascending:true});
+  if(error)throw error;
+  notices=(data||[]).map(noticeFromRow);
+}
+async function loadAudit(){
+  if(!canManage(currentUser)){auditLog=[];return;}
+  const {data,error}=await sb.from('audit_log').select('*').order('created_at',{ascending:true});
+  if(error)throw error;
+  auditLog=(data||[]).map(auditFromRow);
+}
+async function loadMyState(){
+  const {data,error}=await sb.from('user_state').select('*').eq('user_id',currentUser.id).maybeSingle();
+  if(error)throw error;
+  const d=(data&&data.data)||{};
+  if(Array.isArray(d.widgets))homeWidgets[currentUser.id]=d.widgets;
+  if(d.pos&&typeof d.pos==='object')homePos[currentUser.id]=d.pos;
+  widgetStore[currentUser.id]={reminders:Array.isArray(d.reminders)?d.reminders:[],todos:Array.isArray(d.todos)?d.todos:[]};
+}
+let myStateTimer=null;
+function saveMyState(){
+  if(!live())return;
+  clearTimeout(myStateTimer);
+  myStateTimer=setTimeout(async()=>{
+    const payload={widgets:userWidgets(currentUser),pos:posMap(currentUser),
+      reminders:userStore(currentUser).reminders,todos:userStore(currentUser).todos};
+    const {error}=await sb.from('user_state').upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()});
+    if(error)toast('Widgets not saved: '+error.message);
+  },500);
+}
+let miscChannel=null;
+function subscribeMisc(){
+  if(!sb||miscChannel)return;
+  miscChannel=sb.channel('misc-rt')
+    .on('postgres_changes',{event:'*',schema:'public',table:'messages'},payload=>{
+      if(payload.eventType==='DELETE'){ const id=payload.old&&payload.old.id; if(id)messages=messages.filter(m=>m.id!==id); }
+      else if(payload.new){ const row=msgFromRow(payload.new);
+        const i=messages.findIndex(m=>m.id===row.id); if(i>=0)messages[i]=row; else messages.push(row); }
+      paintUserMenu();render();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'work_logs'},payload=>{
+      if(payload.eventType==='DELETE')return;
+      if(payload.new){ const k=payload.new.user_id+'|'+payload.new.day;
+        if(!workLogs[k])workLogs[k]={items:[]};
+        if(!workLogs[k].items.some(i=>i.id===payload.new.id))workLogs[k].items.push({id:payload.new.id,text:payload.new.text});
+        render(); }
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'time_off'},payload=>{
+      if(payload.eventType==='DELETE'){ const id=payload.old&&payload.old.id; if(id)timeOff=timeOff.filter(t=>t.id!==id); }
+      else if(payload.new){ const row=offFromRow(payload.new);
+        const i=timeOff.findIndex(t=>t.id===row.id); if(i>=0)timeOff[i]=row; else timeOff.push(row); }
+      render();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'priorities'},payload=>{
+      if(payload.eventType==='DELETE'){ const id=payload.old&&payload.old.id; if(id)priorities=priorities.filter(p=>p.id!==id); }
+      else if(payload.new){ const row=priFromRow(payload.new);
+        const i=priorities.findIndex(p=>p.id===row.id); if(i>=0)priorities[i]=row; else priorities.push(row);
+        priorities.sort((a,b)=>(a.pos-b.pos)); }
+      render();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'notices'},payload=>{
+      if(payload.eventType==='DELETE'){ const id=payload.old&&payload.old.id; if(id)notices=notices.filter(n=>n.id!==id); }
+      else if(payload.new){ const row=noticeFromRow(payload.new);
+        const i=notices.findIndex(n=>n.id===row.id); if(i>=0)notices[i]=row; else notices.push(row); }
+      render();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'audit_log'},payload=>{
+      if(payload.eventType==='INSERT'&&payload.new&&canManage(currentUser)){
+        if(!auditLog.some(a=>a.id===payload.new.id)){auditLog.push(auditFromRow(payload.new));render();} }
+    })
+    .subscribe();
+}
 async function enterApp(session){
   try{ await loadProfiles(); }
   catch(e){ renderLogin('Could not load team profiles: '+(e.message||e),true); return; }
@@ -824,8 +935,16 @@ async function enterApp(session){
   try{ await loadSchedules(); }catch(e){ toast('Could not load schedules: '+(e.message||e)); }
   try{ await loadPeriods(); }catch(e){ toast('Could not load pay periods: '+(e.message||e)); }
   try{ await loadReimb(); }catch(e){ toast('Could not load reimbursements: '+(e.message||e)); }
+  try{ await loadMessages(); }catch(e){ toast('Could not load messages: '+(e.message||e)); }
+  try{ await loadWorkLogs(); }catch(e){ toast('Could not load work logs: '+(e.message||e)); }
+  try{ await loadTimeOff(); }catch(e){ toast('Could not load time off: '+(e.message||e)); }
+  try{ await loadPriorities(); }catch(e){ toast('Could not load projects: '+(e.message||e)); }
+  try{ await loadNotices(); }catch(e){ toast('Could not load notices: '+(e.message||e)); }
+  try{ await loadAudit(); }catch(e){ toast('Could not load change log: '+(e.message||e)); }
+  try{ await loadMyState(); }catch(e){ toast('Could not load your widgets: '+(e.message||e)); }
   subscribeShifts();
   subscribePayroll();
+  subscribeMisc();
   selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
@@ -872,6 +991,7 @@ function readMessage(ev,id){
   /* one at a time — clicking a single message marks just that one read and drops it, leaving the rest */
   ev.stopPropagation();
   if(!currentUser)return;
+  if(live())sb.from('messages').delete().eq('id',id).then(({error})=>{ if(error)toast('Could not clear: '+error.message); });
   messages=messages.filter(m=>!(m.id===id&&m.to===currentUser.id));
   paintUserMenu();
   if(activeTab==='home')document.getElementById('view').innerHTML=renderBody();
@@ -929,6 +1049,10 @@ async function saveProfile(){
   currentUser.name=name;
   document.getElementById('tbName').textContent=name;
   paintTopAvatar();
+  if(live()){
+    const {error}=await sb.from('profiles').update({name,avatar_bg:currentUser.avatarColor||null,avatar_fg:currentUser.initialsColor||null}).eq('id',currentUser.id);
+    if(error){err.textContent='Could not save: '+error.message;return;}
+  }
   if(pass){ try{ const {error}=await sb.auth.updateUser({password:pass}); if(error){err.textContent=error.message;return;} }catch(e){ err.textContent='Could not reach the server to update the password.';return; } }
   closeModal();render();toast('Profile saved');
 }
@@ -974,7 +1098,15 @@ function sendNotification(){
     if(!who){err.textContent=u.role==='employee'?'Pick a manager or co-manager.':'Pick a valid name from your team.';return;}
     recips=[who];
   }
-  recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:u.name,subject,text,ts:Date.now(),read:false}));
+  if(live()){
+    const rows=recips.map(r=>({to_user:r.id,from_user:u.id,from_name:u.name,subject:subject||null,body:text}));
+    sb.from('messages').insert(rows).select().then(({data,error})=>{
+      if(error){toast('Message not sent: '+error.message);return;}
+      (data||[]).forEach(r=>{ if(!messages.some(m=>m.id===r.id)) messages.push(msgFromRow(r)); });
+    });
+  }else{
+    recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:u.name,subject,text,ts:Date.now(),read:false}));
+  }
   closeModal();toast(toSel&&toSel.value==='all'?'Sent to everyone':'Message sent');
 }
 document.addEventListener('click',()=>{if(menuOpen)closeMenu();closeUserMenu();});
@@ -1096,7 +1228,8 @@ function wDragStart(ev,key){dragKey=key;
   const g=document.getElementById('homeGrid');if(g)g.classList.add('dragging');
   const card=ev.target.closest('.widget');if(card)setTimeout(()=>card.classList.add('drag-src'),0);}
 function wDragOver(ev){if(dragKey===null)return;ev.preventDefault();try{ev.dataTransfer.dropEffect='move';}catch(e){}}
-function wCellDrop(ev,r,c){
+function wCellDrop(ev,r,c){_wCellDrop(ev,r,c);saveMyState();}
+function _wCellDrop(ev,r,c){
   ev.preventDefault();ev.stopPropagation();
   if(dragKey===null){cleanupDrag();return;}
   const u=currentUser,pm=posMap(u),d=dimOf(dragKey);
@@ -1207,10 +1340,10 @@ function addWidget(k){const arr=userWidgets(currentUser);
     if(!spot){toast('No room on the board — remove a widget first');return;}
     arr.push(k);posMap(currentUser)[k]=spot;
   }
-  closeModal();render();}
+  closeModal();render();saveMyState();}
 function removeWidget(k){homeWidgets[currentUser.id]=userWidgets(currentUser).filter(x=>x!==k);
   if(homePos[currentUser.id])delete homePos[currentUser.id][k];
-  render();}
+  render();saveMyState();}
 function openWidgetCatalog(){
   const have=userWidgets(currentUser);
   const items=availableWidgets(currentUser).map(w=>{
@@ -1223,11 +1356,11 @@ function openWidgetCatalog(){
     ${items}
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Done</button></div></div></div>`;
 }
-function addReminder(){const el=document.getElementById('wRem');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).reminders.push(v);render();}
-function removeReminder(i){userStore(currentUser).reminders.splice(i,1);render();}
-function addTodo(){const el=document.getElementById('wTodo');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).todos.push({text:v,done:false});render();}
-function toggleTodo(i){const t=userStore(currentUser).todos[i];if(t){t.done=!t.done;render();}}
-function removeTodo(i){userStore(currentUser).todos.splice(i,1);render();}
+function addReminder(){const el=document.getElementById('wRem');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).reminders.push(v);render();saveMyState();}
+function removeReminder(i){userStore(currentUser).reminders.splice(i,1);render();saveMyState();}
+function addTodo(){const el=document.getElementById('wTodo');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).todos.push({text:v,done:false});render();saveMyState();}
+function toggleTodo(i){const t=userStore(currentUser).todos[i];if(t){t.done=!t.done;render();saveMyState();}}
+function removeTodo(i){userStore(currentUser).todos.splice(i,1);render();saveMyState();}
 
 
 /* ---------- work log ---------- */
@@ -1244,10 +1377,17 @@ function logPanel(empId,dk,editable){
       <button class="btn btn-dark btn-sm" onclick="addItem('${empId}','${dk}')">Add entry</button>
     </div>${list}`;
 }
-function addItem(empId,dk){
+async function addItem(empId,dk){
   const el=document.getElementById('tx_'+dk);if(!el)return;const v=el.value.trim();if(!v)return;
   const k=empId+'|'+dk;if(!workLogs[k])workLogs[k]={items:[]};
-  workLogs[k].items.push({id:Date.now(),text:v});openDay=k;logReminder=false;render();
+  if(live()){
+    const {data,error}=await sb.from('work_logs').insert({user_id:empId,day:dk,text:v}).select().single();
+    if(error){toast('Log not saved: '+error.message);return;}
+    if(!workLogs[k].items.some(i=>i.id===data.id))workLogs[k].items.push({id:data.id,text:data.text});
+  }else{
+    workLogs[k].items.push({id:Date.now(),text:v});
+  }
+  openDay=k;logReminder=false;render();
 }
 
 /* ---------- day accordion ---------- */
@@ -1327,8 +1467,10 @@ function priorityList(editable){
       <div class="err" id="priErr"></div></div>`:'';
   return rows+add;
 }
-function togglePri(id){const p=priorities.find(x=>x.id===id);p.done=!p.done;render();}
-function removePri(id){priorities=priorities.filter(p=>p.id!==id);render();}
+function togglePri(id){const p=priorities.find(x=>x.id===id);if(!p)return;p.done=!p.done;render();
+  if(live())sb.from('priorities').update({done:p.done}).eq('id',id).then(({error})=>{ if(error)toast('Not saved: '+error.message); });}
+function removePri(id){priorities=priorities.filter(p=>p.id!==id);render();
+  if(live())sb.from('priorities').delete().eq('id',id).then(({error})=>{ if(error)toast('Not removed: '+error.message); });}
 let priDragId=null;
 function priDragStart(ev,id){priDragId=id;try{ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',id);}catch(e){}
   const row=ev.target.closest('.pri-row');if(row)setTimeout(()=>row.classList.add('pri-dragging'),0);}
@@ -1337,7 +1479,9 @@ function priDragOver(ev){if(priDragId===null)return;ev.preventDefault();try{ev.d
 function priDrop(ev,targetId){ev.preventDefault();ev.stopPropagation();if(priDragId===null){priDragCleanup();return;}
   const from=priorities.findIndex(p=>p.id===priDragId),to=priorities.findIndex(p=>p.id===targetId);
   if(from<0||to<0||from===to){priDragCleanup();render();return;}
-  const item=priorities.splice(from,1)[0];priorities.splice(to,0,item);priDragId=null;render();}
+  const item=priorities.splice(from,1)[0];priorities.splice(to,0,item);priDragId=null;render();
+  if(live())priorities.forEach((p,i)=>{ p.pos=i;
+    sb.from('priorities').update({pos:i}).eq('id',p.id).then(({error})=>{ if(error)toast('Order not saved: '+error.message); }); });}
 function priDragEnd(){priDragCleanup();}
 function priDragCleanup(){priDragId=null;
   document.querySelectorAll('.pri-row.pri-dragging').forEach(r=>r.classList.remove('pri-dragging'));
@@ -1346,7 +1490,15 @@ function addPri(){
   const t=document.getElementById('priTitle').value.trim(),d=document.getElementById('priDue').value;
   if(!t){document.getElementById('priErr').textContent='Give the project a title.';return;}
   const link=normLink(document.getElementById('priLink').value);
-  priorities.push({id:'pr'+Date.now(),title:t,due:d,done:false,link});render();
+  if(live()){
+    sb.from('priorities').insert({title:t,due:d||null,done:false,link,pos:priorities.length}).select().single().then(({data,error})=>{
+      if(error){toast('Project not saved: '+error.message);return;}
+      if(!priorities.some(p=>p.id===data.id)){priorities.push(priFromRow(data));render();}
+    });
+  }else{
+    priorities.push({id:'pr'+Date.now(),title:t,due:d,done:false,link});
+  }
+  render();
 }
 function normLink(v){v=(v||'').trim();if(!v)return '';if(!/^https?:\/\//i.test(v))v='https://'+v;return v;}
 function openPriLink(id){
@@ -1362,10 +1514,13 @@ function openPriLink(id){
 }
 function savePriLink(id,remove){
   const p=priorities.find(x=>x.id===id);if(!p)return;
-  if(remove){p.link='';closeModal();render();toast('Link removed');return;}
+  if(remove){p.link='';closeModal();render();toast('Link removed');
+    if(live())sb.from('priorities').update({link:''}).eq('id',id).then(({error})=>{ if(error)toast('Not saved: '+error.message); });
+    return;}
   const v=normLink(document.getElementById('plInput').value);
   if(!v){document.getElementById('plErr').textContent='Paste a link, or use Remove link.';return;}
   p.link=v;closeModal();render();toast('Link saved');
+  if(live())sb.from('priorities').update({link:v}).eq('id',id).then(({error})=>{ if(error)toast('Not saved: '+error.message); });
 }
 function calendarTab(scopeId,editable){
   const open=priorities.filter(p=>!p.done).length;
@@ -1412,12 +1567,26 @@ function saveDayAdd(k){
     const s=document.getElementById('daStart').value,e=document.getElementById('daEnd').value;
     if(!s||!e){err.textContent='Pick both dates.';return;}
     if(e<s){err.textContent='End date must be after the start date.';return;}
-    timeOff.push({id:'t'+Date.now(),empId:who,start:s,end:e,note});
+    if(live()){
+      sb.from('time_off').insert({user_id:who,start_date:s,end_date:e,note}).select().single().then(({data,error})=>{
+        if(error){toast('Time off not saved: '+error.message);return;}
+        if(!timeOff.some(t=>t.id===data.id)){timeOff.push(offFromRow(data));render();}
+      });
+    }else{
+      timeOff.push({id:'t'+Date.now(),empId:who,start:s,end:e,note});
+    }
     closeModal();render();toast('Time off added');
   }else{
     const noDue=document.getElementById('daNoDue')&&document.getElementById('daNoDue').checked;
     const d=noDue?'':document.getElementById('daStart').value;
-    priorities.push({id:'pr'+Date.now(),title:note,due:d,done:false});
+    if(live()){
+      sb.from('priorities').insert({title:note,due:d||null,done:false,pos:priorities.length}).select().single().then(({data,error})=>{
+        if(error){toast('Project not saved: '+error.message);return;}
+        if(!priorities.some(p=>p.id===data.id)){priorities.push(priFromRow(data));render();}
+      });
+    }else{
+      priorities.push({id:'pr'+Date.now(),title:note,due:d,done:false});
+    }
     closeModal();render();toast('Project added');
   }
 }
@@ -1582,7 +1751,8 @@ async function removePendingRole(email){
   await sb.from('pending_roles').delete().eq('email',email);
   await loadPendingRoles(); render();
 }
-function dismissNotice(id){notices=notices.filter(n=>n.id!==id);render();}
+function dismissNotice(id){notices=notices.filter(n=>n.id!==id);render();
+  if(live())sb.from('notices').delete().eq('id',id).then(({error})=>{ if(error)toast('Not dismissed: '+error.message); });}
 function employeeDetail(id){
   const e=employees.find(x=>x.id===id),s=schedules[id]||blankWeek();
   const schedRows=DOW.map(k=>{const day=Array.isArray(s[k])?s[k]:[];
@@ -1780,7 +1950,7 @@ async function saveAdd(empId){
   }else{
     shifts.push({id:nid(),empId,clockIn:nIn,clockOut:nOut,edited:true});
   }
-  auditLog.push({ts:Date.now(),manager:currentUser.name,emp:nameOf(empId),field:'Day added',old:'—',new:fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'—'),reason});
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(empId),field:'Day added',old:'—',new:fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'—'),reason});
   closeModal();render();toast('Day added');
 }
 function openEditDay(shiftId){
@@ -1810,7 +1980,7 @@ async function saveEditDay(shiftId){
     if(error){err.textContent='Could not save: '+error.message;return;}
   }
   s.clockIn=nIn;s.clockOut=nOut||null;s.edited=true;
-  auditLog.push({ts:Date.now(),manager:currentUser.name,emp:nameOf(s.empId),field:'Time edited',old:oldStr,new:newStr,reason:''});
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(s.empId),field:'Time edited',old:oldStr,new:newStr,reason:''});
   closeModal();render();toast('Day updated');
 }
 
@@ -1839,7 +2009,14 @@ function askNotify(ts){
 }
 function sendNotice(ts){
   const r=document.getElementById('nfReason').value.trim();
-  notices.push({id:'n'+Date.now(),empId:currentUser.id,ts,reason:r});
+  if(live()){
+    sb.from('notices').insert({user_id:currentUser.id,ts:new Date(ts).toISOString(),reason:r}).select().single().then(({data,error})=>{
+      if(error){toast('Notice not sent: '+error.message);return;}
+      if(!notices.some(n=>n.id===data.id)){notices.push(noticeFromRow(data));render();}
+    });
+  }else{
+    notices.push({id:'n'+Date.now(),empId:currentUser.id,ts,reason:r});
+  }
   closeModal();render();toast('Notice sent to your manager');
 }
 async function clockOut(){
@@ -1865,10 +2042,17 @@ function promptWorkLog(){
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="wlSkip()">Skip for now</button>
       <button class="btn btn-primary btn-sm" onclick="wlDone()">Done</button></div></div></div>`;
 }
-function wlAdd(){
+async function wlAdd(){
   const el=document.getElementById('wlInput'),v=el.value.trim();if(!v)return;
   const k=currentUser.id+'|'+dateKey(now);if(!workLogs[k])workLogs[k]={items:[]};
-  workLogs[k].items.push({id:Date.now(),text:v});el.value='';
+  if(live()){
+    const {data,error}=await sb.from('work_logs').insert({user_id:currentUser.id,day:dateKey(now),text:v}).select().single();
+    if(error){toast('Log not saved: '+error.message);return;}
+    if(!workLogs[k].items.some(i=>i.id===data.id))workLogs[k].items.push({id:data.id,text:data.text});
+  }else{
+    workLogs[k].items.push({id:Date.now(),text:v});
+  }
+  el.value='';
   document.getElementById('wlList').innerHTML='<ul class="loglist">'+workLogs[k].items.map(i=>`<li><span>${esc(i.text)}</span></li>`).join('')+'</ul>';
 }
 function wlSkip(){
