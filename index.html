@@ -695,7 +695,6 @@ function renderLogin(msg,isErr){
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
-  return demoEnter(); // TEMP preview bypass — delete this line to restore real Supabase sign-in
   if(authBusy||!sb)return;
   const email=(document.getElementById('auEmail').value||'').trim().toLowerCase();
   const pass=document.getElementById('auPass').value||'';
