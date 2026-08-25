@@ -623,6 +623,12 @@ function isOutsideSchedule(id,ts){const slots=slotsForDate(id,ts);if(!slots.leng
 function weekStartKey(){const d=new Date(now);d.setDate(d.getDate()-d.getDay());return dateKey(d);}
 function workedThisWeek(id){const ws=weekStartKey();
   return shifts.filter(s=>s.empId===id&&dateKey(s.clockIn)>=ws).reduce((t,s)=>t+netMs(s),0);}
+/* ---- live Supabase state (real session only; demo bypass stays in-memory) ---- */
+let liveSession=false;
+function live(){return !!sb&&liveSession;}
+function shiftFromRow(r){return {id:r.id,empId:r.user_id,clockIn:new Date(r.clock_in).getTime(),
+  clockOut:r.clock_out?new Date(r.clock_out).getTime():null,edited:!!r.edited};}
+function upsertShift(s){const i=shifts.findIndex(x=>x.id===s.id);if(i>=0)shifts[i]=s;else shifts.push(s);}
 /* one compact field: accepts "9-5", "9am-5pm", "09:00-17:00", "9:30 to 6" */
 function parseOne(t){
   const m=t.match(/^(\d{1,2})(?::(\d{2}))?(am|pm)?$/);
@@ -729,6 +735,22 @@ async function loadPendingRoles(){
   const {data}=await sb.from('pending_roles').select('*').order('email');
   pendingRoles=data||[];
 }
+async function loadShifts(){
+  const {data,error}=await sb.from('shifts').select('*');
+  if(error)throw error;
+  shifts=(data||[]).map(shiftFromRow);
+}
+let shiftChannel=null;
+function subscribeShifts(){
+  if(!sb||shiftChannel)return;
+  shiftChannel=sb.channel('shifts-rt')
+    .on('postgres_changes',{event:'*',schema:'public',table:'shifts'},payload=>{
+      if(payload.eventType==='DELETE'){ if(payload.old&&payload.old.id) shifts=shifts.filter(x=>x.id!==payload.old.id); }
+      else if(payload.new){ upsertShift(shiftFromRow(payload.new)); }
+      render();
+    })
+    .subscribe();
+}
 async function enterApp(session){
   try{ await loadProfiles(); }
   catch(e){ renderLogin('Could not load team profiles: '+(e.message||e),true); return; }
@@ -745,6 +767,9 @@ async function enterApp(session){
   }
   if(!currentUser){ renderLogin('Signed in, but your profile could not be created. Run supabase-fix-login.sql, then sign in again.',true); await sb.auth.signOut(); return; }
   await loadPendingRoles();
+  liveSession=true;
+  try{ await loadShifts(); }catch(e){ toast('Could not load shifts: '+(e.message||e)); }
+  subscribeShifts();
   selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
@@ -1603,7 +1628,11 @@ function downloadPeriodPDF(id){
   const team=hourlyStaff();
   const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
   const rows=team.map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
-    return `<tr><td>${esc(e.name)}</td><td class="n">${fmtDur(ms)}</td><td class="n">${money(e.rate)}/hr</td><td class="n"><b>${money(amt)}</b></td></tr>`;}).join('');
+    const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id);
+    const rbTotal=rb.reduce((t,r)=>t+r.amount,0);
+    const main=`<tr${rb.length?' class="rb-parent"':''}><td>${esc(e.name)}</td><td class="n">${fmtDur(ms)}</td><td class="n">${money(e.rate)}/hr</td><td class="n">${money(amt)}</td><td class="n">${rbTotal>0?money(rbTotal):'—'}</td><td class="n"><b>${money(amt+rbTotal)}</b></td></tr>`;
+    const sub=rb.length?`<tr class="rb-sub"><td colspan="6">Reimbursements: ${rb.map(r=>esc(r.label)+' — '+money(r.amount)).join(' · ')}</td></tr>`:'';
+    return main+sub;}).join('');
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to download the PDF');return;}
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OTG Payroll ${range}</title>
@@ -1620,13 +1649,15 @@ function downloadPeriodPDF(id){
       td{padding:11px 6px;border-bottom:1px solid #DEDCE2}
       .n{text-align:right;font-family:"IBM Plex Mono",monospace}
       .note{color:#8A8792;font-size:11px;margin-top:22px}
+      .rb-parent td{border-bottom:0;padding-bottom:4px}
+      .rb-sub td{padding:0 6px 11px;color:#8A8792;font-size:11.5px;font-family:"IBM Plex Mono",monospace;border-bottom:1px solid #DEDCE2}
     </style></head><body>
     <span class="mark">OTG</span>
     <h1>Payroll — pay period</h1>
     <p class="sub">${range}</p>
-    <table><thead><tr><th>Employee</th><th class="n">Total time</th><th class="n">Rate</th><th class="n">Exact pay</th></tr></thead>
+    <table><thead><tr><th>Employee</th><th class="n">Total time</th><th class="n">Rate</th><th class="n">Exact pay</th><th class="n">Reimb</th><th class="n">Total</th></tr></thead>
     <tbody>${rows}</tbody></table>
-    <p class="note">Exact pay = hours worked × hourly rate, to the minute. No overtime rules applied.</p>
+    <p class="note">Exact pay = hours worked × hourly rate, to the minute. No overtime rules applied. Total = exact pay + reimbursements.</p>
     <scr`+`ipt>window.onload=function(){setTimeout(function(){window.print();},200);}</scr`+`ipt>
     </body></html>`);
   w.document.close();
@@ -1661,13 +1692,19 @@ function openAdd(empId){
 }
 function closeModal(){document.getElementById('modalMount').innerHTML='';}
 function toast(m){const t=document.getElementById('toastMount');t.innerHTML=`<div class="toast">${m}</div>`;setTimeout(()=>{t.innerHTML='';},2400);}
-function saveAdd(empId){
+async function saveAdd(empId){
   const err=document.getElementById('edErr'),reason=document.getElementById('edReason').value.trim();
   if(!reason){err.textContent='Add a reason — it goes in the change log.';return;}
   const nIn=inputToTs(document.getElementById('edIn').value),nOut=inputToTs(document.getElementById('edOut').value);
   if(!nIn){err.textContent='Clock-in time is required.';return;}
   if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
-  shifts.push({id:nid(),empId,clockIn:nIn,clockOut:nOut,edited:true});
+  if(live()){
+    const {data,error}=await sb.from('shifts').insert({user_id:empId,clock_in:new Date(nIn).toISOString(),clock_out:nOut?new Date(nOut).toISOString():null,edited:true}).select().single();
+    if(error){err.textContent='Could not save: '+error.message;return;}
+    upsertShift(shiftFromRow(data));
+  }else{
+    shifts.push({id:nid(),empId,clockIn:nIn,clockOut:nOut,edited:true});
+  }
   auditLog.push({ts:Date.now(),manager:currentUser.name,emp:nameOf(empId),field:'Day added',old:'—',new:fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'—'),reason});
   closeModal();render();toast('Day added');
 }
@@ -1683,7 +1720,7 @@ function openEditDay(shiftId){
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
     <button class="btn btn-primary btn-sm" onclick="saveEditDay('${shiftId}')">Save changes</button></div></div></div>`;
 }
-function saveEditDay(shiftId){
+async function saveEditDay(shiftId){
   const s=shifts.find(x=>x.id===shiftId);if(!s)return;
   const wasActive=s.clockOut===null;
   const err=document.getElementById('edErr');
@@ -1693,15 +1730,25 @@ function saveEditDay(shiftId){
   if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
   const oldStr=fmtTime(s.clockIn)+' – '+(s.clockOut?fmtTime(s.clockOut):'active');
   const newStr=fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'active');
+  if(live()){
+    const {error}=await sb.from('shifts').update({clock_in:new Date(nIn).toISOString(),clock_out:nOut?new Date(nOut).toISOString():null,edited:true}).eq('id',shiftId);
+    if(error){err.textContent='Could not save: '+error.message;return;}
+  }
   s.clockIn=nIn;s.clockOut=nOut||null;s.edited=true;
   auditLog.push({ts:Date.now(),manager:currentUser.name,emp:nameOf(s.empId),field:'Time edited',old:oldStr,new:newStr,reason:''});
   closeModal();render();toast('Day updated');
 }
 
 /* ================= CLOCK ================= */
-function clockIn(){
+async function clockIn(){
   const ts=Date.now();
-  shifts.push({id:nid(),empId:currentUser.id,clockIn:ts,clockOut:null,edited:false});
+  if(live()){
+    const {data,error}=await sb.from('shifts').insert({user_id:currentUser.id,clock_in:new Date(ts).toISOString(),edited:false}).select().single();
+    if(error){toast('Could not clock in: '+error.message);return;}
+    upsertShift(shiftFromRow(data));
+  }else{
+    shifts.push({id:nid(),empId:currentUser.id,clockIn:ts,clockOut:null,edited:false});
+  }
   render();
   if(isOutsideSchedule(currentUser.id,ts))askNotify(ts);
 }
@@ -1720,9 +1767,14 @@ function sendNotice(ts){
   notices.push({id:'n'+Date.now(),empId:currentUser.id,ts,reason:r});
   closeModal();render();toast('Notice sent to your manager');
 }
-function clockOut(){
+async function clockOut(){
   const s=openShift(currentUser.id);if(!s)return;
-  s.clockOut=Date.now();if(breakActive)endBreak(true);
+  const out=Date.now();
+  if(live()){
+    const {error}=await sb.from('shifts').update({clock_out:new Date(out).toISOString()}).eq('id',s.id);
+    if(error){toast('Could not clock out: '+error.message);return;}
+  }
+  s.clockOut=out;if(breakActive)endBreak(true);
   render();promptWorkLog();
 }
 function promptWorkLog(){
