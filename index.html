@@ -110,6 +110,82 @@
   .um-ct{display:inline-grid;place-items:center;min-width:16px;height:16px;padding:0 4px;background:var(--purple);color:#fff;border-radius:9px;font-size:9.5px;letter-spacing:0;vertical-align:middle}
   .um-send{width:24px;height:24px;border-radius:6px;background:var(--purple);border:0;display:grid;place-items:center;cursor:pointer;flex:none;padding:0}
   .um-send:hover{background:var(--purple-deep)}
+  .um-open{background:none;border:0;padding:0;cursor:pointer;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;display:inline-flex;align-items:center;gap:6px}
+  .um-open:hover{color:var(--purple)}
+  /* ---- messaging page ---- */
+  .chat-page{display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
+  .chat-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .chat-head h1{font-size:22px;margin:0}
+  .chat-head-t{display:flex;flex-direction:column}
+  .chat-sub{font-size:12px;color:var(--muted)}
+  .chat-x{background:none;border:0;cursor:pointer;color:var(--text);padding:4px;display:inline-flex;border-radius:8px}
+  .chat-x:hover{background:var(--purple-wash)}
+  .cv-actions{display:flex;gap:9px;margin-bottom:14px}
+  .cv-list{display:flex;flex-direction:column}
+  .cv-row{display:flex;align-items:center;gap:12px;padding:11px 6px;border:0;border-bottom:1px solid var(--rule-soft);background:none;cursor:pointer;text-align:left;width:100%}
+  .cv-row:hover{background:var(--purple-wash)}
+  .cv-ava{width:38px;height:38px;flex:none;border-radius:50%;background:var(--purple);color:#fff;display:grid;place-items:center;font-family:"Archivo";font-weight:700;font-size:14px}
+  .cv-ava.grp{background:#E9E5F0;color:var(--purple-deep)}
+  .cv-mid{flex:1;min-width:0;display:flex;flex-direction:column}
+  .cv-name{font-weight:600;font-size:14.5px}
+  .cv-prev{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .cv-row.unread .cv-name{font-weight:800}
+  .cv-row.unread .cv-prev{color:var(--text)}
+  .cv-dot{width:9px;height:9px;flex:none;border-radius:50%;background:var(--purple)}
+  .cv-empty{color:var(--muted);font-size:13px;padding:20px 4px}
+  .chat-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:6px 2px 12px;max-height:calc(100vh - 250px)}
+  .cb-row{display:flex;flex-direction:column;max-width:78%}
+  .cb-row.me{align-self:flex-end;align-items:flex-end}
+  .cb-row.them{align-self:flex-start;align-items:flex-start}
+  .cb-who{font-size:10.5px;color:var(--muted);margin:2px 8px 1px}
+  .cb{padding:8px 12px;border-radius:16px;font-size:14px;line-height:1.35;word-break:break-word}
+  .cb-me{background:var(--purple);color:#fff;border-bottom-right-radius:5px}
+  .cb-them{background:#EDEAF2;color:var(--text);border-bottom-left-radius:5px}
+  .cb-t{font-size:9.5px;color:var(--muted);margin:2px 8px 0}
+  .chat-compose{display:flex;gap:9px;align-items:center;padding-top:10px;border-top:1px solid var(--rule-soft);margin-top:4px}
+  .chat-compose input{flex:1;border:1px solid var(--rule);border-radius:22px;padding:10px 15px;font-family:"Barlow";font-size:14px;color:#000;background:#fff;color-scheme:only light;outline:none}
+  .chat-compose input:focus{border-color:var(--purple)}
+  .chat-send{width:40px;height:40px;flex:none;border-radius:50%;background:var(--purple);border:0;display:grid;place-items:center;cursor:pointer;padding:0}
+  .chat-send:hover{background:var(--purple-deep)}
+  .pick-list{display:flex;flex-direction:column;max-height:320px;overflow:auto;margin-top:4px}
+  .pick-row{display:flex;align-items:center;gap:11px;padding:9px 6px;border:0;border-bottom:1px solid var(--rule-soft);background:none;cursor:pointer;text-align:left;width:100%;font-size:14px}
+  .pick-row:hover{background:var(--purple-wash)}
+  .grp-list{display:flex;flex-direction:column;gap:2px;max-height:260px;overflow:auto;margin-top:4px}
+  .grp-pick{display:flex;align-items:center;gap:9px;padding:7px 4px;font-size:14px;cursor:pointer}
+  .grp-pick input{width:16px;height:16px;accent-color:var(--purple)}
+  /* ---- time-off requests ---- */
+  .um-req{width:100%;margin:2px 0 10px;padding:9px 12px;border:1px solid var(--purple);background:var(--purple-wash);color:var(--purple-deep);
+    border-radius:20px;font-family:"Archivo";font-weight:700;font-size:12px;cursor:pointer}
+  .um-req:hover{background:var(--purple);color:#fff}
+  .rq-sec{margin-bottom:16px}
+  .rq-sec-lbl{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .rq-card{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:10px;border:1px solid var(--rule);border-radius:12px;background:#fff;cursor:pointer;margin-bottom:7px}
+  .rq-card:hover{border-color:var(--purple)}
+  .rq-card.pending{border-left:3px solid var(--purple)}
+  .rq-ic{width:34px;height:34px;flex:none;border-radius:9px;background:var(--purple-wash);color:var(--purple-deep);display:grid;place-items:center}
+  .rq-mid{flex:1;min-width:0;display:flex;flex-direction:column}
+  .rq-title{font-weight:600;font-size:13.5px}
+  .rq-sub{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rq-chip{flex:none;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:20px}
+  .rq-chip.pending{background:#FBEED2;color:#8A6D1B}
+  .rq-chip.approved{background:#E6F4EA;color:#0B6B33}
+  .rq-chip.denied{background:#F6E0E1;color:#A81E27}
+  .rq-reason{font-size:14px;margin:2px 0 0}
+  .rq-decided{font-size:13px;color:var(--muted);margin:8px 0 0}
+  .rq-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+  .rq-approve,.rq-deny{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:22px;font-family:"Archivo";font-weight:700;font-size:12.5px;cursor:pointer;border:1px solid}
+  .rq-approve{background:#0B6B33;border-color:#0B6B33;color:#fff}
+  .rq-approve:hover{background:#095a2b}
+  .rq-deny{background:#fff;border-color:#C86A70;color:#A81E27}
+  .rq-deny:hover{background:rgba(168,30,39,.07)}
+  .mrc{border:1px solid var(--rule-soft);border-radius:12px;padding:12px;margin:12px 0 4px}
+  .mrc-head{text-align:center;font-family:"Archivo";font-weight:700;font-size:13px;margin-bottom:8px}
+  .mrc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+  .mrc-dow{font-size:9.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace;padding:2px 0}
+  .mrc-cell{font-size:12px;padding:6px 0;border-radius:6px}
+  .mrc-cell.pad{visibility:hidden}
+  .mrc-cell.on{background:var(--purple);color:#fff;font-weight:700}
+  .mrc-note{text-align:center;font-size:12px;color:var(--purple-deep);margin:8px 0 0;font-weight:600}
   .um-subj{color:#fff;font-weight:600}
   .user-panel{display:none;position:absolute;right:0;top:calc(100% + 10px);min-width:186px;background:#0B0A0D;
     border:1px solid rgba(255,255,255,.2);box-shadow:0 18px 44px rgba(0,0,0,.55);padding:5px 0;z-index:45}
@@ -758,7 +834,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 13 · trash icon</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 15 · time-off requests</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -873,7 +949,8 @@ function subscribePayroll(){
 }
 /* ---- row mappers for the remaining domains ---- */
 function msgFromRow(r){return {id:r.id,to:r.to_user,from:r.from_name,subject:r.subject||'',text:r.body,ts:new Date(r.created_at).getTime(),read:!!r.read};}
-function offFromRow(r){return {id:r.id,empId:r.user_id,start:r.start_date,end:r.end_date,note:r.note||''};}
+function offFromRow(r){return {id:r.id,empId:r.user_id,start:r.start_date,end:r.end_date,note:r.note||'',status:r.status||'approved',response:r.response||'',decidedBy:r.decided_by||null,decidedByName:r.decided_by_name||'',decidedAt:r.decided_at?new Date(r.decided_at).getTime():0};}
+function isManagerId(id){const e=employees.find(x=>x.id===id);return !!e&&(e.role==='manager'||e.role==='comanager');}
 function priFromRow(r){return {id:r.id,title:r.title,due:r.due||'',done:!!r.done,link:r.link||'',pos:r.pos||0,pnum:(r.pnum==null?null:r.pnum),pcolor:r.pcolor||''};}
 function noticeFromRow(r){return {id:r.id,empId:r.user_id,ts:new Date(r.ts).getTime(),reason:r.reason||''};}
 function auditFromRow(r){return {id:r.id,ts:new Date(r.created_at).getTime(),manager:r.manager,emp:r.emp,field:r.field,old:r.old_val||'—',new:r.new_val||'—',reason:r.reason||''};}
@@ -980,6 +1057,267 @@ function subscribeMisc(){
     })
     .subscribe();
 }
+/* ================= MESSAGING (chat) ================= */
+let conversations=[], chatMsgs={}, chatPageOpen=false, chatOpenConv=null, chatChannel=null;
+function convName(c){
+  if(!c)return '';
+  if(c.kind==='group')return c.title||'Group';
+  const other=(c.members||[]).find(id=>id!==currentUser.id);
+  return nameOf(other)||'Direct message';
+}
+function convUnread(c){
+  const list=chatMsgs[c.id]||[];
+  return list.some(m=>m.from!==currentUser.id&&m.ts>(c.lastRead||0));
+}
+function convLastTs(c){const l=chatMsgs[c.id]||[];return l.length?l[l.length-1].ts:0;}
+function appendChatMsg(convId,m){
+  const list=chatMsgs[convId]=chatMsgs[convId]||[];
+  if(!list.some(x=>x.id===m.id)){list.push(m);list.sort((a,b)=>a.ts-b.ts);}
+}
+async function loadChat(){
+  const [cr,mr,gr]=await Promise.all([
+    sb.from('conversations').select('*'),
+    sb.from('conversation_members').select('*'),
+    sb.from('chat_messages').select('*').order('created_at',{ascending:true})
+  ]);
+  if(cr.error)throw cr.error; if(mr.error)throw mr.error; if(gr.error)throw gr.error;
+  const memByConv={}, myRead={};
+  (mr.data||[]).forEach(m=>{(memByConv[m.conversation_id]=memByConv[m.conversation_id]||[]).push(m.user_id);
+    if(m.user_id===currentUser.id)myRead[m.conversation_id]=new Date(m.last_read_at).getTime();});
+  conversations=(cr.data||[]).map(c=>({id:c.id,kind:c.kind,title:c.title||'',dmKey:c.dm_key||'',
+    members:memByConv[c.id]||[],lastRead:myRead[c.id]||0}));
+  chatMsgs={};
+  (gr.data||[]).forEach(m=>appendChatMsg(m.conversation_id,{id:m.id,from:m.from_user,fromName:m.from_name,body:m.body,ts:new Date(m.created_at).getTime()}));
+}
+function subscribeChat(){
+  if(!sb||chatChannel)return;
+  chatChannel=sb.channel('chat-rt')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages'},payload=>{
+      const m=payload.new; if(!m)return;
+      const known=conversations.some(c=>c.id===m.conversation_id);
+      appendChatMsg(m.conversation_id,{id:m.id,from:m.from_user,fromName:m.from_name,body:m.body,ts:new Date(m.created_at).getTime()});
+      if(!known){ loadChat().then(()=>{ if(chatPageOpen)render(); }); return; }
+      if(chatPageOpen){ if(chatOpenConv===m.conversation_id)markRead(m.conversation_id); render(); }
+      paintUserMenu();
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'conversation_members'},payload=>{
+      if(payload.new&&payload.new.user_id===currentUser.id){ loadChat().then(()=>{ if(chatPageOpen)render(); }); }
+    })
+    .subscribe();
+}
+function openChatPage(ev){ if(ev)ev.stopPropagation(); closeUserMenu(); chatPageOpen=true; chatOpenConv=null; render(); }
+function closeChatPage(){ chatPageOpen=false; chatOpenConv=null; render(); }
+function openConv(id){ chatOpenConv=id; markRead(id); render();
+  setTimeout(()=>{const el=document.getElementById('chatScroll');if(el)el.scrollTop=el.scrollHeight;},0); }
+function backToConvList(){ chatOpenConv=null; render(); }
+function markRead(convId){
+  const c=conversations.find(x=>x.id===convId); if(c)c.lastRead=Date.now();
+  if(live())sb.from('conversation_members').update({last_read_at:new Date().toISOString()}).eq('conversation_id',convId).eq('user_id',currentUser.id).then(()=>{});
+  paintUserMenu();
+}
+async function openOrCreateDM(otherId){
+  const key=[currentUser.id,otherId].sort().join('|');
+  let conv=conversations.find(c=>c.kind==='dm'&&c.dmKey===key);
+  if(conv){closeModal();openConv(conv.id);return;}
+  if(!live()){toast('Sign in to start a chat.');return;}
+  const {data:existing}=await sb.from('conversations').select('*').eq('dm_key',key).maybeSingle();
+  let convId;
+  if(existing){convId=existing.id;}
+  else{
+    const {data:created,error}=await sb.from('conversations').insert({kind:'dm',dm_key:key,created_by:currentUser.id}).select().single();
+    if(error){
+      const {data:again}=await sb.from('conversations').select('*').eq('dm_key',key).maybeSingle();
+      if(!again){toast('Could not start chat: '+error.message);return;}
+      convId=again.id;
+    }else{
+      convId=created.id;
+      const {error:me}=await sb.from('conversation_members').insert([{conversation_id:convId,user_id:currentUser.id},{conversation_id:convId,user_id:otherId}]);
+      if(me){toast('Could not start chat: '+me.message);return;}
+    }
+  }
+  await loadChat(); closeModal(); openConv(convId);
+}
+async function createGroup(){
+  const title=(document.getElementById('grpName').value||'').trim();
+  const err=document.getElementById('grpErr');
+  if(!title){err.textContent='Give the group a name.';return;}
+  const picked=[...document.querySelectorAll('.grp-mem:checked')].map(el=>el.value);
+  if(!picked.length){err.textContent='Pick at least one person.';return;}
+  if(!live()){toast('Sign in to create a group.');return;}
+  const {data:created,error}=await sb.from('conversations').insert({kind:'group',title,created_by:currentUser.id}).select().single();
+  if(error){err.textContent='Could not create group: '+error.message;return;}
+  const rows=[{conversation_id:created.id,user_id:currentUser.id},...picked.map(id=>({conversation_id:created.id,user_id:id}))];
+  const {error:mErr}=await sb.from('conversation_members').insert(rows);
+  if(mErr){err.textContent='Group made, but adding members failed: '+mErr.message;return;}
+  await loadChat(); closeModal(); openConv(created.id);
+}
+async function sendChat(){
+  const el=document.getElementById('chatInput'); if(!el)return;
+  const body=el.value.trim(); if(!body||!chatOpenConv)return;
+  el.value='';
+  if(!live()){toast('Sign in to send messages.');return;}
+  const {data,error}=await sb.from('chat_messages').insert({conversation_id:chatOpenConv,from_user:currentUser.id,from_name:currentUser.name,body}).select().single();
+  if(error){toast('Message not sent: '+error.message);el.value=body;return;}
+  appendChatMsg(chatOpenConv,{id:data.id,from:currentUser.id,fromName:currentUser.name,body:data.body,ts:new Date(data.created_at).getTime()});
+  markRead(chatOpenConv); render();
+  setTimeout(()=>{const s=document.getElementById('chatScroll');if(s)s.scrollTop=s.scrollHeight;},0);
+}
+function totalChatUnread(){return conversations.reduce((n,c)=>n+(convUnread(c)?1:0),0);}
+/* ---------- time-off requests ---------- */
+function myRequests(){return timeOff.filter(t=>t.empId===currentUser.id&&t.note!==null).filter(t=>t.status==='pending'||t.status==='approved'||t.status==='denied');}
+function pendingRequests(){return timeOff.filter(t=>t.status==='pending');}
+function pendingRequestCount(){return canManage(currentUser)?pendingRequests().length:0;}
+function openTimeOffRequest(ev){ if(ev)ev.stopPropagation(); closeUserMenu();
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Request time off</h3><p class="sub">Your manager will approve or deny it.</p>
+    <div class="field"><label>First day</label><input type="date" id="toStart"></div>
+    <div class="field"><label>Last day</label><input type="date" id="toEnd"></div>
+    <div class="field"><label>Reason</label><input type="text" id="toReason" placeholder="e.g. Family trip"></div>
+    <div class="err" id="toErr"></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="submitTimeOff()">Send request</button></div></div></div>`;
+}
+async function submitTimeOff(){
+  const s=document.getElementById('toStart').value,e=document.getElementById('toEnd').value;
+  const reason=(document.getElementById('toReason').value||'').trim();
+  const err=document.getElementById('toErr');
+  if(!s||!e){err.textContent='Pick both dates.';return;}
+  if(e<s){err.textContent='The last day must be on or after the first day.';return;}
+  if(!reason){err.textContent='Add a short reason.';return;}
+  if(!live()){toast('Sign in to send a request.');return;}
+  const {data,error}=await sb.from('time_off').insert({user_id:currentUser.id,start_date:s,end_date:e,note:reason,status:'pending'}).select().single();
+  if(error){err.textContent='Could not send: '+error.message;return;}
+  if(!timeOff.some(t=>t.id===data.id))timeOff.push(offFromRow(data));
+  closeModal();render();toast('Time off request sent');
+}
+function openRequestDetail(id){
+  const t=timeOff.find(x=>x.id===id);if(!t)return;
+  const mgr=canManage(currentUser), pending=t.status==='pending';
+  const statusChip=`<span class="rq-chip ${t.status}">${t.status[0].toUpperCase()+t.status.slice(1)}</span>`;
+  const decided=t.status!=='pending'?`<p class="rq-decided">${t.status==='approved'?'Approved':'Denied'} by ${esc(t.decidedByName||'a manager')}${t.response?' · “'+esc(t.response)+'”':''}</p>`:'';
+  const actions=(mgr&&pending)
+    ? `<div class="field"><label>Response <span class="opt">optional</span></label><input type="text" id="rqResp" placeholder="Add a note back (optional)"></div>
+       <div class="err" id="rqErr"></div>
+       <div class="rq-actions"><button class="rq-deny" onclick="decideRequest('${id}',false)" title="Deny">${xGlyph()} Deny</button>
+         <button class="rq-approve" onclick="decideRequest('${id}',true)" title="Approve">${checkGlyph()} Approve</button></div>`
+    : `<div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div>`;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Time off request</h3><p class="sub">${esc(nameOf(t.empId))} ${statusChip}</p>
+    ${miniRangeCal(t.start,t.end)}
+    <p class="rq-reason"><b>Reason:</b> ${esc(t.note)}</p>
+    ${decided}
+    ${actions}</div></div>`;
+}
+async function decideRequest(id,approve){
+  const t=timeOff.find(x=>x.id===id);if(!t)return;
+  const resp=(document.getElementById('rqResp')?document.getElementById('rqResp').value:'').trim();
+  const patch={status:approve?'approved':'denied',response:resp||null,decided_by:currentUser.id,decided_by_name:currentUser.name,decided_at:new Date().toISOString()};
+  if(live()){
+    const {error}=await sb.from('time_off').update(patch).eq('id',id);
+    if(error){const e=document.getElementById('rqErr');if(e)e.textContent='Could not save: '+error.message;return;}
+  }
+  t.status=patch.status;t.response=resp;t.decidedBy=currentUser.id;t.decidedByName=currentUser.name;t.decidedAt=Date.now();
+  closeModal();render();toast(approve?'Request approved':'Request denied');
+}
+function miniRangeCal(startK,endK){
+  const [sy,sm]=startK.split('-').map(Number);
+  const first=new Date(sy,sm-1,1),lead=first.getDay(),total=new Date(sy,sm,0).getDate();
+  const monthName=first.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  let cells='';
+  ['S','M','T','W','T','F','S'].forEach(d=>cells+=`<span class="mrc-dow">${d}</span>`);
+  for(let i=0;i<lead;i++)cells+='<span class="mrc-cell pad"></span>';
+  for(let d=1;d<=total;d++){
+    const k=sy+'-'+pad(sm)+'-'+pad(d);
+    const on=k>=startK&&k<=endK;
+    cells+=`<span class="mrc-cell ${on?'on':''}">${d}</span>`;
+  }
+  const spanNote=(startK!==endK)?`<p class="mrc-note">${fmtDayKey(startK)} → ${fmtDayKey(endK)}</p>`:`<p class="mrc-note">${fmtDayKey(startK)}</p>`;
+  return `<div class="mrc"><div class="mrc-head">${monthName}</div><div class="mrc-grid">${cells}</div>${spanNote}</div>`;
+}
+function checkGlyph(){return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;}
+function xGlyph(){return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`;}
+/* ---------- messaging page UI ---------- */
+function messagingPage(){
+  return chatOpenConv?chatThreadView():chatListView();
+}
+function chatListView(){
+  const sorted=[...conversations].sort((a,b)=>convLastTs(b)-convLastTs(a));
+  const rows=sorted.length?sorted.map(c=>{
+    const last=(chatMsgs[c.id]||[]).slice(-1)[0];
+    const prev=last?`${last.from===currentUser.id?'You: ':''}${esc(last.body)}`:'No messages yet';
+    const un=convUnread(c);
+    return `<button class="cv-row ${un?'unread':''}" onclick="openConv('${c.id}')">
+      <span class="cv-ava ${c.kind==='group'?'grp':''}">${c.kind==='group'?groupGlyph():esc(initials(convName(c)))}</span>
+      <span class="cv-mid"><span class="cv-name">${esc(convName(c))}</span><span class="cv-prev">${prev}</span></span>
+      ${un?'<span class="cv-dot"></span>':''}</button>`;
+  }).join(''):'<div class="cv-empty">No conversations yet. Start one below.</div>';
+  return `<div class="chat-page">
+    <div class="chat-head"><button class="chat-x" onclick="closeChatPage()" title="Close">${backArrow()}</button>
+      <h1>Messages</h1></div>
+    ${requestsSection()}
+    <div class="cv-actions"><button class="btn btn-primary btn-sm" onclick="openNewDM()">New message</button>
+      <button class="btn btn-line btn-sm" onclick="openNewGroup()">New group</button></div>
+    <div class="cv-list">${rows}</div></div>`;
+}
+function requestsSection(){
+  const mgr=canManage(currentUser);
+  let items=mgr
+    ? timeOff.filter(t=>t.status&&t.empId!==undefined).filter(t=>t.status==='pending'||(t.decidedBy&&t.decidedAt))   /* incoming + recently handled */
+    : myRequests();
+  if(mgr){ items=[...items].sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||b.start.localeCompare(a.start)); }
+  else { items=[...items].sort((a,b)=>b.start.localeCompare(a.start)); }
+  if(!items.length)return '';
+  const cards=items.map(t=>{
+    const who=mgr?nameOf(t.empId):'You';
+    const range=t.start===t.end?fmtDayKey(t.start):`${fmtDayKey(t.start)} → ${fmtDayKey(t.end)}`;
+    return `<button class="rq-card ${t.status}" onclick="openRequestDetail('${t.id}')">
+      <span class="rq-ic">${calMini()}</span>
+      <span class="rq-mid"><span class="rq-title">Time off request${mgr?' · '+esc(who):''}</span><span class="rq-sub">${range} · ${esc(t.note)}</span></span>
+      <span class="rq-chip ${t.status}">${t.status[0].toUpperCase()+t.status.slice(1)}</span></button>`;
+  }).join('');
+  const label=mgr?'Time off requests':'Your time off requests';
+  return `<div class="rq-sec"><div class="rq-sec-lbl">${label}</div>${cards}</div>`;
+}
+function calMini(){return `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`;}
+function chatThreadView(){
+  const c=conversations.find(x=>x.id===chatOpenConv);
+  if(!c)return chatListView();
+  const list=chatMsgs[c.id]||[];
+  const bubbles=list.length?list.map((m,i)=>{
+    const mine=m.from===currentUser.id;
+    const showName=c.kind==='group'&&!mine&&(i===0||list[i-1].from!==m.from);
+    return `<div class="cb-row ${mine?'me':'them'}">${showName?`<span class="cb-who">${esc(m.fromName)}</span>`:''}<span class="cb ${mine?'cb-me':'cb-them'}">${esc(m.body)}</span><span class="cb-t">${fmtTime(m.ts)}</span></div>`;
+  }).join(''):'<div class="cv-empty">No messages yet — say hello.</div>';
+  const sub=c.kind==='group'?`${c.members.length} people`:'';
+  return `<div class="chat-page">
+    <div class="chat-head"><button class="chat-x" onclick="backToConvList()" title="Back">${backArrow()}</button>
+      <div class="chat-head-t"><h1>${esc(convName(c))}</h1>${sub?`<span class="chat-sub">${sub}</span>`:''}</div></div>
+    <div class="chat-scroll" id="chatScroll">${bubbles}</div>
+    <div class="chat-compose"><input type="text" id="chatInput" placeholder="Message…" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();sendChat();}">
+      <button class="chat-send" onclick="sendChat()" title="Send">${sendArrow()}</button></div></div>`;
+}
+function openNewDM(){
+  const others=employees.filter(e=>e.id!==currentUser.id);
+  const rows=others.length?others.map(e=>`<button class="pick-row" onclick="openOrCreateDM('${e.id}')"><span class="cv-ava" style="${avatarStyle(e)}">${esc(initials(e.name))}</span><span>${esc(e.name)}</span></button>`).join(''):'<div class="cv-empty">No one else here yet.</div>';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>New message</h3><p class="sub">Pick someone to message</p>
+    <div class="pick-list">${rows}</div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button></div></div></div>`;
+}
+function openNewGroup(){
+  const others=employees.filter(e=>e.id!==currentUser.id);
+  const checks=others.map(e=>`<label class="grp-pick"><input type="checkbox" class="grp-mem" value="${e.id}"><span>${esc(e.name)}</span></label>`).join('');
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>New group</h3>
+    <div class="field"><label>Group name</label><input type="text" id="grpName" placeholder="e.g. Weekend crew"></div>
+    <div class="field"><label>Members</label><div class="grp-list">${checks||'<div class="cv-empty">No one else here yet.</div>'}</div></div>
+    <div class="err" id="grpErr"></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createGroup()">Create group</button></div></div></div>`;
+}
+function backArrow(){return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>`;}
+function sendArrow(){return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 11.5 21 3l-8.5 18-2.2-7.3z"/></svg>`;}
+function groupGlyph(){return `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;}
 async function enterApp(session){
   try{ await loadProfiles(); }
   catch(e){ renderLogin('Could not load team profiles: '+(e.message||e),true); return; }
@@ -1008,9 +1346,11 @@ async function enterApp(session){
   try{ await loadNotices(); }catch(e){ toast('Could not load notices: '+(e.message||e)); }
   try{ await loadAudit(); }catch(e){ toast('Could not load change log: '+(e.message||e)); }
   try{ await loadMyState(); }catch(e){ toast('Could not load your widgets: '+(e.message||e)); }
+  try{ await loadChat(); }catch(e){ toast('Could not load messages: '+(e.message||e)); }
   subscribeShifts();
   subscribePayroll();
   subscribeMisc();
+  subscribeChat();
   selectedEmpId=null; openDay=null; menuOpen=false; logReminder=false; activeTab='home';
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
@@ -1051,7 +1391,7 @@ function paintMenu(){
   p.classList.toggle('hide',!menuOpen);
   b.classList.toggle('open',menuOpen);
 }
-function goTab(id){activeTab=id;selectedEmpId=null;openDay=null;menuOpen=false;render();}
+function goTab(id){activeTab=id;selectedEmpId=null;openDay=null;menuOpen=false;chatPageOpen=false;chatOpenConv=null;render();}
 function toggleUserMenu(ev){ev.stopPropagation();
   const p=document.getElementById('userPanel');const showing=p.classList.toggle('show');if(menuOpen)closeMenu();
   if(showing)paintUserMenu();
@@ -1182,11 +1522,12 @@ document.addEventListener('click',()=>{if(menuOpen)closeMenu();closeUserMenu();}
 
 /* ================= RENDER ================= */
 function render(){
-  document.body.classList.toggle('home-bg', activeTab==='home' && !selectedEmpId);
+  document.body.classList.toggle('home-bg', activeTab==='home' && !selectedEmpId && !chatPageOpen);
   document.getElementById('view').innerHTML=renderBody();
   paintMenu();paintUserMenu();
 }
 function renderBody(){
+  if(chatPageOpen)return messagingPage();
   if(activeTab==='home')return homeTab();
   if(canManage(currentUser)&&selectedEmpId)return employeeDetail(selectedEmpId);
   switch(activeTab){
@@ -1205,16 +1546,19 @@ function paintUserMenu(){
   if(!currentUser)return;
   const myMsgs=messages.filter(m=>m.to===currentUser.id&&!m.read);
   const mgrNotices=canManage(currentUser)?notices:[];
-  dot.classList.toggle('hide',myMsgs.length===0&&mgrNotices.length===0);
   const msgItems=myMsgs.map(m=>`<div class="um-item um-click" onclick="readMessage(event,'${m.id}')" title="Click to mark read"><b>${esc(m.from)}</b>${m.subject?` <span class="um-subj">${esc(m.subject)}</span>`:''} ${esc(m.text)}<span class="t">${fmtDay(m.ts)} · ${fmtTime(m.ts)}</span></div>`).join('');
   const noticeItems=mgrNotices.map(n=>`<div class="um-item"><b>${nameOf(n.empId)}</b> clocked in outside their schedule.
         ${n.reason?'“'+esc(n.reason)+'”':''}<span class="t">${fmtDay(n.ts)} · ${fmtTime(n.ts)}</span>
         <button class="dz" onclick="event.stopPropagation();dismissNotice('${n.id}')">Dismiss</button></div>`).join('');
-  const body=(msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
-  const count=myMsgs.length+mgrNotices.length;
-  const inbox=`<div class="um-notif"><div class="um-label"><span>Notifications${count?` <span class="um-ct">${count}</span>`:''}</span>`
+  const pReq=pendingRequestCount();
+  const reqLine=pReq?`<button class="um-item um-click" onclick="openChatPage(event)"><b>${pReq} time off request${pReq>1?'s':''}</b> waiting for your review.</button>`:'';
+  const body=(reqLine+msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
+  const count=myMsgs.length+mgrNotices.length+pReq;
+  dot.classList.toggle('hide',myMsgs.length===0&&mgrNotices.length===0&&pReq===0);
+  const reqBtn=!canManage(currentUser)?`<button class="um-req" onclick="openTimeOffRequest(event)">Request time off</button>`:'';
+  const inbox=`<div class="um-notif"><div class="um-label"><button class="um-open" onclick="openChatPage(event)" title="Open messages">Notifications${count?` <span class="um-ct">${count}</span>`:''}</button>`
     +`<button class="um-send" onclick="openSendNotif(event)" title="Send a message" aria-label="Send a message"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M3 11.5 21 3l-8.5 18-2.2-7.3z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></button>`
-    +`</div>${body}</div><div class="um-div"></div>`;
+    +`</div>${reqBtn}${body}</div><div class="um-div"></div>`;
   panel.innerHTML=inbox
     +`<button class="menu-item" onclick="openProfile(event)">Profile</button>`
     +`<button class="menu-item" onclick="signOut()">Sign out</button>`;
@@ -1483,7 +1827,14 @@ function shiftMonth(n){
   const d=new Date(y,m-1+n,1);calCursor=d.getFullYear()+'-'+pad(d.getMonth()+1);render();
 }
 function thisMonth(){const d=new Date(now);calCursor=d.getFullYear()+'-'+pad(d.getMonth()+1);render();}
-function offFor(k,scopeId){return timeOff.filter(t=>k>=t.start&&k<=t.end&&(!scopeId||t.empId===scopeId));}
+function offFor(k,scopeId){
+  return timeOff.filter(t=>{
+    if(t.status!=='approved')return false;                 // only approved on the calendar
+    if(!(k>=t.start&&k<=t.end))return false;
+    if(canManage(currentUser))return true;                 // managers see everyone
+    return t.empId===currentUser.id||isManagerId(t.empId); // employees: own + managers'
+  });
+}
 function priFor(k){return priorities.filter(p=>p.due===k);}
 
 function calendarGrid(scopeId){
@@ -1494,7 +1845,7 @@ function calendarGrid(scopeId){
   for(let i=0;i<lead;i++)cells+='<div class="cell pad"></div>';
   for(let d=1;d<=total;d++){
     const k=y+'-'+pad(m)+'-'+pad(d);
-    const offs=offFor(k,scopeId).map(t=>`<span class="ev off">${esc(scopeId?t.note:nameOf(t.empId).split(' ')[0]+' · '+t.note)}</span>`).join('');
+    const offs=offFor(k,scopeId).map(t=>`<span class="ev off">${esc(t.empId===currentUser.id?t.note:nameOf(t.empId).split(' ')[0]+' · '+t.note)}</span>`).join('');
     const pris=priFor(k).map(p=>`<span class="ev pri ${p.done?'done':''}">${esc(p.title)}</span>`).join('');
     const clickable=canManage(currentUser);
     cells+=`<${clickable?'button':'div'} class="cell ${k===todayK?'today':''}" ${clickable?`onclick="openDayAdd('${k}')"`:''}>
@@ -1720,12 +2071,12 @@ function saveDayAdd(k){
     if(!s||!e){err.textContent='Pick both dates.';return;}
     if(e<s){err.textContent='End date must be after the start date.';return;}
     if(live()){
-      sb.from('time_off').insert({user_id:who,start_date:s,end_date:e,note}).select().single().then(({data,error})=>{
+      sb.from('time_off').insert({user_id:who,start_date:s,end_date:e,note,status:'approved'}).select().single().then(({data,error})=>{
         if(error){toast('Time off not saved: '+error.message);return;}
         if(!timeOff.some(t=>t.id===data.id)){timeOff.push(offFromRow(data));render();}
       });
     }else{
-      timeOff.push({id:'t'+Date.now(),empId:who,start:s,end:e,note});
+      timeOff.push({id:'t'+Date.now(),empId:who,start:s,end:e,note,status:'approved'});
     }
     closeModal();render();toast('Time off added');
   }else{
