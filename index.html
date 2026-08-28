@@ -767,7 +767,8 @@ function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s
 /* role helpers — managers and co-managers share management powers; co-managers + employees clock in */
 function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager');}
 function clocksIn(u){return !!u&&u.role!=='manager';}
-function hourlyStaff(){return employees.filter(e=>e.role==='comanager'||e.role==='employee').sort((a,b)=>a.name.localeCompare(b.name));}
+function lastName(n){const p=(n||'').trim().split(/\s+/);return p.length>1?p[p.length-1]:(p[0]||'');}
+function hourlyStaff(){return employees.filter(e=>e.role==='comanager'||e.role==='employee').sort((a,b)=>lastName(a.name).localeCompare(lastName(b.name))||a.name.localeCompare(b.name));}
 function periodMs(id,p){return shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
 function nameOf(id){const e=employees.find(x=>x.id===id);return e?e.name:'—';}
 function hmToMin(hm){const [h,m]=hm.split(':').map(Number);return h*60+m;}
@@ -851,7 +852,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 20 · payroll alphabetical</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 21 · payroll by last name</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
