@@ -852,7 +852,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 21 · payroll by last name</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 22 · deleted chats stay gone</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1102,8 +1102,10 @@ async function loadChat(){
   const memByConv={}, myRead={};
   (mr.data||[]).forEach(m=>{(memByConv[m.conversation_id]=memByConv[m.conversation_id]||[]).push(m.user_id);
     if(m.user_id===currentUser.id)myRead[m.conversation_id]=new Date(m.last_read_at).getTime();});
-  conversations=(cr.data||[]).map(c=>({id:c.id,kind:c.kind,title:c.title||'',dmKey:c.dm_key||'',
-    members:memByConv[c.id]||[],lastRead:myRead[c.id]||0}));
+  conversations=(cr.data||[])
+    .filter(c=>(memByConv[c.id]||[]).includes(currentUser.id))   /* left/deleted chats stay gone */
+    .map(c=>({id:c.id,kind:c.kind,title:c.title||'',dmKey:c.dm_key||'',
+      members:memByConv[c.id]||[],lastRead:myRead[c.id]||0}));
   chatMsgs={};
   (gr.data||[]).forEach(m=>appendChatMsg(m.conversation_id,{id:m.id,from:m.from_user,fromName:m.from_name,body:m.body,ts:new Date(m.created_at).getTime()}));
 }
