@@ -852,7 +852,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 22 · deleted chats stay gone</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 23 · verify chat delete</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1146,8 +1146,9 @@ function askDeleteConv(id){
 }
 async function deleteConv(id){
   if(live()){
-    const {error}=await sb.from('conversation_members').delete().eq('conversation_id',id).eq('user_id',currentUser.id);
+    const {data,error}=await sb.from('conversation_members').delete().eq('conversation_id',id).eq('user_id',currentUser.id).select();
     if(error){toast('Could not delete: '+error.message);return;}
+    if(!data||data.length===0){toast("Couldn't remove it on the server — a database permission is missing (run otg-schema-7.sql).");return;}
   }
   conversations=conversations.filter(c=>c.id!==id); delete chatMsgs[id];
   if(chatOpenConv===id)chatOpenConv=null;
