@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -336,6 +336,16 @@
   /* --- rounded (oval) add-project box --- */
   .pri-add .btn-sm{border-radius:22px;padding-left:20px;padding-right:20px}
   .pri-add input{border-radius:9px}
+  .pri-add.collapsed{padding-top:4px}
+  .pri-add-btn{width:100%;justify-content:center}
+  .pri-add-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+  .pri-color-row{display:flex;gap:16px;align-items:flex-start;margin-top:4px;flex-wrap:wrap}
+  .pri-recent{display:flex;flex-direction:column;gap:7px;padding-top:2px}
+  .pri-recent-lbl{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .pri-recent-swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .pri-recent-sw{width:24px;height:24px;border-radius:6px;border:1px solid var(--rule);cursor:pointer;padding:0}
+  .pri-recent-sw:hover{transform:scale(1.08);border-color:var(--purple)}
+  .pri-recent-none{font-size:12px;color:var(--muted)}
   .w-sheet{display:inline-flex;align-items:center;gap:6px;color:#0B6B33;text-decoration:none;font-weight:600}
   .w-sheet svg{width:13px;height:13px;flex:none;stroke:#0F9D58}
   .w-sheet:hover span{text-decoration:underline}
@@ -741,7 +751,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 9 · priority redesign</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 11 · recent colors</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -908,6 +918,7 @@ async function loadMyState(){
   if(Array.isArray(d.widgets))homeWidgets[currentUser.id]=d.widgets;
   if(d.pos&&typeof d.pos==='object')homePos[currentUser.id]=d.pos;
   widgetStore[currentUser.id]={reminders:Array.isArray(d.reminders)?d.reminders:[],todos:Array.isArray(d.todos)?d.todos:[]};
+  recentColors=Array.isArray(d.recentColors)?d.recentColors.slice(0,5):[];
 }
 let myStateTimer=null;
 function saveMyState(){
@@ -915,7 +926,7 @@ function saveMyState(){
   clearTimeout(myStateTimer);
   myStateTimer=setTimeout(async()=>{
     const payload={widgets:userWidgets(currentUser),pos:posMap(currentUser),
-      reminders:userStore(currentUser).reminders,todos:userStore(currentUser).todos};
+      reminders:userStore(currentUser).reminders,todos:userStore(currentUser).todos,recentColors:recentColors};
     const {error}=await sb.from('user_state').upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()});
     if(error)toast('Widgets not saved: '+error.message);
   },500);
@@ -1517,12 +1528,13 @@ function priorityList(editable){
       ${editable?`<button class="pri-link ${p.link?'on':''}" draggable="false" onclick="openPriLink('${p.id}')" title="${p.link?'Edit spreadsheet link':'Add spreadsheet link'}">${sheetIcon()}</button>
       <button class="pri-x" draggable="false" onclick="removePri('${p.id}')" title="Remove">&times;</button>`:''}</div>`;
   }).join(''):'<div class="empty">No projects.</div>';
-  const add=editable?`<div class="pri-add">
+  const add=editable?(priAddOpen?`<div class="pri-add">
       <div class="field"><label>New project</label><input type="text" id="priTitle" placeholder="Quarterly inventory count"></div>
       <div class="field"><label>Spreadsheet link <span class="opt">optional</span></label><input type="text" id="priLink" placeholder="Paste a Google Sheets link"></div>
       <div class="field"><label>Due <span class="opt">optional</span></label><input type="date" id="priDue"></div>
-      <button class="btn btn-primary btn-sm" onclick="addPri()">Add project</button>
-      <div class="err" id="priErr"></div></div>`:'';
+      <div class="pri-add-actions"><button class="btn btn-line btn-sm" onclick="priAddOpen=false;render()">Cancel</button><button class="btn btn-primary btn-sm" onclick="addPri()">Add project</button></div>
+      <div class="err" id="priErr"></div></div>`
+    :`<div class="pri-add collapsed"><button class="btn btn-primary btn-sm pri-add-btn" onclick="openPriAdd()">Add project</button></div>`):'';
   return rows+add;
 }
 function togglePri(id){const p=priorities.find(x=>x.id===id);if(!p)return;p.done=!p.done;render();
@@ -1541,7 +1553,18 @@ function priDrop(ev,targetId){ev.preventDefault();ev.stopPropagation();if(priDra
   if(live())priorities.forEach((p,i)=>{ p.pos=i;
     sb.from('priorities').update({pos:i}).eq('id',p.id).then(({error})=>{ if(error)toast('Order not saved: '+error.message); }); });}
 function priDragEnd(){priDragCleanup();}
-let priDueOpen=null, priPickColor='';
+let priDueOpen=null, priPickColor='', priAddOpen=false, recentColors=[];
+function rememberColor(c){
+  if(!c)return;
+  recentColors=[c,...recentColors.filter(x=>x!==c)].slice(0,5);
+  saveMyState();
+}
+function pickRecent(c){
+  priPickColor=c;
+  const prev=document.getElementById('priPrev');
+  if(prev){prev.style.background=c;prev.style.borderColor=c;prev.style.color=priContrast(c);}
+}
+function openPriAdd(){priAddOpen=true;render();setTimeout(()=>{const el=document.getElementById('priTitle');if(el)el.focus();},0);}
 function priContrast(color){
   if(!color)return '#fff';
   let l=null;
@@ -1565,7 +1588,15 @@ function openPriPriority(id){
     <h3>Priority</h3><p class="sub">${esc(p.title)}</p>
     <div class="field"><label>Number</label><input type="number" id="priNumIn" min="1" step="1" value="${p.pnum!=null?p.pnum:''}" placeholder="e.g. 1"></div>
     <div class="field"><label>Color</label>
-      <div class="pf-wheel" id="priWheel" onclick="priWheelPick(event)" style="margin-top:4px"></div></div>
+      <div class="pri-color-row">
+        <div class="pf-wheel" id="priWheel" onclick="priWheelPick(event)" style="margin-top:4px"></div>
+        <div class="pri-recent">
+          <span class="pri-recent-lbl">Recently used</span>
+          ${recentColors.length
+            ? `<div class="pri-recent-swatches">${recentColors.map(c=>`<button class="pri-recent-sw" title="${c}" style="background:${c}" onclick="pickRecent('${c}')"></button>`).join('')}</div>`
+            : `<span class="pri-recent-none">None yet</span>`}
+        </div>
+      </div></div>
     <div class="field"><label>Preview</label><span class="pri-p set" id="priPrev" style="${swatch}">P<span class="pn" id="priPrevN">${p.pnum!=null?p.pnum:'1'}</span></span></div>
     <div class="err" id="priPErr"></div>
     <div class="modal-actions">
@@ -1593,7 +1624,7 @@ function savePriPriority(id,clear){
   const raw=(document.getElementById('priNumIn').value||'').trim();
   const num=parseInt(raw,10);
   if(!raw||isNaN(num)||num<1){document.getElementById('priPErr').textContent='Enter a priority number (1 or higher).';return;}
-  p.pnum=num;p.pcolor=priPickColor||'';closeModal();render();
+  p.pnum=num;p.pcolor=priPickColor||'';rememberColor(p.pcolor);closeModal();render();
   if(live())sb.from('priorities').update({pnum:num,pcolor:p.pcolor||null}).eq('id',id).then(({error})=>{ if(error)toast('Priority not saved: '+error.message); });
 }
 function priDragCleanup(){priDragId=null;
@@ -1611,6 +1642,7 @@ function addPri(){
   }else{
     priorities.push({id:'pr'+Date.now(),title:t,due:d,done:false,link});
   }
+  priAddOpen=false;
   render();
 }
 function normLink(v){v=(v||'').trim();if(!v)return '';if(!/^https?:\/\//i.test(v))v='https://'+v;return v;}
