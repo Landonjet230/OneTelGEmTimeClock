@@ -133,6 +133,7 @@
   .cv-row.unread .cv-prev{color:var(--text)}
   .cv-dot{width:9px;height:9px;flex:none;border-radius:50%;background:var(--purple)}
   .cv-empty{color:var(--muted);font-size:13px;padding:20px 4px}
+  .cv-hint{font-size:11px;color:var(--muted);text-align:center;margin:14px 0 0}
   .chat-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:6px 2px 12px;max-height:calc(100vh - 250px)}
   .cb-row{display:flex;flex-direction:column;max-width:78%}
   .cb-row.me{align-self:flex-end;align-items:flex-end}
@@ -834,7 +835,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 15 · time-off requests</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 17 · chat dedup & delete</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1110,6 +1111,34 @@ function closeChatPage(){ chatPageOpen=false; chatOpenConv=null; render(); }
 function openConv(id){ chatOpenConv=id; markRead(id); render();
   setTimeout(()=>{const el=document.getElementById('chatScroll');if(el)el.scrollTop=el.scrollHeight;},0); }
 function backToConvList(){ chatOpenConv=null; render(); }
+let convTapId=null, convTapTimer=null;
+function convTap(id){
+  if(convTapId===id&&convTapTimer){ clearTimeout(convTapTimer);convTapTimer=null;convTapId=null; askDeleteConv(id); return; }
+  convTapId=id;
+  convTapTimer=setTimeout(()=>{ convTapTimer=null;convTapId=null; openConv(id); },250);
+}
+function convTwoFinger(ev,id){
+  if(ev.touches&&ev.touches.length===2){ ev.preventDefault();
+    if(convTapTimer){clearTimeout(convTapTimer);convTapTimer=null;convTapId=null;}
+    askDeleteConv(id); }
+}
+function askDeleteConv(id){
+  const c=conversations.find(x=>x.id===id);if(!c)return;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Delete chat</h3><p class="sub">Remove “${esc(convName(c))}” from your list? Your messages stay for the others.</p>
+    <div class="modal-actions edit-actions"><span></span><span class="ea-right">
+      <button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteConv('${id}')">Delete</button></span></div></div></div>`;
+}
+async function deleteConv(id){
+  if(live()){
+    const {error}=await sb.from('conversation_members').delete().eq('conversation_id',id).eq('user_id',currentUser.id);
+    if(error){toast('Could not delete: '+error.message);return;}
+  }
+  conversations=conversations.filter(c=>c.id!==id); delete chatMsgs[id];
+  if(chatOpenConv===id)chatOpenConv=null;
+  closeModal();render();toast('Chat removed');
+}
 function markRead(convId){
   const c=conversations.find(x=>x.id===convId); if(c)c.lastRead=Date.now();
   if(live())sb.from('conversation_members').update({last_read_at:new Date().toISOString()}).eq('conversation_id',convId).eq('user_id',currentUser.id).then(()=>{});
@@ -1122,7 +1151,11 @@ async function openOrCreateDM(otherId){
   if(!live()){toast('Sign in to start a chat.');return;}
   const {data:existing}=await sb.from('conversations').select('*').eq('dm_key',key).maybeSingle();
   let convId;
-  if(existing){convId=existing.id;}
+  if(existing){
+    convId=existing.id;
+    const {data:mem}=await sb.from('conversation_members').select('user_id').eq('conversation_id',convId).eq('user_id',currentUser.id).maybeSingle();
+    if(!mem){ await sb.from('conversation_members').insert({conversation_id:convId,user_id:currentUser.id}); }
+  }
   else{
     const {data:created,error}=await sb.from('conversations').insert({kind:'dm',dm_key:key,created_by:currentUser.id}).select().single();
     if(error){
@@ -1138,11 +1171,14 @@ async function openOrCreateDM(otherId){
   await loadChat(); closeModal(); openConv(convId);
 }
 async function createGroup(){
-  const title=(document.getElementById('grpName').value||'').trim();
+  let title=(document.getElementById('grpName').value||'').trim();
   const err=document.getElementById('grpErr');
-  if(!title){err.textContent='Give the group a name.';return;}
   const picked=[...document.querySelectorAll('.grp-mem:checked')].map(el=>el.value);
   if(!picked.length){err.textContent='Pick at least one person.';return;}
+  const wantKey=[...new Set([currentUser.id,...picked])].sort().join('|');
+  const dupe=conversations.find(c=>c.kind==='group'&&[...c.members].sort().join('|')===wantKey);
+  if(dupe){closeModal();openConv(dupe.id);toast('Opened your existing group');return;}
+  if(!title){ title=[currentUser.id,...picked].map(id=>nameOf(id).split(' ')[0]).join(', '); }
   if(!live()){toast('Sign in to create a group.');return;}
   const {data:created,error}=await sb.from('conversations').insert({kind:'group',title,created_by:currentUser.id}).select().single();
   if(error){err.textContent='Could not create group: '+error.message;return;}
@@ -1246,7 +1282,7 @@ function chatListView(){
     const last=(chatMsgs[c.id]||[]).slice(-1)[0];
     const prev=last?`${last.from===currentUser.id?'You: ':''}${esc(last.body)}`:'No messages yet';
     const un=convUnread(c);
-    return `<button class="cv-row ${un?'unread':''}" onclick="openConv('${c.id}')">
+    return `<button class="cv-row ${un?'unread':''}" onclick="convTap('${c.id}')" ontouchstart="convTwoFinger(event,'${c.id}')">
       <span class="cv-ava ${c.kind==='group'?'grp':''}">${c.kind==='group'?groupGlyph():esc(initials(convName(c)))}</span>
       <span class="cv-mid"><span class="cv-name">${esc(convName(c))}</span><span class="cv-prev">${prev}</span></span>
       ${un?'<span class="cv-dot"></span>':''}</button>`;
@@ -1257,7 +1293,8 @@ function chatListView(){
     ${requestsSection()}
     <div class="cv-actions"><button class="btn btn-primary btn-sm" onclick="openNewDM()">New message</button>
       <button class="btn btn-line btn-sm" onclick="openNewGroup()">New group</button></div>
-    <div class="cv-list">${rows}</div></div>`;
+    <div class="cv-list">${rows}</div>
+    ${sorted.length?'<p class="cv-hint">Double-tap or two-finger tap a chat to remove it from your list.</p>':''}</div>`;
 }
 function requestsSection(){
   const mgr=canManage(currentUser);
@@ -1309,7 +1346,7 @@ function openNewGroup(){
   const checks=others.map(e=>`<label class="grp-pick"><input type="checkbox" class="grp-mem" value="${e.id}"><span>${esc(e.name)}</span></label>`).join('');
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>New group</h3>
-    <div class="field"><label>Group name</label><input type="text" id="grpName" placeholder="e.g. Weekend crew"></div>
+    <div class="field"><label>Group name <span class="opt">optional</span></label><input type="text" id="grpName" placeholder="Defaults to members' names"></div>
     <div class="field"><label>Members</label><div class="grp-list">${checks||'<div class="cv-empty">No one else here yet.</div>'}</div></div>
     <div class="err" id="grpErr"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
