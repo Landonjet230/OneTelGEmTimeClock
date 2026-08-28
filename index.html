@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -439,6 +439,10 @@
   .pf-preset{width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.25);cursor:pointer;padding:0}
   .pf-ro{font-family:"IBM Plex Mono";font-size:14px;color:#EAE7F0}
   .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:26px;flex-wrap:wrap}
+  .edit-actions{justify-content:space-between;align-items:center}
+  .edit-actions .ea-right{display:flex;gap:10px;align-items:center}
+  .btn-danger{background:#A81E27;color:#fff;border:1px solid #A81E27}
+  .btn-danger:hover{background:#8E1720;border-color:#8E1720}
   .req{color:var(--purple-deep)}
   .role-row{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--rule-soft)}
   .role-row:last-child{border-bottom:0}
@@ -751,7 +755,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 11 · recent colors</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 12 · timecard delete & open shifts</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -2087,6 +2091,7 @@ async function saveAdd(empId){
   if(!reason){err.textContent='Add a reason — it goes in the change log.';return;}
   const nIn=inputToTs(document.getElementById('edIn').value),nOut=inputToTs(document.getElementById('edOut').value);
   if(!nIn){err.textContent='Clock-in time is required.';return;}
+  if(!nOut&&dateKey(nIn)!==dateKey(now)){err.textContent='Clock-out is required for a past day.';return;}
   if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
   if(live()){
     const {data,error}=await sb.from('shifts').insert({user_id:empId,clock_in:new Date(nIn).toISOString(),clock_out:nOut?new Date(nOut).toISOString():null,edited:true}).select().single();
@@ -2101,22 +2106,24 @@ async function saveAdd(empId){
 function openEditDay(shiftId){
   const s=shifts.find(x=>x.id===shiftId);if(!s)return;
   const e=employees.find(x=>x.id===s.empId);
-  const active=s.clockOut===null;
+  const inToday=dateKey(s.clockIn)===dateKey(now);
+  const outHint=inToday?'<span class="opt">leave blank if still clocked in</span>':'<span class="opt">required for a past day</span>';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Edit day</h3><p class="sub">${e.name} · ${fmtDay(s.clockIn)}</p>
     <div class="field"><label>Clock in</label><input type="datetime-local" id="edIn" value="${tsToInput(s.clockIn)}"></div>
-    <div class="field"><label>Clock out ${active?'<span class="opt">optional — still clocked in</span>':''}</label><input type="datetime-local" id="edOut" value="${s.clockOut?tsToInput(s.clockOut):''}"></div>
+    <div class="field"><label>Clock out ${outHint}</label><input type="datetime-local" id="edOut" value="${s.clockOut?tsToInput(s.clockOut):''}"></div>
     <div class="err" id="edErr"></div>
-    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-primary btn-sm" onclick="saveEditDay('${shiftId}')">Save changes</button></div></div></div>`;
+    <div class="modal-actions edit-actions"><button class="btn btn-danger btn-sm" onclick="deleteShift('${shiftId}')">Delete record</button>
+    <span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="saveEditDay('${shiftId}')">Save changes</button></span></div></div></div>`;
 }
 async function saveEditDay(shiftId){
   const s=shifts.find(x=>x.id===shiftId);if(!s)return;
-  const wasActive=s.clockOut===null;
   const err=document.getElementById('edErr');
   const nIn=inputToTs(document.getElementById('edIn').value),nOut=inputToTs(document.getElementById('edOut').value);
   if(!nIn){err.textContent='Clock-in time is required.';return;}
-  if(!nOut&&!wasActive){err.textContent='Clock-out time is required.';return;}   /* active shifts may stay open */
+  const inToday=dateKey(nIn)===dateKey(now);
+  if(!nOut&&!inToday){err.textContent='Clock-out is required for a past day.';return;}   /* only today's shift may stay open */
   if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
   const oldStr=fmtTime(s.clockIn)+' – '+(s.clockOut?fmtTime(s.clockOut):'active');
   const newStr=fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'active');
@@ -2127,6 +2134,18 @@ async function saveEditDay(shiftId){
   s.clockIn=nIn;s.clockOut=nOut||null;s.edited=true;
   logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(s.empId),field:'Time edited',old:oldStr,new:newStr,reason:''});
   closeModal();render();toast('Day updated');
+}
+async function deleteShift(shiftId){
+  const s=shifts.find(x=>x.id===shiftId);if(!s)return;
+  const err=document.getElementById('edErr');
+  const oldStr=fmtTime(s.clockIn)+' – '+(s.clockOut?fmtTime(s.clockOut):'active');
+  if(live()){
+    const {error}=await sb.from('shifts').delete().eq('id',shiftId);
+    if(error){if(err)err.textContent='Could not delete: '+error.message;return;}
+  }
+  shifts=shifts.filter(x=>x.id!==shiftId);
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(s.empId),field:'Record deleted',old:oldStr,new:'—',reason:''});
+  closeModal();render();toast('Time record deleted');
 }
 
 /* ================= CLOCK ================= */
