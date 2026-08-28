@@ -134,15 +134,15 @@
   .cv-dot{width:9px;height:9px;flex:none;border-radius:50%;background:var(--purple)}
   .cv-empty{color:var(--muted);font-size:13px;padding:20px 4px}
   .cv-hint{font-size:11px;color:var(--muted);text-align:center;margin:14px 0 0}
-  .chat-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:6px 2px 12px;max-height:calc(100vh - 250px)}
-  .cb-row{display:flex;flex-direction:column;max-width:78%}
+  .chat-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:6px 2px 12px;max-height:calc(100vh - 250px)}
+  .cb-row{display:flex;flex-direction:column;max-width:76%}
   .cb-row.me{align-self:flex-end;align-items:flex-end}
   .cb-row.them{align-self:flex-start;align-items:flex-start}
-  .cb-who{font-size:10.5px;color:var(--muted);margin:2px 8px 1px}
-  .cb{padding:8px 12px;border-radius:16px;font-size:14px;line-height:1.35;word-break:break-word}
-  .cb-me{background:var(--purple);color:#fff;border-bottom-right-radius:5px}
-  .cb-them{background:#EDEAF2;color:var(--text);border-bottom-left-radius:5px}
-  .cb-t{font-size:9.5px;color:var(--muted);margin:2px 8px 0}
+  .cb-who{font-size:10.5px;color:var(--muted);margin:4px 12px 1px}
+  .cb{padding:7px 14px;border-radius:20px;font-size:15px;line-height:1.32;word-break:break-word;-webkit-font-smoothing:antialiased}
+  .cb-me{background:var(--purple);color:#fff;border-bottom-right-radius:7px}
+  .cb-them{background:#E9E9EB;color:#111;border-bottom-left-radius:7px}
+  .cb-t{font-size:9.5px;color:var(--muted);margin:3px 12px 4px}
   .chat-compose{display:flex;gap:9px;align-items:center;padding-top:10px;border-top:1px solid var(--rule-soft);margin-top:4px}
   .chat-compose input{flex:1;border:1px solid var(--rule);border-radius:22px;padding:10px 15px;font-family:"Barlow";font-size:14px;color:#000;background:#fff;color-scheme:only light;outline:none}
   .chat-compose input:focus{border-color:var(--purple)}
@@ -835,7 +835,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 17 · chat dedup & delete</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 18 · iMessage bubbles & avatar colors</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1117,11 +1117,6 @@ function convTap(id){
   convTapId=id;
   convTapTimer=setTimeout(()=>{ convTapTimer=null;convTapId=null; openConv(id); },250);
 }
-function convTwoFinger(ev,id){
-  if(ev.touches&&ev.touches.length===2){ ev.preventDefault();
-    if(convTapTimer){clearTimeout(convTapTimer);convTapTimer=null;convTapId=null;}
-    askDeleteConv(id); }
-}
 function askDeleteConv(id){
   const c=conversations.find(x=>x.id===id);if(!c)return;
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
@@ -1282,8 +1277,10 @@ function chatListView(){
     const last=(chatMsgs[c.id]||[]).slice(-1)[0];
     const prev=last?`${last.from===currentUser.id?'You: ':''}${esc(last.body)}`:'No messages yet';
     const un=convUnread(c);
-    return `<button class="cv-row ${un?'unread':''}" onclick="convTap('${c.id}')" ontouchstart="convTwoFinger(event,'${c.id}')">
-      <span class="cv-ava ${c.kind==='group'?'grp':''}">${c.kind==='group'?groupGlyph():esc(initials(convName(c)))}</span>
+    const other=c.kind==='dm'?employees.find(e=>e.id===c.members.find(id=>id!==currentUser.id)):null;
+    const avaStyle=other?avatarStyle(other):'';
+    return `<button class="cv-row ${un?'unread':''}" onclick="convTap('${c.id}')">
+      <span class="cv-ava ${c.kind==='group'?'grp':''}" style="${avaStyle}">${c.kind==='group'?groupGlyph():esc(initials(convName(c)))}</span>
       <span class="cv-mid"><span class="cv-name">${esc(convName(c))}</span><span class="cv-prev">${prev}</span></span>
       ${un?'<span class="cv-dot"></span>':''}</button>`;
   }).join(''):'<div class="cv-empty">No conversations yet. Start one below.</div>';
@@ -1294,7 +1291,7 @@ function chatListView(){
     <div class="cv-actions"><button class="btn btn-primary btn-sm" onclick="openNewDM()">New message</button>
       <button class="btn btn-line btn-sm" onclick="openNewGroup()">New group</button></div>
     <div class="cv-list">${rows}</div>
-    ${sorted.length?'<p class="cv-hint">Double-tap or two-finger tap a chat to remove it from your list.</p>':''}</div>`;
+    ${sorted.length?'<p class="cv-hint">Double-tap a chat to remove it from your list.</p>':''}</div>`;
 }
 function requestsSection(){
   const mgr=canManage(currentUser);
