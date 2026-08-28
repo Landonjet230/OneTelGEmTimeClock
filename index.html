@@ -443,6 +443,9 @@
   .edit-actions .ea-right{display:flex;gap:10px;align-items:center}
   .btn-danger{background:#A81E27;color:#fff;border:1px solid #A81E27}
   .btn-danger:hover{background:#8E1720;border-color:#8E1720}
+  .del-shift{background:none;border:0;cursor:pointer;color:#C86A70;padding:5px;display:inline-flex;align-items:center;line-height:1;border-radius:7px}
+  .del-shift svg{width:19px;height:19px}
+  .del-shift:hover{color:#A81E27;background:rgba(168,30,39,.08)}
   .req{color:var(--purple-deep)}
   .role-row{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--rule-soft)}
   .role-row:last-child{border-bottom:0}
@@ -755,7 +758,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 12 · timecard delete & open shifts</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 13 · trash icon</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -2113,7 +2116,7 @@ function openEditDay(shiftId){
     <div class="field"><label>Clock in</label><input type="datetime-local" id="edIn" value="${tsToInput(s.clockIn)}"></div>
     <div class="field"><label>Clock out ${outHint}</label><input type="datetime-local" id="edOut" value="${s.clockOut?tsToInput(s.clockOut):''}"></div>
     <div class="err" id="edErr"></div>
-    <div class="modal-actions edit-actions"><button class="btn btn-danger btn-sm" onclick="deleteShift('${shiftId}')">Delete record</button>
+    <div class="modal-actions edit-actions"><button class="del-shift" title="Delete this time record" onclick="deleteShift('${shiftId}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
     <span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
     <button class="btn btn-primary btn-sm" onclick="saveEditDay('${shiftId}')">Save changes</button></span></div></div></div>`;
 }
