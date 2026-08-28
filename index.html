@@ -134,6 +134,22 @@
   .cv-dot{width:9px;height:9px;flex:none;border-radius:50%;background:var(--purple)}
   .cv-empty{color:var(--muted);font-size:13px;padding:20px 4px}
   .cv-hint{font-size:11px;color:var(--muted);text-align:center;margin:14px 0 0}
+  /* ---- clean compose sheet (send-message popup) ---- */
+  .modal.compose{max-width:430px}
+  .modal.compose h3{margin-bottom:3px}
+  .cmp-sub{font-size:12.5px;color:var(--muted);margin:0 0 16px}
+  .seg{display:flex;background:#EEEBF3;border-radius:12px;padding:3px;gap:3px;margin-bottom:16px}
+  .seg-opt{flex:1;border:0;background:transparent;border-radius:9px;padding:9px;font-family:"Archivo";font-weight:700;font-size:12.5px;color:var(--muted);cursor:pointer;transition:background .12s}
+  .seg-opt.on{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.09)}
+  .cmp-field{margin-bottom:13px}
+  .cmp-field label{display:block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .cmp-field .opt{text-transform:none;letter-spacing:0;color:#B4AFBE}
+  .cmp-field input,.cmp-field textarea{width:100%;box-sizing:border-box;border:1px solid var(--rule);border-radius:13px;padding:11px 14px;font-family:"Barlow";font-size:14.5px;color:#000;background:#fff;color-scheme:only light;outline:none}
+  .cmp-field input::placeholder,.cmp-field textarea::placeholder{color:#9A94A4}
+  .cmp-field input:focus,.cmp-field textarea:focus{border-color:var(--purple)}
+  .cmp-field textarea{resize:vertical;min-height:90px;line-height:1.42}
+  .cmp-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
+  .cmp-actions .btn{border-radius:22px;padding-left:22px;padding-right:22px}
   .chat-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:6px 2px 12px;max-height:calc(100vh - 250px)}
   .cb-row{display:flex;flex-direction:column;max-width:76%}
   .cb-row.me{align-self:flex-end;align-items:flex-end}
@@ -835,7 +851,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 18 · iMessage bubbles & avatar colors</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 19 · clean compose sheet</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1505,26 +1521,29 @@ function openSendNotif(ev){ev.stopPropagation();closeUserMenu();
   const everyone=employees.filter(e=>e.id!==u.id);
   const indiv = role==='employee' ? leaders : everyone;
   const opts=indiv.map(e=>`<option value="${esc(e.name)}"></option>`).join('');
-  /* employees always send to one leader (no "Everyone"); leadership gets the Everyone/individual picker */
-  const toField = role==='employee' ? ''
-    : `<div class="field" id="ntToWrap"><label>To</label><select id="ntTo" onchange="ntSwap()">
-        <option value="all">Everyone</option><option value="one">An individual</option></select></div>`;
+  /* employees always send to one leader (no "Everyone"); leadership gets the segmented picker */
+  const seg = role==='employee' ? ''
+    : `<div class="seg" id="ntSeg">
+         <button class="seg-opt on" data-v="all" onclick="ntSegPick('all')">Everyone</button>
+         <button class="seg-opt" data-v="one" onclick="ntSegPick('one')">Individual</button>
+       </div><input type="hidden" id="ntTo" value="all">`;
   const whoHidden = role==='employee' ? '' : 'hide';
-  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>New message</h3><p class="sub" id="ntSub">Appears in your team's notifications.</p>
-    ${toField}
-    <div class="field ${whoHidden}" id="ntWhoWrap"><label>${role==='employee'?'To a manager or co-manager':'Name'}</label>
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal compose">
+    <h3>New message</h3><p class="cmp-sub" id="ntSub">${role==='employee'?'Sent to a manager or co-manager.':"Appears in your team's notifications."}</p>
+    ${seg}
+    <div class="cmp-field ${whoHidden}" id="ntWhoWrap"><label>${role==='employee'?'To':'Recipient'}</label>
       <input type="text" id="ntWho" list="ntNames" placeholder="Type a name" autocomplete="off">
       <datalist id="ntNames">${opts}</datalist></div>
-    <div class="field"><label>Subject <span class="opt">optional</span></label><input type="text" id="ntSubj" placeholder="Time off, project question, reimbursement request…"></div>
-    <div class="field"><label>Message</label><input type="text" id="ntMsg" placeholder="Team meeting moved to 3pm"></div>
+    <div class="cmp-field"><label>Subject <span class="opt">optional</span></label><input type="text" id="ntSubj" placeholder="Time off, project question…"></div>
+    <div class="cmp-field"><label>Message</label><textarea id="ntMsg" rows="3" placeholder="Write your message…"></textarea></div>
     <div class="err" id="ntErr"></div>
-    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+    <div class="cmp-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="sendNotification()">Send</button></div></div></div>`;
 }
-function ntSwap(){
-  const sel=document.getElementById('ntTo'); if(!sel)return;
-  document.getElementById('ntWhoWrap').classList.toggle('hide',sel.value!=='one');
+function ntSegPick(v){
+  const t=document.getElementById('ntTo'); if(t)t.value=v;
+  document.querySelectorAll('#ntSeg .seg-opt').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.getElementById('ntWhoWrap').classList.toggle('hide',v!=='one');
 }
 function sendNotification(){
   const u=currentUser, err=document.getElementById('ntErr');
