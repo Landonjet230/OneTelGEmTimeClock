@@ -564,7 +564,7 @@
   .home-h1{font-family:"Archivo";font-weight:700;font-size:26px;letter-spacing:-.01em}
   .home-hi{color:var(--muted);font-size:13px;margin-top:3px}
   .home-empty{color:var(--muted);font-size:14px;padding:20px}
-  .widget-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,130px);gap:20px;position:relative}
+  .widget-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:130px;gap:20px;position:relative}
   .home-cell{grid-column:var(--c);grid-row:var(--r);border-radius:18px;pointer-events:none;opacity:0;transition:opacity .12s;
     box-shadow:inset 0 0 0 1.5px rgba(155,100,177,.28);background:rgba(155,100,177,.06)}
   .widget-grid.dragging .home-cell{pointer-events:auto;opacity:1}
@@ -602,9 +602,24 @@
   .mc-today .mc-dot{background:#fff}
   .w-add{display:flex;gap:6px;margin-top:10px}
   .w-add input{flex:1;min-width:0}
-  .w-chk{flex:none;width:19px;height:19px;border:1px solid var(--purple);background:#fff;color:var(--purple);border-radius:6px;
+  .w-chk{flex:none;width:19px;height:19px;border:1px solid var(--purple);background:#fff;color:var(--purple);border-radius:50%;
     font-size:11px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-  .w-chk.on{background:var(--purple);color:#fff}
+  .w-chk.on{background:var(--purple);color:#000}
+  .w-todo{transition:opacity .35s ease}
+  .w-todo.done{opacity:.45}
+  .w-todo.done .w-todo-t{text-decoration:line-through;color:var(--muted)}
+  .w-pbadge{flex:none;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:700;border:1px solid #C7C3CE;background:#fff;color:#6E6880;border-radius:5px;padding:1px 5px;margin-right:2px}
+  .widget-tools{margin-left:auto;display:flex;align-items:center;gap:4px}
+  .widget-size{background:none;border:0;color:#C7C3CE;font-size:14px;line-height:1;padding:0 2px;cursor:pointer}
+  .widget-size:hover{color:var(--purple)}
+  .widget-tools .widget-x{margin-left:0}
+  .size-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:6px 0 4px}
+  .size-opt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border:1px solid var(--rule);border-radius:12px;background:#fff;cursor:pointer}
+  .size-opt:hover{border-color:var(--purple);background:var(--purple-wash)}
+  .size-demo{width:38px;height:26px;border-radius:4px;background:#EEEBF3;display:grid;place-items:center}
+  .size-demo-fill{background:var(--purple);border-radius:2px;width:calc(var(--sw)*7px);height:calc(var(--sh)*9px);max-width:34px;max-height:22px}
+  .size-lbl{font-family:"Archivo";font-weight:700;font-size:11px}
+  .size-dim{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--muted)}
   .w-del{margin-left:auto;background:none;border:0;color:#C7C3CE;font-size:15px;line-height:1;cursor:pointer}
   .w-del:hover{color:#A81E27}
   .w-clockbtn{margin-top:12px}
@@ -852,7 +867,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 23 · verify chat delete</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 24 · customizable widgets</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1019,7 +1034,9 @@ async function loadMyState(){
   const d=(data&&data.data)||{};
   if(Array.isArray(d.widgets))homeWidgets[currentUser.id]=d.widgets;
   if(d.pos&&typeof d.pos==='object')homePos[currentUser.id]=d.pos;
-  widgetStore[currentUser.id]={reminders:Array.isArray(d.reminders)?d.reminders:[],todos:Array.isArray(d.todos)?d.todos:[]};
+  const rawTodos=Array.isArray(d.todos)?d.todos:[];
+  widgetStore[currentUser.id]={reminders:[],todos:rawTodos.map(t=>typeof t==='string'?{id:tuid(),text:t,done:false}:{id:t.id||tuid(),text:t.text||'',done:!!t.done})};
+  homeSize[currentUser.id]=(d.sizes&&typeof d.sizes==='object')?d.sizes:{};
   recentColors=Array.isArray(d.recentColors)?d.recentColors.slice(0,5):[];
 }
 let myStateTimer=null;
@@ -1028,7 +1045,7 @@ function saveMyState(){
   clearTimeout(myStateTimer);
   myStateTimer=setTimeout(async()=>{
     const payload={widgets:userWidgets(currentUser),pos:posMap(currentUser),
-      reminders:userStore(currentUser).reminders,todos:userStore(currentUser).todos,recentColors:recentColors};
+      todos:userStore(currentUser).todos,recentColors:recentColors,sizes:homeSize[currentUser.id]||{}};
     const {error}=await sb.from('user_state').upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()});
     if(error)toast('Widgets not saved: '+error.message);
   },500);
@@ -1630,32 +1647,34 @@ const WIDGETS=[
   {key:'calendar',label:'Calendar'},
   {key:'notifications',label:'Notifications'},
   {key:'time',label:'Time'},
-  {key:'reminders',label:'Reminders'},
   {key:'todos',label:'To-do list'},
 ];
 function defaultWidgets(u){return u.role==='manager'?['time','priorities','notifications']:['clock','break','time','priorities'];}
-function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u).slice();return homeWidgets[u.id];}
+function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u).slice();
+  const arr=homeWidgets[u.id]; const i=arr.indexOf('reminders'); if(i>=0)arr.splice(i,1);
+  return arr;}
 function userStore(u){if(!widgetStore[u.id])widgetStore[u.id]={reminders:[],todos:[]};return widgetStore[u.id];}
 function availableWidgets(u){return WIDGETS.filter(w=>!w.clockOnly||clocksIn(u));}
-const GRID_N=4; /* 4x4 board */
-const WDIM={time:{w:4,h:1},clock:{w:2,h:2},break:{w:1,h:1},priorities:{w:1,h:2},notifications:{w:2,h:1},calendar:{w:2,h:2},reminders:{w:2,h:2},todos:{w:2,h:2}};
-function dimOf(k){return WDIM[k]||{w:2,h:1};}
+const GRID_COLS=4, GRID_MAXR=40; /* 4 columns wide; board grows down */
+const WDIM={time:{w:4,h:1},clock:{w:2,h:2},break:{w:1,h:1},priorities:{w:1,h:2},notifications:{w:2,h:1},calendar:{w:2,h:2},todos:{w:2,h:2}};
+let homeSize={};   /* userId -> { widgetKey: {w,h} } chosen sizes */
+function dimOf(k){const s=(homeSize[currentUser.id]||{})[k];return s||WDIM[k]||{w:2,h:1};}
 function posMap(u){if(!homePos[u.id])homePos[u.id]={};return homePos[u.id];}
 /* build occupancy grid from placed widgets, optionally excluding one key */
 function occGrid(u,exclude){
-  const pm=posMap(u),keys=userWidgets(u),g=Array.from({length:GRID_N+1},()=>Array(GRID_N+1).fill(null));
+  const pm=posMap(u),keys=userWidgets(u),g=Array.from({length:GRID_MAXR+1},()=>Array(GRID_COLS+1).fill(null));
   keys.forEach(k=>{if(k===exclude)return;const p=pm[k];if(!p)return;const d=dimOf(k);
-    for(let r=p.r;r<p.r+d.h;r++)for(let c=p.c;c<p.c+d.w;c++)if(r>=1&&r<=GRID_N&&c>=1&&c<=GRID_N)g[r][c]=k;});
+    for(let r=p.r;r<p.r+d.h;r++)for(let c=p.c;c<p.c+d.w;c++)if(r>=1&&r<=GRID_MAXR&&c>=1&&c<=GRID_COLS)g[r][c]=k;});
   return g;
 }
 function fits(g,r,c,d){
-  if(r<1||c<1||r+d.h-1>GRID_N||c+d.w-1>GRID_N)return false;
+  if(r<1||c<1||r+d.h-1>GRID_MAXR||c+d.w-1>GRID_COLS)return false;
   for(let rr=r;rr<r+d.h;rr++)for(let cc=c;cc<c+d.w;cc++)if(g[rr][cc])return false;
   return true;
 }
 function firstFree(u,k,exclude){
   const g=occGrid(u,exclude),d=dimOf(k);
-  for(let r=1;r<=GRID_N;r++)for(let c=1;c<=GRID_N;c++)if(fits(g,r,c,d))return {r,c};
+  for(let r=1;r<=GRID_MAXR;r++)for(let c=1;c<=GRID_COLS;c++)if(fits(g,r,c,d))return {r,c};
   return null;
 }
 /* make sure every present widget has a position (largest first so defaults pack cleanly) */
@@ -1670,9 +1689,11 @@ function homeTab(){
   ensurePositions(u);
   const pm=posMap(u),keys=userWidgets(u);
   const cards=keys.map(k=>widgetCard(k)).join('');
-  // 16 cell drop-zones for free placement (active while dragging)
+  // drop-zones for free placement (active while dragging) — grow with the board
+  let rowsUsed=1; keys.forEach(k=>{const p=pm[k];if(p)rowsUsed=Math.max(rowsUsed,p.r+dimOf(k).h-1);});
+  const dropRows=Math.max(rowsUsed+1,4);
   let cells='';
-  for(let r=1;r<=GRID_N;r++)for(let c=1;c<=GRID_N;c++)
+  for(let r=1;r<=dropRows;r++)for(let c=1;c<=GRID_COLS;c++)
     cells+=`<div class="home-cell" style="--r:${r};--c:${c}" ondragover="wDragOver(event)" ondrop="wCellDrop(event,${r},${c})"></div>`;
   const board=keys.length?`<div class="widget-grid" id="homeGrid">${cells}${cards}</div>`
     :'<div class="home-empty">No widgets yet. Use “Add widget” to build your hub.</div>';
@@ -1689,7 +1710,9 @@ function widgetCard(k){
   return `<div class="widget" style="--r:${p.r};--c:${p.c};--w:${d.w};--h:${d.h}" data-key="${k}">
       <div class="widget-head" draggable="true" ondragstart="wDragStart(event,'${k}')" ondragend="wDragEnd(event)">
         <span class="widget-title">${k==='time'?'':w.label}</span>
-        <button class="widget-x" draggable="false" onclick="removeWidget('${k}')" title="Remove widget">&times;</button></div>
+        <span class="widget-tools">
+          <button class="widget-size" draggable="false" onclick="openSizePicker('${k}')" title="Resize">⤢</button>
+          <button class="widget-x" draggable="false" onclick="removeWidget('${k}')" title="Remove widget">&times;</button></span></div>
       <div class="widget-body">${widgetBody(k)}</div></div>`;
 }
 let dragKey=null;
@@ -1704,7 +1727,7 @@ function _wCellDrop(ev,r,c){
   if(dragKey===null){cleanupDrag();return;}
   const u=currentUser,pm=posMap(u),d=dimOf(dragKey);
   // clamp target so the widget stays fully on the board
-  let tr=Math.min(Math.max(1,r),GRID_N-d.h+1),tc=Math.min(Math.max(1,c),GRID_N-d.w+1);
+  let tr=Math.min(Math.max(1,r),GRID_MAXR-d.h+1),tc=Math.min(Math.max(1,c),GRID_COLS-d.w+1);
   const old=pm[dragKey];
   // which other widgets overlap the target footprint?
   const g=occGrid(u,dragKey),hit=new Set();
@@ -1713,8 +1736,8 @@ function _wCellDrop(ev,r,c){
   if(hit.size===1 && old){ // swap with the single occupant
     const other=[...hit][0],od=dimOf(other),op=pm[other];
     // tentative: dragged -> other's spot; other -> dragged's old spot
-    const g2=Array.from({length:GRID_N+1},()=>Array(GRID_N+1).fill(null));
-    const place=(k,r0,c0,dd)=>{for(let rr=r0;rr<r0+dd.h;rr++)for(let cc=c0;cc<c0+dd.w;cc++){if(rr<1||cc<1||rr>GRID_N||cc>GRID_N||g2[rr][cc])return false;g2[rr][cc]=k;}return true;};
+    const g2=Array.from({length:GRID_MAXR+1},()=>Array(GRID_COLS+1).fill(null));
+    const place=(k,r0,c0,dd)=>{for(let rr=r0;rr<r0+dd.h;rr++)for(let cc=c0;cc<c0+dd.w;cc++){if(rr<1||cc<1||rr>GRID_MAXR||cc>GRID_COLS||g2[rr][cc])return false;g2[rr][cc]=k;}return true;};
     // place every other widget except dragged & other, then try the swap
     let ok=true;
     userWidgets(u).forEach(k=>{if(k===dragKey||k===other)return;const pp=pm[k];if(pp&&ok)ok=place(k,pp.r,pp.c,dimOf(k));});
@@ -1761,8 +1784,10 @@ function widgetBody(k){
     const todayK=dateKey(now);
     return list.map(p=>{
       const meta=p.due?`<span class="ml" style="margin-left:auto;color:${p.due<todayK?'#A81E27':'var(--muted)'}">${p.due<todayK?'Overdue':fmtDayKey(p.due)}</span>`:'';
+      const pset=p.pnum!=null&&p.pnum!=='';
+      const badge=pset?`<span class="w-pbadge" style="${p.pcolor?`background:${p.pcolor};color:${priContrast(p.pcolor)};border-color:${p.pcolor}`:''}">P${p.pnum}</span>`:'';
       const name=p.link?`<a class="w-sheet" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">${sheetIcon()}<span>${esc(p.title)}</span></a>`:`<span>${esc(p.title)}</span>`;
-      return `<div class="w-line">${name}${meta}</div>`;
+      return `<div class="w-line">${badge}${name}${meta}</div>`;
     }).join('');
   }
   if(k==='calendar'){
@@ -1792,14 +1817,9 @@ function widgetBody(k){
     if(body)return body;
     return canManage(u)?'<div class="w-empty">No new notifications.</div>':'<div class="w-empty">You\'re all caught up.</div>';
   }
-  if(k==='reminders'){
-    const arr=userStore(u).reminders;
-    const rows=arr.length?arr.map((r,i)=>`<div class="w-line"><span>${esc(r)}</span><button class="w-del" onclick="removeReminder(${i})" title="Remove">&times;</button></div>`).join(''):'<div class="w-empty">No reminders yet.</div>';
-    return rows+`<div class="w-add"><input type="text" id="wRem" placeholder="Add a reminder" onkeydown="if(event.key==='Enter')addReminder()"><button class="btn btn-dark btn-sm" onclick="addReminder()">Add</button></div>`;
-  }
   if(k==='todos'){
     const arr=userStore(u).todos;
-    const rows=arr.length?arr.map((t,i)=>`<div class="w-line"><button class="w-chk ${t.done?'on':''}" onclick="toggleTodo(${i})">${t.done?'&#10003;':''}</button><span style="${t.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(t.text)}</span><button class="w-del" onclick="removeTodo(${i})" title="Remove">&times;</button></div>`).join(''):'<div class="w-empty">Nothing to do yet.</div>';
+    const rows=arr.length?arr.map(t=>`<div class="w-line w-todo ${t.done?'done':''}"><button class="w-chk ${t.done?'on':''}" onclick="toggleTodo('${t.id}')">${t.done?'&#10003;':''}</button><span class="w-todo-t">${esc(t.text)}</span><button class="w-del" onclick="removeTodo('${t.id}')" title="Remove">&times;</button></div>`).join(''):'<div class="w-empty">Nothing to do yet.</div>';
     return rows+`<div class="w-add"><input type="text" id="wTodo" placeholder="Add a to-do" onkeydown="if(event.key==='Enter')addTodo()"><button class="btn btn-dark btn-sm" onclick="addTodo()">Add</button></div>`;
   }
   return '';
@@ -1811,6 +1831,48 @@ function addWidget(k){const arr=userWidgets(currentUser);
     arr.push(k);posMap(currentUser)[k]=spot;
   }
   closeModal();render();saveMyState();}
+const SIZE_PRESETS=[{w:1,h:1,label:'Small'},{w:2,h:1,label:'Wide'},{w:1,h:2,label:'Tall'},{w:2,h:2,label:'Medium'},{w:4,h:1,label:'Full width'},{w:4,h:2,label:'Large'}];
+function sizeGridHTML(key,mode){
+  return `<div class="size-grid">`+SIZE_PRESETS.map(s=>{
+    const call=mode==='add'?`addWidgetSized('${key}',${s.w},${s.h})`:`setWidgetSize('${key}',${s.w},${s.h})`;
+    return `<button class="size-opt" onclick="${call}"><span class="size-demo"><span class="size-demo-fill" style="--sw:${s.w};--sh:${s.h}"></span></span><span class="size-lbl">${s.label}</span><span class="size-dim">${s.w}×${s.h}</span></button>`;
+  }).join('')+`</div>`;
+}
+function openAddSize(key){
+  const w=WIDGETS.find(x=>x.key===key);
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Add ${esc(w.label)}</h3><p class="sub">How much space should it take?</p>
+    ${sizeGridHTML(key,'add')}
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="openWidgetCatalog()">Back</button></div></div></div>`;
+}
+function addWidgetSized(key,w,h){
+  if(!homeSize[currentUser.id])homeSize[currentUser.id]={};
+  homeSize[currentUser.id][key]={w,h};
+  const arr=userWidgets(currentUser);
+  if(!arr.includes(key)){
+    const spot=firstFree(currentUser,key,null);
+    if(!spot){toast('No room at that size — remove or shrink a widget first');return;}
+    arr.push(key);posMap(currentUser)[key]=spot;
+  }
+  closeModal();render();saveMyState();
+}
+function openSizePicker(key){
+  const w=WIDGETS.find(x=>x.key===key);
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Resize ${esc(w.label)}</h3><p class="sub">Choose a new size.</p>
+    ${sizeGridHTML(key,'set')}
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button></div></div></div>`;
+}
+function setWidgetSize(key,w,h){
+  if(!homeSize[currentUser.id])homeSize[currentUser.id]={};
+  homeSize[currentUser.id][key]={w,h};
+  const pm=posMap(currentUser),p=pm[key],g=occGrid(currentUser,key);
+  if(!p||!fits(g,p.r,p.c,{w,h})){
+    const spot=firstFree(currentUser,key,key);
+    if(spot)pm[key]=spot; else toast('Tight fit — you may need to move or shrink another widget');
+  }
+  closeModal();render();saveMyState();
+}
 function removeWidget(k){homeWidgets[currentUser.id]=userWidgets(currentUser).filter(x=>x!==k);
   if(homePos[currentUser.id])delete homePos[currentUser.id][k];
   render();saveMyState();}
@@ -1819,18 +1881,19 @@ function openWidgetCatalog(){
   const items=availableWidgets(currentUser).map(w=>{
     const added=have.includes(w.key);
     return `<div class="cat-item"><span>${w.label}</span>
-      <button class="btn ${added?'btn-line':'btn-primary'} btn-sm" style="margin-left:auto" ${added?'disabled':''} onclick="addWidget('${w.key}')">${added?'Added':'Add'}</button></div>`;
+      <button class="btn ${added?'btn-line':'btn-primary'} btn-sm" style="margin-left:auto" ${added?'disabled':''} onclick="openAddSize('${w.key}')">${added?'Added':'Add'}</button></div>`;
   }).join('');
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Add a widget</h3><p class="sub">Pick what shows on your home hub.</p>
     ${items}
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Done</button></div></div></div>`;
 }
-function addReminder(){const el=document.getElementById('wRem');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).reminders.push(v);render();saveMyState();}
-function removeReminder(i){userStore(currentUser).reminders.splice(i,1);render();saveMyState();}
-function addTodo(){const el=document.getElementById('wTodo');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).todos.push({text:v,done:false});render();saveMyState();}
-function toggleTodo(i){const t=userStore(currentUser).todos[i];if(t){t.done=!t.done;render();saveMyState();}}
-function removeTodo(i){userStore(currentUser).todos.splice(i,1);render();saveMyState();}
+function tuid(){return 'td'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function addTodo(){const el=document.getElementById('wTodo');if(!el)return;const v=el.value.trim();if(!v)return;userStore(currentUser).todos.push({id:tuid(),text:v,done:false});render();saveMyState();}
+function toggleTodo(id){const t=userStore(currentUser).todos.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;render();saveMyState();
+  if(t.done)setTimeout(()=>{const s=userStore(currentUser);s.todos=s.todos.filter(x=>x.id!==id);render();saveMyState();},1000);}
+function removeTodo(id){const s=userStore(currentUser);s.todos=s.todos.filter(x=>x.id!==id);render();saveMyState();}
 
 
 /* ---------- work log ---------- */
