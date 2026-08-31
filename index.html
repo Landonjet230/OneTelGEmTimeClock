@@ -194,6 +194,9 @@
   .rq-decided{font-size:13px;color:var(--muted);margin:8px 0 0}
   .rq-added{font-size:12.5px;color:var(--muted);margin:6px 0 0}
   .cell .ev{cursor:pointer}
+  .role-row.inactive{opacity:.6}
+  .inactive-tag{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:#F0EEF3;color:#8A8792;border-radius:20px;padding:2px 7px;margin-left:4px}
+  .rl-deact:hover{border-color:#A81E27;color:#A81E27}
   .rq-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
   .rq-approve,.rq-deny{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:22px;font-family:"Archivo";font-weight:700;font-size:12.5px;cursor:pointer;border:1px solid}
   .rq-approve{background:#0B6B33;border-color:#0B6B33;color:#fff}
@@ -788,7 +791,10 @@ function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s
 function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager');}
 function clocksIn(u){return !!u&&u.role!=='manager';}
 function lastName(n){const p=(n||'').trim().split(/\s+/);return p.length>1?p[p.length-1]:(p[0]||'');}
-function hourlyStaff(){return employees.filter(e=>e.role==='comanager'||e.role==='employee').sort((a,b)=>lastName(a.name).localeCompare(lastName(b.name))||a.name.localeCompare(b.name));}
+function byLast(a,b){return lastName(a.name).localeCompare(lastName(b.name))||a.name.localeCompare(b.name);}
+function isActive(e){return !!e&&e.active!==false;}
+function activeAll(){return employees.filter(isActive).sort(byLast);}
+function hourlyStaff(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&isActive(e)).sort(byLast);}
 function periodMs(id,p){return shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
 function nameOf(id){const e=employees.find(x=>x.id===id);return e?e.name:'—';}
 function hmToMin(hm){const [h,m]=hm.split(':').map(Number);return h*60+m;}
@@ -872,7 +878,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 26 · titles, calendar notes, priority words</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 27 · manager time-off, chat history, deactivate</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -909,7 +915,7 @@ async function loadProfiles(){
   const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
   if(error)throw error;
   employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role,rate:Number(p.rate)||0,
-    avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||''}));
+    avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||'',active:p.active!==false}));
 }
 async function loadPendingRoles(){
   if(!canManage(currentUser)){pendingRoles=[];return;}
@@ -1196,31 +1202,39 @@ function markRead(convId){
   if(live())sb.from('conversation_members').update({last_read_at:new Date().toISOString()}).eq('conversation_id',convId).eq('user_id',currentUser.id).then(()=>{});
   paintUserMenu();
 }
-async function openOrCreateDM(otherId){
+async function getOrCreateDMId(otherId){
   const key=[currentUser.id,otherId].sort().join('|');
-  let conv=conversations.find(c=>c.kind==='dm'&&c.dmKey===key);
-  if(conv){closeModal();openConv(conv.id);return;}
-  if(!live()){toast('Sign in to start a chat.');return;}
+  const local=conversations.find(c=>c.kind==='dm'&&c.dmKey===key);
+  if(local)return local.id;
+  if(!live())return null;
   const {data:existing}=await sb.from('conversations').select('*').eq('dm_key',key).maybeSingle();
-  let convId;
   if(existing){
-    convId=existing.id;
-    const {data:mem}=await sb.from('conversation_members').select('user_id').eq('conversation_id',convId).eq('user_id',currentUser.id).maybeSingle();
-    if(!mem){ await sb.from('conversation_members').insert({conversation_id:convId,user_id:currentUser.id}); }
+    const {data:mem}=await sb.from('conversation_members').select('user_id').eq('conversation_id',existing.id).eq('user_id',currentUser.id).maybeSingle();
+    if(!mem)await sb.from('conversation_members').insert({conversation_id:existing.id,user_id:currentUser.id});
+    return existing.id;
   }
-  else{
-    const {data:created,error}=await sb.from('conversations').insert({kind:'dm',dm_key:key,created_by:currentUser.id}).select().single();
-    if(error){
-      const {data:again}=await sb.from('conversations').select('*').eq('dm_key',key).maybeSingle();
-      if(!again){toast('Could not start chat: '+error.message);return;}
-      convId=again.id;
-    }else{
-      convId=created.id;
-      const {error:me}=await sb.from('conversation_members').insert([{conversation_id:convId,user_id:currentUser.id},{conversation_id:convId,user_id:otherId}]);
-      if(me){toast('Could not start chat: '+me.message);return;}
-    }
-  }
-  await loadChat(); closeModal(); openConv(convId);
+  const {data:created,error}=await sb.from('conversations').insert({kind:'dm',dm_key:key,created_by:currentUser.id}).select().single();
+  if(error){const {data:again}=await sb.from('conversations').select('*').eq('dm_key',key).maybeSingle();return again?again.id:null;}
+  const {error:me}=await sb.from('conversation_members').insert([{conversation_id:created.id,user_id:currentUser.id},{conversation_id:created.id,user_id:otherId}]);
+  if(me)return null;
+  return created.id;
+}
+async function sendChatTo(otherId,body){
+  const id=await getOrCreateDMId(otherId);
+  if(!id)return false;
+  const {error}=await sb.from('chat_messages').insert({conversation_id:id,from_user:currentUser.id,from_name:currentUser.name,body});
+  if(error)return false;
+  await loadChat();
+  if(chatPageOpen)render();
+  return true;
+}
+async function openOrCreateDM(otherId){
+  const local=conversations.find(c=>c.kind==='dm'&&c.dmKey===[currentUser.id,otherId].sort().join('|'));
+  if(local){closeModal();openConv(local.id);return;}
+  if(!live()){toast('Sign in to start a chat.');return;}
+  const id=await getOrCreateDMId(otherId);
+  if(!id){toast('Could not start chat.');return;}
+  await loadChat(); closeModal(); openConv(id);
 }
 async function createGroup(){
   let title=(document.getElementById('grpName').value||'').trim();
@@ -1391,7 +1405,7 @@ function chatThreadView(){
       <button class="chat-send" onclick="sendChat()" title="Send">${sendArrow()}</button></div></div>`;
 }
 function openNewDM(){
-  const others=employees.filter(e=>e.id!==currentUser.id);
+  const others=activeAll().filter(e=>e.id!==currentUser.id);
   const rows=others.length?others.map(e=>`<button class="pick-row" onclick="openOrCreateDM('${e.id}')"><span class="cv-ava" style="${avatarStyle(e)}">${esc(initials(e.name))}</span><span>${esc(e.name)}</span></button>`).join(''):'<div class="cv-empty">No one else here yet.</div>';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>New message</h3><p class="sub">Pick someone to message</p>
@@ -1399,7 +1413,7 @@ function openNewDM(){
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button></div></div></div>`;
 }
 function openNewGroup(){
-  const others=employees.filter(e=>e.id!==currentUser.id);
+  const others=activeAll().filter(e=>e.id!==currentUser.id);
   const checks=others.map(e=>`<label class="grp-pick"><input type="checkbox" class="grp-mem" value="${e.id}"><span>${esc(e.name)}</span></label>`).join('');
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>New group</h3>
@@ -1427,6 +1441,7 @@ async function enterApp(session){
     }catch(e){/* fall through to message below */}
   }
   if(!currentUser){ renderLogin('Signed in, but your profile could not be created. Run supabase-fix-login.sql, then sign in again.',true); await sb.auth.signOut(); return; }
+  if(currentUser.active===false){ await sb.auth.signOut(); renderLogin('This account has been deactivated. Please contact your manager.'); return; }
   await loadPendingRoles();
   liveSession=true;
   try{ await loadShifts(); }catch(e){ toast('Could not load shifts: '+(e.message||e)); }
@@ -1561,8 +1576,8 @@ async function saveProfile(){
 }
 function openSendNotif(ev){ev.stopPropagation();closeUserMenu();
   const u=currentUser, role=u.role;
-  const leaders=employees.filter(e=>e.id!==u.id&&(e.role==='manager'||e.role==='comanager'));
-  const everyone=employees.filter(e=>e.id!==u.id);
+  const leaders=activeAll().filter(e=>e.id!==u.id&&(e.role==='manager'||e.role==='comanager'));
+  const everyone=activeAll().filter(e=>e.id!==u.id);
   const indiv = role==='employee' ? leaders : everyone;
   const opts=indiv.map(e=>`<option value="${esc(e.name)}"></option>`).join('');
   /* employees always send to one leader (no "Everyone"); leadership gets the segmented picker */
@@ -1596,10 +1611,11 @@ function sendNotification(){
   if(!text){err.textContent='Write a message.';return;}
   let recips=[];
   const toSel=document.getElementById('ntTo');
-  if(toSel&&toSel.value==='all'){ recips=employees.filter(e=>e.id!==u.id); }
+  const isAll=toSel&&toSel.value==='all';
+  if(isAll){ recips=activeAll().filter(e=>e.id!==u.id); }
   else{
     const nm=(document.getElementById('ntWho').value||'').trim().toLowerCase();
-    let who=employees.find(e=>e.id!==u.id&&e.name.toLowerCase()===nm);
+    let who=activeAll().find(e=>e.id!==u.id&&e.name.toLowerCase()===nm);
     if(u.role==='employee'&&who&&!(who.role==='manager'||who.role==='comanager'))who=null;
     if(!who){err.textContent=u.role==='employee'?'Pick a manager or co-manager.':'Pick a valid name from your team.';return;}
     recips=[who];
@@ -1613,7 +1629,10 @@ function sendNotification(){
   }else{
     recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:u.name,subject,text,ts:Date.now(),read:false}));
   }
-  closeModal();toast(toSel&&toSel.value==='all'?'Sent to everyone':'Message sent');
+  if(!isAll&&recips.length===1){                              /* individual → also keep it in the full chat history */
+    sendChatTo(recips[0].id, subject?`${subject} — ${text}`:text);
+  }
+  closeModal();toast(isAll?'Sent to everyone':'Message sent');
 }
 document.addEventListener('click',()=>{if(menuOpen)closeMenu();closeUserMenu();});
 
@@ -2224,9 +2243,9 @@ function daSwap(k){
   k=k||document.getElementById('daBody').dataset.k;
   const t=document.getElementById('daType').value,b=document.getElementById('daBody');
   b.dataset.k=k;
-  const people=hourlyStaff().map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  const people=activeAll().map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
   b.innerHTML = t==='off'
-    ? `<div class="field"><label>Employee</label><select id="daWho">${people}</select></div>
+    ? `<div class="field"><label>Person</label><select id="daWho">${people}</select></div>
        <div class="field"><label>Reason</label><input type="text" id="daNote" placeholder="Vacation"></div>
        <div class="field"><label>From</label><input type="date" id="daStart" value="${k}"></div>
        <div class="field"><label>To</label><input type="date" id="daEnd" value="${k}"></div>`
@@ -2380,13 +2399,18 @@ function teamTab(){
     +rolesCard();
 }
 function rolesCard(){
-  const people=employees.map(e=>`<div class="role-row">
-      <span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b><span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
-      <select class="role-sel" onchange="changeRole('${e.id}',this.value)">
+  const people=employees.slice().sort(byLast).map(e=>{
+    const off=e.active===false, me=e.id===currentUser.id;
+    const btn=me?'':(off?`<button class="btn btn-line btn-sm" onclick="setActive('${e.id}',true)">Reactivate</button>`
+                        :`<button class="btn btn-line btn-sm rl-deact" onclick="askDeactivate('${e.id}')">Deactivate</button>`);
+    return `<div class="role-row ${off?'inactive':''}">
+      <span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b>${off?' <span class="inactive-tag">Inactive</span>':''}<span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
+      <select class="role-sel" ${off?'disabled':''} onchange="changeRole('${e.id}',this.value)">
         <option value="employee" ${e.role==='employee'?'selected':''}>Employee</option>
         <option value="comanager" ${e.role==='comanager'?'selected':''}>Co-manager</option>
         <option value="manager" ${e.role==='manager'?'selected':''}>Manager</option>
-      </select></div>`).join('');
+      </select>${btn}</div>`;
+  }).join('');
   const pend=pendingRoles.length?pendingRoles.map(p=>`<div class="role-row">
       <span><b>${esc(p.email)}</b><span class="mini" style="display:block">hasn't signed up yet</span></span>
       <span class="mini" style="text-transform:capitalize">${p.role==='comanager'?'Co-manager':p.role}</span>
@@ -2404,6 +2428,20 @@ function rolesCard(){
         </div><div class="err" id="prErr"></div>
         <div style="margin-top:14px">${pend}</div>
       </div></div>`;
+}
+async function setActive(id,activeVal){
+  const e=employees.find(x=>x.id===id); if(e)e.active=activeVal;
+  if(live())sb.from('profiles').update({active:activeVal}).eq('id',id).then(({error})=>{ if(error)toast('Not saved: '+error.message); });
+  closeModal();render();toast(activeVal?'Person reactivated':'Person deactivated');
+}
+function askDeactivate(id){
+  const e=employees.find(x=>x.id===id);if(!e)return;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Deactivate ${esc(e.name)}?</h3>
+    <p class="sub">They won't be able to sign in, and they'll be removed from schedules, messaging, and payroll. Their past hours and history are kept, and you can reactivate them anytime.</p>
+    <div class="modal-actions edit-actions"><span></span><span class="ea-right">
+      <button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="setActive('${id}',false)">Deactivate</button></span></div></div></div>`;
 }
 async function changeRole(id,role){
   if(id===currentUser.id&&role==='employee'&&!confirm('This removes your own leadership access. Continue?')){render();return;}
