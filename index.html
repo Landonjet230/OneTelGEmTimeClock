@@ -150,6 +150,9 @@
   .cmp-field textarea{resize:vertical;min-height:90px;line-height:1.42}
   .cmp-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
   .cmp-actions .btn{border-radius:22px;padding-left:22px;padding-right:22px}
+  .chk-line{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text);cursor:pointer;margin:2px 0 13px}
+  .chk-line input{width:16px;height:16px;accent-color:var(--purple);flex:none}
+  .chk-line .opt{color:var(--muted)}
   .chat-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:6px 2px 12px;max-height:calc(100vh - 250px)}
   .cb-row{display:flex;flex-direction:column;max-width:76%}
   .cb-row.me{align-self:flex-end;align-items:flex-end}
@@ -867,7 +870,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 24 · customizable widgets</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 25 · time-off delete & clocked-in add</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1011,6 +1014,21 @@ async function loadTimeOff(){
   const {data,error}=await sb.from('time_off').select('*').order('start_date',{ascending:true});
   if(error)throw error;
   timeOff=(data||[]).filter(r=>r.user_id&&r.start_date&&r.end_date).map(offFromRow);
+  cleanupPassedTimeOff();
+}
+function cleanupPassedTimeOff(){
+  const tk=dateKey(now);
+  const passed=timeOff.filter(t=>t.end<tk);
+  if(!passed.length)return;
+  timeOff=timeOff.filter(t=>t.end>=tk);                       /* hide once the dates are behind us */
+  if(live()&&canManage(currentUser)){                          /* only managers can actually delete */
+    passed.forEach(t=>sb.from('time_off').delete().eq('id',t.id).then(()=>{}));
+  }
+}
+async function deleteTimeOff(id){
+  if(live()){const {error}=await sb.from('time_off').delete().eq('id',id);if(error){toast('Could not delete: '+error.message);return;}}
+  timeOff=timeOff.filter(t=>t.id!==id);
+  closeModal();render();toast('Request deleted');
 }
 async function loadPriorities(){
   const {data,error}=await sb.from('priorities').select('*').order('pos',{ascending:true}).order('created_at',{ascending:true});
@@ -1263,12 +1281,13 @@ function openRequestDetail(id){
   const mgr=canManage(currentUser), pending=t.status==='pending';
   const statusChip=`<span class="rq-chip ${t.status}">${t.status[0].toUpperCase()+t.status.slice(1)}</span>`;
   const decided=t.status!=='pending'?`<p class="rq-decided">${t.status==='approved'?'Approved':'Denied'} by ${esc(t.decidedByName||'a manager')}${t.response?' · “'+esc(t.response)+'”':''}</p>`:'';
+  const del=mgr?`<button class="del-shift" title="Delete this request" onclick="deleteTimeOff('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`:'';
   const actions=(mgr&&pending)
     ? `<div class="field"><label>Response <span class="opt">optional</span></label><input type="text" id="rqResp" placeholder="Add a note back (optional)"></div>
        <div class="err" id="rqErr"></div>
-       <div class="rq-actions"><button class="rq-deny" onclick="decideRequest('${id}',false)" title="Deny">${xGlyph()} Deny</button>
-         <button class="rq-approve" onclick="decideRequest('${id}',true)" title="Approve">${checkGlyph()} Approve</button></div>`
-    : `<div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div>`;
+       <div class="modal-actions edit-actions">${del}<span class="ea-right"><button class="rq-deny" onclick="decideRequest('${id}',false)" title="Deny">${xGlyph()} Deny</button>
+         <button class="rq-approve" onclick="decideRequest('${id}',true)" title="Approve">${checkGlyph()} Approve</button></span></div>`
+    : `<div class="modal-actions edit-actions">${del}<span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div>`;
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Time off request</h3><p class="sub">${esc(nameOf(t.empId))} ${statusChip}</p>
     ${miniRangeCal(t.start,t.end)}
@@ -2552,7 +2571,8 @@ function openAdd(empId){
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Add a missing day</h3><p class="sub">${e.name}</p>
     <div class="field"><label>Clock in</label><input type="datetime-local" id="edIn" value="${base}"></div>
-    <div class="field"><label>Clock out</label><input type="datetime-local" id="edOut" value="${base}"></div>
+    <label class="chk-line"><input type="checkbox" id="edActive" onchange="toggleAddActive()"> Currently clocked in <span class="opt">no clock-out · today only</span></label>
+    <div class="field" id="edOutWrap"><label>Clock out</label><input type="datetime-local" id="edOut" value="${base}"></div>
     <div class="field"><label>Reason <span class="req">required</span></label><input type="text" id="edReason" placeholder="Employee forgot to clock in"></div>
     <div class="err" id="edErr"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
@@ -2563,10 +2583,16 @@ function toast(m){const t=document.getElementById('toastMount');t.innerHTML=`<di
 async function saveAdd(empId){
   const err=document.getElementById('edErr'),reason=document.getElementById('edReason').value.trim();
   if(!reason){err.textContent='Add a reason — it goes in the change log.';return;}
-  const nIn=inputToTs(document.getElementById('edIn').value),nOut=inputToTs(document.getElementById('edOut').value);
+  const active=document.getElementById('edActive')&&document.getElementById('edActive').checked;
+  const nIn=inputToTs(document.getElementById('edIn').value);
+  const nOut=active?null:inputToTs(document.getElementById('edOut').value);
   if(!nIn){err.textContent='Clock-in time is required.';return;}
-  if(!nOut&&dateKey(nIn)!==dateKey(now)){err.textContent='Clock-out is required for a past day.';return;}
-  if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
+  if(active){
+    if(dateKey(nIn)!==dateKey(now)){err.textContent='“Currently clocked in” only works for today.';return;}
+  }else{
+    if(!nOut&&dateKey(nIn)!==dateKey(now)){err.textContent='Clock-out is required for a past day.';return;}
+    if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
+  }
   if(live()){
     const {data,error}=await sb.from('shifts').insert({user_id:empId,clock_in:new Date(nIn).toISOString(),clock_out:nOut?new Date(nOut).toISOString():null,edited:true}).select().single();
     if(error){err.textContent='Could not save: '+error.message;return;}
@@ -2574,8 +2600,12 @@ async function saveAdd(empId){
   }else{
     shifts.push({id:nid(),empId,clockIn:nIn,clockOut:nOut,edited:true});
   }
-  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(empId),field:'Day added',old:'—',new:fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'—'),reason});
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(empId),field:'Day added',old:'—',new:fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'currently clocked in'),reason});
   closeModal();render();toast('Day added');
+}
+function toggleAddActive(){
+  const on=document.getElementById('edActive').checked;
+  document.getElementById('edOutWrap').classList.toggle('hide',on);
 }
 function openEditDay(shiftId){
   const s=shifts.find(x=>x.id===shiftId);if(!s)return;
