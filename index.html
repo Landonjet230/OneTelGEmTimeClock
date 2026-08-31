@@ -192,6 +192,8 @@
   .rq-chip.denied{background:#F6E0E1;color:#A81E27}
   .rq-reason{font-size:14px;margin:2px 0 0}
   .rq-decided{font-size:13px;color:var(--muted);margin:8px 0 0}
+  .rq-added{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+  .cell .ev{cursor:pointer}
   .rq-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
   .rq-approve,.rq-deny{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:22px;font-family:"Archivo";font-weight:700;font-size:12.5px;cursor:pointer;border:1px solid}
   .rq-approve{background:#0B6B33;border-color:#0B6B33;color:#fff}
@@ -870,7 +872,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 25 · time-off delete & clocked-in add</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 26 · titles, calendar notes, priority words</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -985,9 +987,9 @@ function subscribePayroll(){
 }
 /* ---- row mappers for the remaining domains ---- */
 function msgFromRow(r){return {id:r.id,to:r.to_user,from:r.from_name,subject:r.subject||'',text:r.body,ts:new Date(r.created_at).getTime(),read:!!r.read};}
-function offFromRow(r){return {id:r.id,empId:r.user_id,start:r.start_date,end:r.end_date,note:r.note||'',status:r.status||'approved',response:r.response||'',decidedBy:r.decided_by||null,decidedByName:r.decided_by_name||'',decidedAt:r.decided_at?new Date(r.decided_at).getTime():0};}
+function offFromRow(r){return {id:r.id,empId:r.user_id,start:r.start_date,end:r.end_date,note:r.note||'',status:r.status||'approved',response:r.response||'',decidedBy:r.decided_by||null,decidedByName:r.decided_by_name||'',decidedAt:r.decided_at?new Date(r.decided_at).getTime():0,addedBy:r.added_by||''};}
 function isManagerId(id){const e=employees.find(x=>x.id===id);return !!e&&(e.role==='manager'||e.role==='comanager');}
-function priFromRow(r){return {id:r.id,title:r.title,due:r.due||'',done:!!r.done,link:r.link||'',pos:r.pos||0,pnum:(r.pnum==null?null:r.pnum),pcolor:r.pcolor||''};}
+function priFromRow(r){return {id:r.id,title:r.title,due:r.due||'',done:!!r.done,link:r.link||'',pos:r.pos||0,pnum:(r.pnum==null||r.pnum===''?null:String(r.pnum)),pcolor:r.pcolor||'',addedBy:r.added_by||''};}
 function noticeFromRow(r){return {id:r.id,empId:r.user_id,ts:new Date(r.ts).getTime(),reason:r.reason||''};}
 function auditFromRow(r){return {id:r.id,ts:new Date(r.created_at).getTime(),manager:r.manager,emp:r.emp,field:r.field,old:r.old_val||'—',new:r.new_val||'—',reason:r.reason||''};}
 function logAudit(e){
@@ -1271,7 +1273,7 @@ async function submitTimeOff(){
   if(e<s){err.textContent='The last day must be on or after the first day.';return;}
   if(!reason){err.textContent='Add a short reason.';return;}
   if(!live()){toast('Sign in to send a request.');return;}
-  const {data,error}=await sb.from('time_off').insert({user_id:currentUser.id,start_date:s,end_date:e,note:reason,status:'pending'}).select().single();
+  const {data,error}=await sb.from('time_off').insert({user_id:currentUser.id,start_date:s,end_date:e,note:reason,status:'pending',added_by:currentUser.name}).select().single();
   if(error){err.textContent='Could not send: '+error.message;return;}
   if(!timeOff.some(t=>t.id===data.id))timeOff.push(offFromRow(data));
   closeModal();render();toast('Time off request sent');
@@ -1281,6 +1283,7 @@ function openRequestDetail(id){
   const mgr=canManage(currentUser), pending=t.status==='pending';
   const statusChip=`<span class="rq-chip ${t.status}">${t.status[0].toUpperCase()+t.status.slice(1)}</span>`;
   const decided=t.status!=='pending'?`<p class="rq-decided">${t.status==='approved'?'Approved':'Denied'} by ${esc(t.decidedByName||'a manager')}${t.response?' · “'+esc(t.response)+'”':''}</p>`:'';
+  const addNote=t.decidedByName?`<p class="rq-added">Added to the calendar by ${esc(t.decidedByName)} (approved this request)</p>`:(t.addedBy?`<p class="rq-added">Added to the calendar by ${esc(t.addedBy)}</p>`:'');
   const del=mgr?`<button class="del-shift" title="Delete this request" onclick="deleteTimeOff('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`:'';
   const actions=(mgr&&pending)
     ? `<div class="field"><label>Response <span class="opt">optional</span></label><input type="text" id="rqResp" placeholder="Add a note back (optional)"></div>
@@ -1292,6 +1295,7 @@ function openRequestDetail(id){
     <h3>Time off request</h3><p class="sub">${esc(nameOf(t.empId))} ${statusChip}</p>
     ${miniRangeCal(t.start,t.end)}
     <p class="rq-reason"><b>Reason:</b> ${esc(t.note)}</p>
+    ${addNote}
     ${decided}
     ${actions}</div></div>`;
 }
@@ -1804,7 +1808,7 @@ function widgetBody(k){
     return list.map(p=>{
       const meta=p.due?`<span class="ml" style="margin-left:auto;color:${p.due<todayK?'#A81E27':'var(--muted)'}">${p.due<todayK?'Overdue':fmtDayKey(p.due)}</span>`:'';
       const pset=p.pnum!=null&&p.pnum!=='';
-      const badge=pset?`<span class="w-pbadge" style="${p.pcolor?`background:${p.pcolor};color:${priContrast(p.pcolor)};border-color:${p.pcolor}`:''}">P${p.pnum}</span>`:'';
+      const badge=pset?`<span class="w-pbadge" style="${p.pcolor?`background:${p.pcolor};color:${priContrast(p.pcolor)};border-color:${p.pcolor}`:''}">${priBadgeText(p.pnum)}</span>`:'';
       const name=p.link?`<a class="w-sheet" href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">${sheetIcon()}<span>${esc(p.title)}</span></a>`:`<span>${esc(p.title)}</span>`;
       return `<div class="w-line">${badge}${name}${meta}</div>`;
     }).join('');
@@ -1984,8 +1988,8 @@ function calendarGrid(scopeId){
   for(let i=0;i<lead;i++)cells+='<div class="cell pad"></div>';
   for(let d=1;d<=total;d++){
     const k=y+'-'+pad(m)+'-'+pad(d);
-    const offs=offFor(k,scopeId).map(t=>`<span class="ev off">${esc(t.empId===currentUser.id?t.note:nameOf(t.empId).split(' ')[0]+' · '+t.note)}</span>`).join('');
-    const pris=priFor(k).map(p=>`<span class="ev pri ${p.done?'done':''}">${esc(p.title)}</span>`).join('');
+    const offs=offFor(k,scopeId).map(t=>`<span class="ev off" onclick="event.stopPropagation();openRequestDetail('${t.id}')">${esc(t.empId===currentUser.id?t.note:nameOf(t.empId).split(' ')[0]+' · '+t.note)}</span>`).join('');
+    const pris=priFor(k).map(p=>`<span class="ev pri ${p.done?'done':''}" onclick="event.stopPropagation();openProjectDetail('${p.id}')">${esc(p.title)}</span>`).join('');
     const clickable=canManage(currentUser);
     cells+=`<${clickable?'button':'div'} class="cell ${k===todayK?'today':''}" ${clickable?`onclick="openDayAdd('${k}')"`:''}>
       <span class="dnum">${d}</span>${offs}${pris}</${clickable?'button':'div'}>`;
@@ -2012,8 +2016,8 @@ function priorityList(editable){
     const pset=p.pnum!=null&&p.pnum!=='';
     const pstyle=pset&&p.pcolor?`style="background:${p.pcolor};color:${priContrast(p.pcolor)};border-color:${p.pcolor}"`:'';
     const pbadge=editable
-      ? `<button class="pri-p ${pset?'set':''}" draggable="false" onclick="openPriPriority('${p.id}')" title="Set priority" ${pstyle}>P${pset?`<span class="pn">${p.pnum}</span>`:`<span class="pbox"></span>`}</button>`
-      : (pset?`<span class="pri-p set" ${pstyle}>P<span class="pn">${p.pnum}</span></span>`:'');
+      ? `<button class="pri-p ${pset?'set':''}" draggable="false" onclick="openPriPriority('${p.id}')" title="Set priority" ${pstyle}>${pset?`<span class="pn">${priBadgeText(p.pnum)}</span>`:`P<span class="pbox"></span>`}</button>`
+      : (pset?`<span class="pri-p set" ${pstyle}><span class="pn">${priBadgeText(p.pnum)}</span></span>`:'');
     const dueOpen=priDueOpen===p.id;
     const dueCtrl=editable
       ? `<span class="pri-due-wrap">${hasDue?`<span class="pri-duev ${p.due<todayK?'over':''}">${p.due<todayK?'Overdue · '+fmtDayKey(p.due):fmtDayKey(p.due)}</span>`:''}<button class="pri-due-toggle ${dueOpen?'open':''}" draggable="false" onclick="togglePriDue('${p.id}')" title="${hasDue?'Change due date':'Add due date'}"><i class="chev"></i></button>${dueOpen?`<input type="date" class="pri-due-in" value="${p.due||''}" draggable="false" onchange="setPriDue('${p.id}',this.value)">`:''}</span>`
@@ -2022,7 +2026,8 @@ function priorityList(editable){
     const drag=editable?`draggable="true" ondragstart="priDragStart(event,'${p.id}')" ondragover="priDragOver(event)" ondrop="priDrop(event,'${p.id}')" ondragend="priDragEnd(event)"`:'';
     return `<div class="pri-row ${editable?'pri-drag':''}" ${drag}>
       <div class="pri-main"><div class="pri-line1">${name}</div>${line2}</div>
-      ${editable?`<button class="pri-link ${p.link?'on':''}" draggable="false" onclick="openPriLink('${p.id}')" title="${p.link?'Edit spreadsheet link':'Add spreadsheet link'}">${sheetIcon()}</button>
+      ${editable?`<button class="pri-link" draggable="false" onclick="openPriRename('${p.id}')" title="Edit title"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      <button class="pri-link ${p.link?'on':''}" draggable="false" onclick="openPriLink('${p.id}')" title="${p.link?'Edit spreadsheet link':'Add spreadsheet link'}">${sheetIcon()}</button>
       <button class="pri-x" draggable="false" onclick="removePri('${p.id}')" title="Remove">&times;</button>`:''}</div>`;
   }).join(''):'<div class="empty">No projects.</div>';
   const add=editable?(priAddOpen?`<div class="pri-add">
@@ -2077,13 +2082,43 @@ function togglePriDue(id){priDueOpen=(priDueOpen===id?null:id);render();
   if(priDueOpen===id)setTimeout(()=>{const el=document.querySelector('.pri-due-in');if(el)el.focus();},0);}
 function setPriDue(id,val){const p=priorities.find(x=>x.id===id);if(!p)return;p.due=val||'';priDueOpen=null;render();
   if(live())sb.from('priorities').update({due:val||null}).eq('id',id).then(({error})=>{ if(error)toast('Due date not saved: '+error.message); });}
+function openProjectDetail(id){
+  const p=priorities.find(x=>x.id===id);if(!p)return;
+  const badge=(p.pnum!=null&&p.pnum!=='')?`<span class="pri-p set" style="${p.pcolor?`background:${p.pcolor};color:${priContrast(p.pcolor)};border-color:${p.pcolor}`:''}"><span class="pn">${priBadgeText(p.pnum)}</span></span>`:'';
+  const due=p.due?`<p class="rq-added">Due ${p.due<dateKey(now)?'· <b style="color:#A81E27">overdue</b> ·':''} ${fmtDayKey(p.due)}</p>`:'';
+  const link=p.link?`<p class="rq-added"><a href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">Open spreadsheet</a></p>`:'';
+  const added=p.addedBy?`<p class="rq-added">Added to the calendar by ${esc(p.addedBy)}</p>`:'';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Project</h3><p class="sub">${badge} ${esc(p.title)}</p>
+    ${due}${link}${added}
+    <div class="modal-actions edit-actions"><button class="btn btn-line btn-sm" onclick="openPriRename('${id}')">Edit title</button>
+      <span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div></div></div>`;
+}
+function openPriRename(id){
+  const p=priorities.find(x=>x.id===id);if(!p)return;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Edit title</h3>
+    <div class="field"><label>Project title</label><input type="text" id="priRenameIn" value="${esc(p.title)}"></div>
+    <div class="err" id="priRenameErr"></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="renamePri('${id}')">Save</button></div></div></div>`;
+  setTimeout(()=>{const el=document.getElementById('priRenameIn');if(el){el.focus();el.select();}},0);
+}
+function renamePri(id){
+  const p=priorities.find(x=>x.id===id);if(!p)return;
+  const t=(document.getElementById('priRenameIn').value||'').trim();
+  if(!t){document.getElementById('priRenameErr').textContent='Give the project a title.';return;}
+  p.title=t;closeModal();render();toast('Title updated');
+  if(live())sb.from('priorities').update({title:t}).eq('id',id).then(({error})=>{ if(error)toast('Title not saved: '+error.message); });
+}
+function priBadgeText(v){return /^\d+$/.test(String(v))?'P'+v:esc(String(v));}
 function openPriPriority(id){
   const p=priorities.find(x=>x.id===id);if(!p)return;
   priPickColor=p.pcolor||'';
   const swatch=priPickColor?`background:${priPickColor};color:${priContrast(priPickColor)};border-color:${priPickColor}`:'';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Priority</h3><p class="sub">${esc(p.title)}</p>
-    <div class="field"><label>Number</label><input type="number" id="priNumIn" min="1" step="1" value="${p.pnum!=null?p.pnum:''}" placeholder="e.g. 1"></div>
+    <div class="field"><label>Number or word</label><input type="text" id="priNumIn" value="${p.pnum!=null?esc(String(p.pnum)):''}" placeholder="e.g. 1 or High"></div>
     <div class="field"><label>Color</label>
       <div class="pri-color-row">
         <div class="pf-wheel" id="priWheel" onclick="priWheelPick(event)" style="margin-top:4px"></div>
@@ -2094,14 +2129,14 @@ function openPriPriority(id){
             : `<span class="pri-recent-none">None yet</span>`}
         </div>
       </div></div>
-    <div class="field"><label>Preview</label><span class="pri-p set" id="priPrev" style="${swatch}">P<span class="pn" id="priPrevN">${p.pnum!=null?p.pnum:'1'}</span></span></div>
+    <div class="field"><label>Preview</label><span class="pri-p set" id="priPrev" style="${swatch}"><span class="pn" id="priPrevN">${p.pnum!=null?priBadgeText(p.pnum):'P1'}</span></span></div>
     <div class="err" id="priPErr"></div>
     <div class="modal-actions">
       ${p.pnum!=null?`<button class="btn btn-line btn-sm" onclick="savePriPriority('${id}',true)">Clear</button>`:''}
       <button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="savePriPriority('${id}')">Save</button></div></div></div>`;
   const nIn=document.getElementById('priNumIn');
-  if(nIn)nIn.addEventListener('input',()=>{const v=nIn.value.trim();document.getElementById('priPrevN').textContent=v||'1';});
+  if(nIn)nIn.addEventListener('input',()=>{const v=nIn.value.trim();document.getElementById('priPrevN').innerHTML=v?priBadgeText(v):'P1';});
 }
 function priWheelPick(ev){
   const w=document.getElementById('priWheel'), r=w.getBoundingClientRect();
@@ -2119,10 +2154,9 @@ function savePriPriority(id,clear){
     if(live())sb.from('priorities').update({pnum:null,pcolor:null}).eq('id',id).then(({error})=>{ if(error)toast('Not saved: '+error.message); });
     return;}
   const raw=(document.getElementById('priNumIn').value||'').trim();
-  const num=parseInt(raw,10);
-  if(!raw||isNaN(num)||num<1){document.getElementById('priPErr').textContent='Enter a priority number (1 or higher).';return;}
-  p.pnum=num;p.pcolor=priPickColor||'';rememberColor(p.pcolor);closeModal();render();
-  if(live())sb.from('priorities').update({pnum:num,pcolor:p.pcolor||null}).eq('id',id).then(({error})=>{ if(error)toast('Priority not saved: '+error.message); });
+  if(!raw){document.getElementById('priPErr').textContent='Enter a number or a word.';return;}
+  p.pnum=raw;p.pcolor=priPickColor||'';rememberColor(p.pcolor);closeModal();render();
+  if(live())sb.from('priorities').update({pnum:raw,pcolor:p.pcolor||null}).eq('id',id).then(({error})=>{ if(error)toast('Priority not saved: '+error.message); });
 }
 function priDragCleanup(){priDragId=null;
   document.querySelectorAll('.pri-row.pri-dragging').forEach(r=>r.classList.remove('pri-dragging'));
@@ -2132,12 +2166,12 @@ function addPri(){
   if(!t){document.getElementById('priErr').textContent='Give the project a title.';return;}
   const link=normLink(document.getElementById('priLink').value);
   if(live()){
-    sb.from('priorities').insert({title:t,due:d||null,done:false,link,pos:priorities.length}).select().single().then(({data,error})=>{
+    sb.from('priorities').insert({title:t,due:d||null,done:false,link,pos:priorities.length,added_by:currentUser.name}).select().single().then(({data,error})=>{
       if(error){toast('Project not saved: '+error.message);return;}
       if(!priorities.some(p=>p.id===data.id)){priorities.push(priFromRow(data));render();}
     });
   }else{
-    priorities.push({id:'pr'+Date.now(),title:t,due:d,done:false,link});
+    priorities.push({id:'pr'+Date.now(),title:t,due:d,done:false,link,addedBy:currentUser.name});
   }
   priAddOpen=false;
   render();
@@ -2210,24 +2244,24 @@ function saveDayAdd(k){
     if(!s||!e){err.textContent='Pick both dates.';return;}
     if(e<s){err.textContent='End date must be after the start date.';return;}
     if(live()){
-      sb.from('time_off').insert({user_id:who,start_date:s,end_date:e,note,status:'approved'}).select().single().then(({data,error})=>{
+      sb.from('time_off').insert({user_id:who,start_date:s,end_date:e,note,status:'approved',added_by:currentUser.name}).select().single().then(({data,error})=>{
         if(error){toast('Time off not saved: '+error.message);return;}
         if(!timeOff.some(t=>t.id===data.id)){timeOff.push(offFromRow(data));render();}
       });
     }else{
-      timeOff.push({id:'t'+Date.now(),empId:who,start:s,end:e,note,status:'approved'});
+      timeOff.push({id:'t'+Date.now(),empId:who,start:s,end:e,note,status:'approved',addedBy:currentUser.name});
     }
     closeModal();render();toast('Time off added');
   }else{
     const noDue=document.getElementById('daNoDue')&&document.getElementById('daNoDue').checked;
     const d=noDue?'':document.getElementById('daStart').value;
     if(live()){
-      sb.from('priorities').insert({title:note,due:d||null,done:false,pos:priorities.length}).select().single().then(({data,error})=>{
+      sb.from('priorities').insert({title:note,due:d||null,done:false,pos:priorities.length,added_by:currentUser.name}).select().single().then(({data,error})=>{
         if(error){toast('Project not saved: '+error.message);return;}
         if(!priorities.some(p=>p.id===data.id)){priorities.push(priFromRow(data));render();}
       });
     }else{
-      priorities.push({id:'pr'+Date.now(),title:note,due:d,done:false});
+      priorities.push({id:'pr'+Date.now(),title:note,due:d,done:false,addedBy:currentUser.name});
     }
     closeModal();render();toast('Project added');
   }
