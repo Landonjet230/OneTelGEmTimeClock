@@ -814,10 +814,10 @@ function openShift(id){return shifts.find(s=>s.empId===id&&s.clockOut===null);}
 function daysFor(id){return shifts.filter(s=>s.empId===id).sort((a,b)=>b.clockIn-a.clockIn);}
 function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s.clockIn>=w).reduce((t,s)=>t+netMs(s),0);}
 /* role helpers — managers and co-managers share management powers; co-managers + employees clock in */
-/* owner = top-level admin: full manager powers, never on payroll, no clock features */
+/* owner = sees and uses EVERYTHING (employee + co-manager + manager); just kept off payroll */
 function isOwner(u){return !!u&&u.role==='owner';}
 function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager'||u.role==='owner');}
-function clocksIn(u){return !!u&&u.role!=='manager'&&u.role!=='owner';}
+function clocksIn(u){return !!u&&u.role!=='manager';}
 function lastName(n){const p=(n||'').trim().split(/\s+/);return p.length>1?p[p.length-1]:(p[0]||'');}
 function byLast(a,b){return lastName(a.name).localeCompare(lastName(b.name))||a.name.localeCompare(b.name);}
 function isActive(e){return !!e&&e.active!==false;}
@@ -915,7 +915,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 32 · Owner role · full admin, never on payroll</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 33 · Owner sees everything (employee+co-manager+manager), off payroll</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1524,7 +1524,7 @@ async function initAuth(){
   }catch(e){ renderLogin('Can\'t reach the server — check your internet and refresh.',true); }
 }
 const TABS={
-  owner:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  owner:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}]
