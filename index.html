@@ -652,6 +652,25 @@
     .sched-row{gap:10px}
     .sched-hrs{margin-left:0;width:100%}
   }
+
+  /* ---- work log (one running paragraph per day) + condensed day shifts ---- */
+  .log-area{font-family:"Barlow",system-ui,sans-serif;font-size:14.5px;line-height:1.5;width:100%;box-sizing:border-box;
+    border:1px solid var(--rule);border-bottom:1px solid var(--black);border-radius:10px;padding:11px 13px;background:#fff;color:#000;
+    color-scheme:only light;resize:vertical;min-height:92px;outline:none}
+  .log-area:focus{border-color:var(--purple);box-shadow:0 1px 0 0 var(--purple)}
+  .log-area::placeholder{color:#9A94A4}
+  .log-edit .field{margin-bottom:10px}
+  .log-actions{display:flex;justify-content:flex-end}
+  .log-para{white-space:pre-wrap;font-size:14px;line-height:1.55;color:var(--text);padding:10px 0 2px;max-width:660px}
+  .shift-block{margin-bottom:14px}
+  .shift-block-h{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .shift-list{list-style:none;margin:0;padding:0;max-width:520px}
+  .shift-line{display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid var(--rule-soft)}
+  .shift-line:last-child{border-bottom:0}
+  .shift-times{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-variant-numeric:tabular-nums}
+  .shift-dur{margin-left:auto;font-size:12.5px;color:var(--muted)}
+  .shift-count{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+    background:var(--purple-wash);color:var(--purple-deep);border-radius:20px;padding:2px 8px;margin-left:4px}
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
@@ -878,7 +897,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 27 · manager time-off, chat history, deactivate</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 28 · daily work log (one running note) + condensed days</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1015,8 +1034,18 @@ async function loadMessages(){
 async function loadWorkLogs(){
   const {data,error}=await sb.from('work_logs').select('*').order('created_at',{ascending:true});
   if(error)throw error;
-  workLogs={};
-  (data||[]).filter(r=>r.user_id&&r.day&&r.text!=null).forEach(r=>{const k=r.user_id+'|'+r.day;if(!workLogs[k])workLogs[k]={items:[]};workLogs[k].items.push({id:r.id,text:r.text});});
+  const map={};
+  (data||[]).filter(r=>r.user_id&&r.day&&r.text!=null).forEach(r=>{
+    const k=r.user_id+'|'+r.day;
+    if(!map[k])map[k]={parts:[],ids:[]};
+    if(String(r.text).trim()!=='')map[k].parts.push(r.text);   /* legacy bullet rows join into one paragraph */
+    map[k].ids.push(r.id);
+  });
+  const next={};
+  Object.keys(map).forEach(k=>{const t=map[k].parts.join('\n');next[k]={text:t,saved:t,ids:map[k].ids};});
+  /* keep the current user's open day if they're mid-edit, so a background refresh never wipes typing */
+  if(currentUser&&openDay&&openDay.indexOf(currentUser.id+'|')===0&&workLogs[openDay])next[openDay]=workLogs[openDay];
+  workLogs=next;
 }
 async function loadTimeOff(){
   const {data,error}=await sb.from('time_off').select('*').order('start_date',{ascending:true});
@@ -1087,11 +1116,9 @@ function subscribeMisc(){
       paintUserMenu();render();
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'work_logs'},payload=>{
-      if(payload.eventType==='DELETE')return;
-      if(payload.new){ const k=payload.new.user_id+'|'+payload.new.day;
-        if(!workLogs[k])workLogs[k]={items:[]};
-        if(!workLogs[k].items.some(i=>i.id===payload.new.id))workLogs[k].items.push({id:payload.new.id,text:payload.new.text});
-        render(); }
+      const row=payload.new||payload.old; if(!row)return;
+      if(currentUser&&row.user_id===currentUser.id)return; /* our own edits are already reflected locally */
+      loadWorkLogs().then(()=>render());
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'time_off'},payload=>{
       if(payload.eventType==='DELETE'){ const id=payload.old&&payload.old.id; if(id)timeOff=timeOff.filter(t=>t.id!==id); }
@@ -1938,47 +1965,95 @@ function toggleTodo(id){const t=userStore(currentUser).todos.find(x=>x.id===id);
 function removeTodo(id){const s=userStore(currentUser);s.todos=s.todos.filter(x=>x.id!==id);render();saveMyState();}
 
 
-/* ---------- work log ---------- */
+/* ---------- work log (one running paragraph per day; add to it any time) ---------- */
+function logText(empId,dk){const l=workLogs[empId+'|'+dk];return l&&l.text?l.text:'';}
 function logPanel(empId,dk,editable){
-  const log=workLogs[empId+'|'+dk]||{items:[]};
-  const list=log.items.length
-    ? '<ul class="loglist">'+log.items.map(i=>`<li><span>${esc(i.text)}</span></li>`).join('')+'</ul>'
-    : '<div class="empty">Nothing logged for this day.</div>';
-  if(!editable) return list;
-  return `<div class="inline-form">
-      <div class="field grow"><label>What did you work on?</label>
-        <input type="text" id="tx_${dk}" placeholder="Restocked front displays"
-          onkeydown="if(event.key==='Enter')addItem('${empId}','${dk}')"></div>
-      <button class="btn btn-dark btn-sm" onclick="addItem('${empId}','${dk}')">Add entry</button>
-    </div>${list}`;
-}
-async function addItem(empId,dk){
-  const el=document.getElementById('tx_'+dk);if(!el)return;const v=el.value.trim();if(!v)return;
-  const k=empId+'|'+dk;if(!workLogs[k])workLogs[k]={items:[]};
-  if(live()){
-    const {data,error}=await sb.from('work_logs').insert({user_id:empId,day:dk,text:v}).select().single();
-    if(error){toast('Log not saved: '+error.message);return;}
-    if(!workLogs[k].items.some(i=>i.id===data.id))workLogs[k].items.push({id:data.id,text:data.text});
-  }else{
-    workLogs[k].items.push({id:Date.now(),text:v});
+  const text=logText(empId,dk);
+  if(!editable){
+    return text.trim()
+      ? `<div class="log-para">${esc(text).replace(/\n/g,'<br>')}</div>`
+      : '<div class="empty">Nothing logged for this day.</div>';
   }
-  openDay=k;logReminder=false;render();
+  return `<div class="log-edit">
+      <div class="field"><label>Work log <span class="opt">one running note — add to it any time</span></label>
+        <textarea class="log-area" id="tx_${dk}" rows="4" placeholder="What did you work on? You can keep adding to this today or later."
+          oninput="logInput('${empId}','${dk}',this)" onblur="saveLogBlur('${empId}','${dk}')">${esc(text)}</textarea></div>
+      <div class="log-actions"><button class="btn btn-dark btn-sm" onclick="saveLog('${empId}','${dk}')">Save log</button></div>
+    </div>`;
+}
+function logInput(empId,dk,el){const k=empId+'|'+dk;if(!workLogs[k])workLogs[k]={text:'',saved:'',ids:[]};workLogs[k].text=el.value;}
+async function saveLogText(empId,dk,v){
+  const k=empId+'|'+dk, prev=workLogs[k]||{text:'',saved:'',ids:[]};
+  v=(v||'').trim();
+  if(live()){
+    if(v===''){
+      if(prev.ids&&prev.ids.length){const {error}=await sb.from('work_logs').delete().in('id',prev.ids);if(error){toast('Log not saved: '+error.message);return false;}}
+      workLogs[k]={text:'',saved:'',ids:[]};
+    }else if(prev.ids&&prev.ids.length){
+      /* one row per day: update the first, drop any legacy extras */
+      const keep=prev.ids[0], extra=prev.ids.slice(1);
+      const {error}=await sb.from('work_logs').update({text:v}).eq('id',keep);
+      if(error){toast('Log not saved: '+error.message);return false;}
+      if(extra.length)await sb.from('work_logs').delete().in('id',extra);
+      workLogs[k]={text:v,saved:v,ids:[keep]};
+    }else{
+      const {data,error}=await sb.from('work_logs').insert({user_id:empId,day:dk,text:v}).select().single();
+      if(error){toast('Log not saved: '+error.message);return false;}
+      workLogs[k]={text:v,saved:v,ids:[data.id]};
+    }
+  }else{
+    workLogs[k]={text:v,saved:v,ids:(prev.ids&&prev.ids.length)?prev.ids:(v?[Date.now()]:[])};
+  }
+  return true;
+}
+async function saveLog(empId,dk){
+  const el=document.getElementById('tx_'+dk);if(!el)return;
+  const ok=await saveLogText(empId,dk,el.value);
+  if(ok){logReminder=false;openDay=empId+'|'+dk;render();toast('Work log saved');}
+}
+async function saveLogBlur(empId,dk){
+  const el=document.getElementById('tx_'+dk);if(!el)return;
+  const k=empId+'|'+dk, saved=(workLogs[k]&&workLogs[k].saved)||'';
+  if(el.value.trim()===saved.trim())return;   /* nothing new to store */
+  const ok=await saveLogText(empId,dk,el.value);
+  if(ok){logReminder=false;openDay=k;render();}
 }
 
-/* ---------- day accordion ---------- */
+/* ---------- day accordion (one row per calendar day; expand for each shift + the log) ---------- */
 function toggleDay(k){openDay=(openDay===k)?null:k;render();}
+function shiftsByDay(empId){
+  const map={};
+  shifts.filter(s=>s.empId===empId).forEach(s=>{const dk=dateKey(s.clockIn);(map[dk]=map[dk]||[]).push(s);});
+  Object.values(map).forEach(arr=>arr.sort((a,b)=>a.clockIn-b.clockIn));
+  return map;
+}
 function dayList(empId,{logEditable=false,editTimes=false}={}){
-  const list=daysFor(empId);
-  if(!list.length)return '<div class="empty">No days recorded yet.</div>';
+  const map=shiftsByDay(empId);
+  const dks=Object.keys(map).sort((a,b)=>b.localeCompare(a));   /* newest day first */
+  if(!dks.length)return '<div class="empty">No days recorded yet.</div>';
   const pencil=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
-  const rows=list.map(s=>{
-    const dk=dateKey(s.clockIn),ek=empId+'|'+dk,isOpen=openDay===ek;
-    const out=s.clockOut?fmtTime(s.clockOut):'<span class="st on"><i></i>active</span>';
-    const edit=editTimes?`<button class="day-edit" title="Edit clock-in / clock-out" onclick="event.stopPropagation();openEditDay('${s.id}')">${pencil}</button>`:'';
-    return `<tr class="day-row" onclick="toggleDay('${ek}')">
-      <td><span class="day-cell"><span class="caret ${isOpen?'open':''}">&rsaquo;</span>${fmtDay(s.clockIn)}${s.edited?'<span class="edited">edited</span>':''}${edit}</span></td>
-      <td class="num">${fmtTime(s.clockIn)}</td><td class="num">${out}</td><td class="num">${fmtDur(netMs(s))}</td></tr>`
-      +(isOpen?`<tr class="expand"><td colspan="4"><div class="expand-in">${logPanel(empId,dk,logEditable)}</div></td></tr>`:'');
+  const rows=dks.map(dk=>{
+    const day=map[dk], ek=empId+'|'+dk, isOpen=openDay===ek;
+    const totalMs=day.reduce((t,s)=>t+netMs(s),0);
+    const firstIn=day[0].clockIn;
+    const anyActive=day.some(s=>s.clockOut===null);
+    const lastOut=anyActive?null:Math.max.apply(null,day.map(s=>s.clockOut));
+    const edited=day.some(s=>s.edited);
+    const outCell=anyActive?'<span class="st on"><i></i>active</span>':fmtTime(lastOut);
+    const multi=day.length>1?`<span class="shift-count">${day.length} shifts</span>`:'';
+    let html=`<tr class="day-row" onclick="toggleDay('${ek}')">
+      <td><span class="day-cell"><span class="caret ${isOpen?'open':''}">&rsaquo;</span>${fmtDay(firstIn)}${edited?'<span class="edited">edited</span>':''}${multi}</span></td>
+      <td class="num">${fmtTime(firstIn)}</td><td class="num">${outCell}</td><td class="num">${fmtDur(totalMs)}</td></tr>`;
+    if(isOpen){
+      const shiftRows=day.map(s=>{
+        const out=s.clockOut?fmtTime(s.clockOut):'<span class="st on"><i></i>active</span>';
+        const edit=editTimes?`<button class="day-edit" title="Edit clock-in / clock-out" onclick="event.stopPropagation();openEditDay('${s.id}')">${pencil}</button>`:'';
+        return `<li class="shift-line"><span class="shift-times">${fmtTime(s.clockIn)} &ndash; ${out}</span><span class="shift-dur mono">${fmtDur(netMs(s))}</span>${edit}</li>`;
+      }).join('');
+      const shiftBlock=`<div class="shift-block"><div class="shift-block-h">Clock in / out${day.length>1?' &middot; '+day.length+' shifts':''}</div><ul class="shift-list">${shiftRows}</ul></div>`;
+      html+=`<tr class="expand"><td colspan="4"><div class="expand-in">${shiftBlock}${logPanel(empId,dk,logEditable)}</div></td></tr>`;
+    }
+    return html;
   }).join('');
   return `<table><thead><tr><th>Day</th><th class="num">In</th><th class="num">Out</th><th class="num">Hours</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -2770,40 +2845,26 @@ async function clockOut(){
   render();promptWorkLog();
 }
 function promptWorkLog(){
-  const dk=dateKey(now),log=workLogs[currentUser.id+'|'+dk]||{items:[]};
-  const list=log.items.length?'<ul class="loglist">'+log.items.map(i=>`<li><span>${esc(i.text)}</span></li>`).join('')+'</ul>'
-    :'<div class="empty">Nothing logged yet today.</div>';
+  const dk=dateKey(now), text=logText(currentUser.id,dk);
   document.getElementById('modalMount').innerHTML=`<div class="overlay"><div class="modal">
     <h3>Before you go</h3><p class="sub">Work log · ${fmtDayKey(dk)}</p>
-    <div class="field"><label>What did you work on?</label>
-      <input type="text" id="wlInput" placeholder="Restocked front displays" onkeydown="if(event.key==='Enter')wlAdd()"></div>
-    <button class="btn btn-dark btn-sm" onclick="wlAdd()">Add entry</button>
-    <div id="wlList">${list}</div>
+    <div class="field"><label>What did you work on today? <span class="opt">one running note — add to it any time</span></label>
+      <textarea class="log-area" id="wlInput" rows="5" placeholder="What did you work on? You can keep adding to this today or later.">${esc(text)}</textarea></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="wlSkip()">Skip for now</button>
-      <button class="btn btn-primary btn-sm" onclick="wlDone()">Done</button></div></div></div>`;
+      <button class="btn btn-primary btn-sm" onclick="wlDone()">Save log</button></div></div></div>`;
 }
-async function wlAdd(){
-  const el=document.getElementById('wlInput'),v=el.value.trim();if(!v)return;
-  const k=currentUser.id+'|'+dateKey(now);if(!workLogs[k])workLogs[k]={items:[]};
-  if(live()){
-    const {data,error}=await sb.from('work_logs').insert({user_id:currentUser.id,day:dateKey(now),text:v}).select().single();
-    if(error){toast('Log not saved: '+error.message);return;}
-    if(!workLogs[k].items.some(i=>i.id===data.id))workLogs[k].items.push({id:data.id,text:data.text});
-  }else{
-    workLogs[k].items.push({id:Date.now(),text:v});
-  }
-  el.value='';
-  document.getElementById('wlList').innerHTML='<ul class="loglist">'+workLogs[k].items.map(i=>`<li><span>${esc(i.text)}</span></li>`).join('')+'</ul>';
-}
-function wlSkip(){
-  const log=workLogs[currentUser.id+'|'+dateKey(now)];
-  logReminder=!log||!log.items.length;
+async function wlSkip(){
+  const el=document.getElementById('wlInput');
+  if(el){const v=el.value.trim(); if(v)await saveLogText(currentUser.id,dateKey(now),v);}   /* keep whatever they typed */
+  logReminder=!logText(currentUser.id,dateKey(now)).trim();
   closeModal();render();
 }
-function wlDone(){
-  const log=workLogs[currentUser.id+'|'+dateKey(now)];
-  logReminder=!log||!log.items.length;
-  closeModal();render();toast(logReminder?'Work log still empty':'Work log saved');
+async function wlDone(){
+  const el=document.getElementById('wlInput'), v=el?el.value.trim():'';
+  const ok=await saveLogText(currentUser.id,dateKey(now),v);
+  if(!ok)return;
+  logReminder=!v;
+  closeModal();render();toast(v?'Work log saved':'Work log still empty');
 }
 function breakKey(){return currentUser.id+'|'+dateKey(now);}
 function breakRemaining(){return Math.max(0,BREAK_BUDGET-(breakUsed[breakKey()]||0));}
