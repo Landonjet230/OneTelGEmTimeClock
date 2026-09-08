@@ -814,8 +814,10 @@ function openShift(id){return shifts.find(s=>s.empId===id&&s.clockOut===null);}
 function daysFor(id){return shifts.filter(s=>s.empId===id).sort((a,b)=>b.clockIn-a.clockIn);}
 function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s.clockIn>=w).reduce((t,s)=>t+netMs(s),0);}
 /* role helpers — managers and co-managers share management powers; co-managers + employees clock in */
-function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager');}
-function clocksIn(u){return !!u&&u.role!=='manager';}
+/* owner = top-level admin: full manager powers, never on payroll, no clock features */
+function isOwner(u){return !!u&&u.role==='owner';}
+function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager'||u.role==='owner');}
+function clocksIn(u){return !!u&&u.role!=='manager'&&u.role!=='owner';}
 function lastName(n){const p=(n||'').trim().split(/\s+/);return p.length>1?p[p.length-1]:(p[0]||'');}
 function byLast(a,b){return lastName(a.name).localeCompare(lastName(b.name))||a.name.localeCompare(b.name);}
 function isActive(e){return !!e&&e.active!==false;}
@@ -882,7 +884,7 @@ let authMode='signin', authBusy=false;
    Lets you click "Sign in" (no credentials) to preview. Seeds the team in memory; resets on refresh. */
 function demoEnter(){
   employees=[
-    {id:'u_landon', name:'Landon Slocum',    email:'lslocum@onetelgem.org',   role:'comanager', rate:19.00},
+    {id:'u_landon', name:'Landon Slocum',    email:'lslocum@onetelgem.com',   role:'owner',     rate:0},
     {id:'u_sarah',  name:'Sarah Vance',       email:'svance@onetelgem.org',    role:'manager',   rate:0},
     {id:'u_mason',  name:'Mason Merrill',     email:'mmerrill@onetelgem.org',  role:'employee',  rate:17.00},
     {id:'u_connor', name:'Connor Williams',   email:'cwilliams@onetelgem.org', role:'employee',  rate:17.00}
@@ -913,7 +915,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 31 · deactivated off payroll · past records still viewable</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 32 · Owner role · full admin, never on payroll</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1029,7 +1031,7 @@ function subscribePayroll(){
 /* ---- row mappers for the remaining domains ---- */
 function msgFromRow(r){return {id:r.id,to:r.to_user,from:r.from_name,subject:r.subject||'',text:r.body,ts:new Date(r.created_at).getTime(),read:!!r.read};}
 function offFromRow(r){return {id:r.id,empId:r.user_id,start:r.start_date,end:r.end_date,note:r.note||'',status:r.status||'approved',response:r.response||'',decidedBy:r.decided_by||null,decidedByName:r.decided_by_name||'',decidedAt:r.decided_at?new Date(r.decided_at).getTime():0,addedBy:r.added_by||''};}
-function isManagerId(id){const e=employees.find(x=>x.id===id);return !!e&&(e.role==='manager'||e.role==='comanager');}
+function isManagerId(id){const e=employees.find(x=>x.id===id);return !!e&&(e.role==='manager'||e.role==='comanager'||e.role==='owner');}
 function priFromRow(r){return {id:r.id,title:r.title,due:r.due||'',done:!!r.done,link:r.link||'',pos:r.pos||0,pnum:(r.pnum==null||r.pnum===''?null:String(r.pnum)),pcolor:r.pcolor||'',addedBy:r.added_by||''};}
 function noticeFromRow(r){return {id:r.id,empId:r.user_id,ts:new Date(r.ts).getTime(),reason:r.reason||''};}
 function auditFromRow(r){return {id:r.id,ts:new Date(r.created_at).getTime(),manager:r.manager,emp:r.emp,field:r.field,old:r.old_val||'—',new:r.new_val||'—',reason:r.reason||''};}
@@ -1522,6 +1524,7 @@ async function initAuth(){
   }catch(e){ renderLogin('Can\'t reach the server — check your internet and refresh.',true); }
 }
 const TABS={
+  owner:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}]
@@ -1619,7 +1622,7 @@ async function saveProfile(){
 }
 function openSendNotif(ev){ev.stopPropagation();closeUserMenu();
   const u=currentUser, role=u.role;
-  const leaders=activeAll().filter(e=>e.id!==u.id&&(e.role==='manager'||e.role==='comanager'));
+  const leaders=activeAll().filter(e=>e.id!==u.id&&(e.role==='manager'||e.role==='comanager'||e.role==='owner'));
   const everyone=activeAll().filter(e=>e.id!==u.id);
   const indiv = role==='employee' ? leaders : everyone;
   const opts=indiv.map(e=>`<option value="${esc(e.name)}"></option>`).join('');
@@ -1659,7 +1662,7 @@ function sendNotification(){
   else{
     const nm=(document.getElementById('ntWho').value||'').trim().toLowerCase();
     let who=activeAll().find(e=>e.id!==u.id&&e.name.toLowerCase()===nm);
-    if(u.role==='employee'&&who&&!(who.role==='manager'||who.role==='comanager'))who=null;
+    if(u.role==='employee'&&who&&!(who.role==='manager'||who.role==='comanager'||who.role==='owner'))who=null;
     if(!who){err.textContent=u.role==='employee'?'Pick a manager or co-manager.':'Pick a valid name from your team.';return;}
     recips=[who];
   }
@@ -2515,6 +2518,7 @@ function rolesCard(){
         <option value="employee" ${e.role==='employee'?'selected':''}>Employee</option>
         <option value="comanager" ${e.role==='comanager'?'selected':''}>Co-manager</option>
         <option value="manager" ${e.role==='manager'?'selected':''}>Manager</option>
+        <option value="owner" ${e.role==='owner'?'selected':''}>Owner</option>
       </select>${btn}</div>`;
   }).join('');
   const pend=pendingRoles.length?pendingRoles.map(p=>`<div class="role-row">
@@ -2529,7 +2533,7 @@ function rolesCard(){
         <p class="mini" style="margin:0 0 12px">Set someone's role before they sign up. When they create their account with this email, the role applies automatically — then send them the site link.</p>
         <div class="inline-form">
           <div class="field grow"><label>Email</label><input type="email" id="prEmail" placeholder="name@onetelgem.com"></div>
-          <div class="field"><label>Role</label><select id="prRole"><option value="employee">Employee</option><option value="comanager">Co-manager</option><option value="manager">Manager</option></select></div>
+          <div class="field"><label>Role</label><select id="prRole"><option value="employee">Employee</option><option value="comanager">Co-manager</option><option value="manager">Manager</option><option value="owner">Owner</option></select></div>
           <button class="btn btn-primary btn-sm" onclick="addPendingRole()">Pre-assign</button>
         </div><div class="err" id="prErr"></div>
         <div style="margin-top:14px">${pend}</div>
@@ -2562,7 +2566,7 @@ async function addPendingRole(){
   const role=document.getElementById('prRole').value;
   const err=document.getElementById('prErr');
   if(!email||!email.includes('@')){err.textContent='Enter a valid email.';return;}
-  const rate=role==='manager'?0:role==='comanager'?19.00:17.00;
+  const rate=(role==='manager'||role==='owner')?0:role==='comanager'?19.00:17.00;
   const {error}=await sb.from('pending_roles').upsert({email,role,rate});
   if(error){err.textContent=error.message;return;}
   await loadPendingRoles(); render(); toast('Role pre-assigned');
