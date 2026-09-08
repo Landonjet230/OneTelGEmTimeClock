@@ -821,6 +821,15 @@ function byLast(a,b){return lastName(a.name).localeCompare(lastName(b.name))||a.
 function isActive(e){return !!e&&e.active!==false;}
 function activeAll(){return employees.filter(isActive).sort(byLast);}
 function hourlyStaff(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&isActive(e)).sort(byLast);}
+function inactiveHourly(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&!isActive(e)).sort(byLast);}
+function hadShiftsIn(id,p){return shifts.some(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;});}
+/* who shows on a pay period: all active hourly staff, plus any deactivated person who actually
+   worked hours inside this period (so past payroll stays intact, but the current/next periods drop them) */
+function periodStaff(p){
+  const active=hourlyStaff();
+  const past=inactiveHourly().filter(e=>hadShiftsIn(e.id,p));
+  return [...active,...past].sort(byLast);
+}
 function periodMs(id,p){return shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
 function nameOf(id){const e=employees.find(x=>x.id===id);return e?e.name:'—';}
 function hmToMin(hm){const [h,m]=hm.split(':').map(Number);return h*60+m;}
@@ -904,7 +913,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 29 · summary + detailed payroll PDF</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 31 · deactivated off payroll · past records still viewable</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1050,8 +1059,8 @@ async function loadWorkLogs(){
   });
   const next={};
   Object.keys(map).forEach(k=>{const t=map[k].parts.join('\n');next[k]={text:t,saved:t,ids:map[k].ids};});
-  /* keep the current user's open day if they're mid-edit, so a background refresh never wipes typing */
-  if(currentUser&&openDay&&openDay.indexOf(currentUser.id+'|')===0&&workLogs[openDay])next[openDay]=workLogs[openDay];
+  /* keep the open day if it has unsaved edits, so a background refresh never wipes typing */
+  if(openDay&&workLogs[openDay]&&(workLogs[openDay].text||'')!==(workLogs[openDay].saved||''))next[openDay]=workLogs[openDay];
   workLogs=next;
 }
 async function loadTimeOff(){
@@ -2048,8 +2057,13 @@ function dayList(empId,{logEditable=false,editTimes=false}={}){
     const edited=day.some(s=>s.edited);
     const outCell=anyActive?'<span class="st on"><i></i>active</span>':fmtTime(lastOut);
     const multi=day.length>1?`<span class="shift-count">${day.length} shifts</span>`:'';
+    const rowEdit=editTimes
+      ? (day.length===1
+          ? `<button class="day-edit" title="Edit clock-in / clock-out" onclick="event.stopPropagation();openEditDay('${day[0].id}')">${pencil}</button>`
+          : `<button class="day-edit" title="Open this day to edit each shift" onclick="event.stopPropagation();openDay='${ek}';render()">${pencil}</button>`)
+      : '';
     let html=`<tr class="day-row" onclick="toggleDay('${ek}')">
-      <td><span class="day-cell"><span class="caret ${isOpen?'open':''}">&rsaquo;</span>${fmtDay(firstIn)}${edited?'<span class="edited">edited</span>':''}${multi}</span></td>
+      <td><span class="day-cell"><span class="caret ${isOpen?'open':''}">&rsaquo;</span>${fmtDay(firstIn)}${edited?'<span class="edited">edited</span>':''}${multi}${rowEdit}</span></td>
       <td class="num">${fmtTime(firstIn)}</td><td class="num">${outCell}</td><td class="num">${fmtDur(totalMs)}</td></tr>`;
     if(isOpen){
       const shiftRows=day.map(s=>{
@@ -2476,8 +2490,18 @@ function teamTab(){
     ? `<table><thead><tr><th>Employee</th><th>Status</th>
       <th class="num">Worked</th><th class="num">Scheduled</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
     : '<div class="empty">No hourly people yet — they\'ll appear here once they create accounts.</div>';
+  const gone=inactiveHourly();
+  const inactiveRows=gone.map(e=>`<tr class="rowlink" onclick="openEmp('${e.id}')">
+      <td><span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span>${esc(e.name)} <span class="inactive-tag">Inactive</span></span></td>
+      <td style="text-align:right"><button class="linkish">View history</button></td></tr>`).join('');
+  const inactiveSec=gone.length
+    ? `<div class="sec"><div class="sec-head"><h2>Deactivated</h2><span class="ml meta">past records · read-only</span></div>
+        <p class="lede">Deactivated people are off the current roster and payroll. Their past hours and work logs are kept here to view.</p>
+        <table><tbody>${inactiveRows}</tbody></table></div>`
+    : '';
   return pageHead('Team',live+' of '+team.length+' on the clock')
     +`<div class="sec first">${roster}</div>`
+    +inactiveSec
     +rolesCard();
 }
 function rolesCard(){
@@ -2551,14 +2575,23 @@ function dismissNotice(id){notices=notices.filter(n=>n.id!==id);render();
   if(live())sb.from('notices').delete().eq('id',id).then(({error})=>{ if(error)toast('Not dismissed: '+error.message); });}
 function employeeDetail(id){
   const e=employees.find(x=>x.id===id),s=schedules[id]||blankWeek();
+  const off=!isActive(e);
+  const heading=pageHead(e.name+(off?' <span class="inactive-tag">Inactive</span>':''),money(e.rate)+' / hr');
+  if(off){
+    /* deactivated: past records only, fully read-only, no schedule / current-week / add-day */
+    return `<button class="back" onclick="closeEmp()">&larr; Team</button>`
+      +heading
+      +`<div class="sec first"><div class="note">This account is deactivated — it's off the current roster and payroll. The records below are kept for reference and are read-only. Reactivate them from People &amp; roles to make changes.</div>
+        <div style="margin-top:20px">${dayList(id,{logEditable:false,editTimes:false})}</div></div>`;
+  }
   const schedRows=DOW.map(k=>{const day=Array.isArray(s[k])?s[k]:[];
     return `<tr><td>${DOW_LABEL[k]}</td>
     <td class="num">${day.length?day.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join('<br>'):'<span class="sched-off">Off</span>'}</td>
     <td class="num">${day.length?fmtHrs(dayHours(day)):'—'}</td></tr>`;}).join('');
   return `<button class="back" onclick="closeEmp()">&larr; Team</button>`
-    +pageHead(e.name,money(e.rate)+' / hr')
-    +`<div class="sec first"><p class="lede">Select a day to read its work log.</p>
-      ${dayList(id,{logEditable:false,editTimes:true})}
+    +heading
+    +`<div class="sec first"><p class="lede">Tap the pencil on a day to edit clock times. Open a day to edit its work log.</p>
+      ${dayList(id,{logEditable:true,editTimes:true})}
       <div class="totals"><div class="stat"><div class="k">Worked this week</div><div class="v">${fmtDur(workedThisWeek(id))}</div></div>
         <div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(weekHours(id))}</div></div></div>
       <div style="margin-top:24px"><button class="btn btn-line btn-sm" onclick="openAdd('${id}')">Add a missing day</button></div></div>
@@ -2581,9 +2614,10 @@ function payTab(){
   });
   const periods=ordered.map(p=>{
     const current=todayK>=p.start&&todayK<=p.end;
-    const rows=team.map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
+    const rows=periodStaff(p).map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
       const rbTotal=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((t,r)=>t+r.amount,0);
-      return `<tr><td><button class="emp-link" onclick="openReimb('${p.id}','${e.id}')" title="Add a reimbursement">${esc(e.name)}</button></td><td class="num">${fmtDur(ms)}</td><td class="num">${money(e.rate)}</td><td class="num">${money(amt)}</td><td class="num">${rbTotal>0?money(rbTotal):'—'}</td><td class="num"><b>${money(amt+rbTotal)}</b></td></tr>`;}).join('');
+      const tag=isActive(e)?'':' <span class="inactive-tag">Inactive</span>';
+      return `<tr><td><button class="emp-link" onclick="openReimb('${p.id}','${e.id}')" title="Add a reimbursement">${esc(e.name)}</button>${tag}</td><td class="num">${fmtDur(ms)}</td><td class="num">${money(e.rate)}</td><td class="num">${money(amt)}</td><td class="num">${rbTotal>0?money(rbTotal):'—'}</td><td class="num"><b>${money(amt+rbTotal)}</b></td></tr>`;}).join('');
     return `<div class="period ${current?'current':''}"><div class="period-head">
         <span class="period-title">${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</span>
         ${current?'<span class="period-tag">Current</span>':''}
@@ -2666,7 +2700,7 @@ async function removeReimb(id){const r=periodReimb.find(x=>x.id===id);if(!r)retu
   periodReimb=periodReimb.filter(x=>x.id!==id);render();renderReimbModal(r.periodId,r.empId);}
 function downloadPeriodPDF(id){
   const p=payPeriods.find(x=>x.id===id);if(!p)return;
-  const team=hourlyStaff();
+  const team=periodStaff(p);
   const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
   const rows=team.map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
     const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id);
@@ -2722,7 +2756,7 @@ function openPdfChoice(id){
 /* ---- detailed payroll PDF: every clock-in/out per employee, with pay ---- */
 function downloadPeriodDetailPDF(id){
   const p=payPeriods.find(x=>x.id===id);if(!p)return;
-  const team=hourlyStaff();
+  const team=periodStaff(p);
   const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
   const sections=team.map(e=>{
     const es=shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===e.id&&k>=p.start&&k<=p.end;}).sort((a,b)=>a.clockIn-b.clockIn);
