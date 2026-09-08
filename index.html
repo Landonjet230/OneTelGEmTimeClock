@@ -671,6 +671,13 @@
   .shift-dur{margin-left:auto;font-size:12.5px;color:var(--muted)}
   .shift-count{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
     background:var(--purple-wash);color:var(--purple-deep);border-radius:20px;padding:2px 8px;margin-left:4px}
+  /* ---- payroll PDF chooser ---- */
+  .pdf-choice{display:flex;flex-direction:column;gap:11px;margin:4px 0 4px}
+  .pdf-opt{display:flex;flex-direction:column;gap:3px;text-align:left;width:100%;background:#fff;border:1px solid var(--rule);
+    border-radius:13px;padding:14px 16px;cursor:pointer;transition:border-color .12s,background .12s}
+  .pdf-opt:hover{border-color:var(--purple);background:var(--purple-wash)}
+  .pdf-opt-t{font-family:"Archivo";font-weight:700;font-size:14px;color:var(--text)}
+  .pdf-opt-d{font-size:12.5px;color:var(--muted);line-height:1.4}
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
@@ -897,7 +904,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 28 · daily work log (one running note) + condensed days</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 29 · summary + detailed payroll PDF</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -2580,7 +2587,7 @@ function payTab(){
     return `<div class="period ${current?'current':''}"><div class="period-head">
         <span class="period-title">${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</span>
         ${current?'<span class="period-tag">Current</span>':''}
-        <button class="dl-btn" onclick="downloadPeriodPDF('${p.id}')" title="Download PDF for this period" aria-label="Download PDF">&#8595;</button></div>
+        <button class="dl-btn" onclick="openPdfChoice('${p.id}')" title="Download payroll PDF" aria-label="Download payroll PDF">&#8595;</button></div>
       <table><thead><tr><th>Employee</th><th class="num">Hours</th><th class="num">Rate</th><th class="num">Est. pay</th><th class="num">Reimb</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="rb-hint">Click a name to add a reimbursement.</p>
       <div style="margin-top:10px"><button class="pri-x" onclick="removePeriod('${p.id}')" title="Remove period">&times; Remove this period</button></div></div>`;
@@ -2692,6 +2699,77 @@ function downloadPeriodPDF(id){
     <table><thead><tr><th>Employee</th><th class="n">Total time</th><th class="n">Rate</th><th class="n">Exact pay</th><th class="n">Reimb</th><th class="n">Total</th></tr></thead>
     <tbody>${rows}</tbody></table>
     <p class="note">Exact pay = hours worked × hourly rate, to the minute. No overtime rules applied. Total = exact pay + reimbursements.</p>
+    <scr`+`ipt>window.onload=function(){setTimeout(function(){window.print();},200);}</scr`+`ipt>
+    </body></html>`);
+  w.document.close();
+}
+
+/* ---- choose which payroll PDF to download ---- */
+function openPdfChoice(id){
+  const p=payPeriods.find(x=>x.id===id);if(!p)return;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Download payroll PDF</h3><p class="sub">${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</p>
+    <div class="pdf-choice">
+      <button class="pdf-opt" onclick="closeModal();downloadPeriodPDF('${id}')">
+        <span class="pdf-opt-t">Summary</span>
+        <span class="pdf-opt-d">One line per employee — total hours, rate, pay and reimbursements.</span></button>
+      <button class="pdf-opt" onclick="closeModal();downloadPeriodDetailPDF('${id}')">
+        <span class="pdf-opt-t">Detailed</span>
+        <span class="pdf-opt-d">Every clock-in and clock-out with dates and times, grouped by employee, plus the same pay and reimbursements.</span></button>
+    </div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button></div></div></div>`;
+}
+/* ---- detailed payroll PDF: every clock-in/out per employee, with pay ---- */
+function downloadPeriodDetailPDF(id){
+  const p=payPeriods.find(x=>x.id===id);if(!p)return;
+  const team=hourlyStaff();
+  const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
+  const sections=team.map(e=>{
+    const es=shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===e.id&&k>=p.start&&k<=p.end;}).sort((a,b)=>a.clockIn-b.clockIn);
+    const ms=periodMs(e.id,p), amt=(ms/HR)*e.rate;
+    const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id);
+    const rbTotal=rb.reduce((t,r)=>t+r.amount,0);
+    const shiftRows=es.length
+      ? es.map(s=>`<tr><td>${fmtDay(s.clockIn)}</td><td class="n">${fmtTime(s.clockIn)}</td><td class="n">${s.clockOut?fmtTime(s.clockOut):'in progress'}</td><td class="n">${fmtDur(netMs(s))}</td></tr>`).join('')
+      : `<tr><td colspan="4" class="none">No shifts recorded this period.</td></tr>`;
+    const reimbLine=rb.length?`<p class="rbline">Reimbursements: ${rb.map(r=>esc(r.label)+' — '+money(r.amount)).join(' · ')}</p>`:'';
+    return `<div class="emp">
+      <h2>${esc(e.name)}</h2>
+      <table class="detail"><thead><tr><th>Date</th><th class="n">Clock in</th><th class="n">Clock out</th><th class="n">Hours</th></tr></thead>
+      <tbody>${shiftRows}</tbody></table>
+      <div class="subt"><span>Total worked <b>${fmtDur(ms)}</b></span><span>Rate ${money(e.rate)}/hr</span><span>Est. pay ${money(amt)}</span><span>Reimb ${rbTotal>0?money(rbTotal):'—'}</span><span class="tot">Total ${money(amt+rbTotal)}</span></div>
+      ${reimbLine}
+    </div>`;
+  }).join('');
+  const w=window.open('','_blank');
+  if(!w){toast('Allow pop-ups to download the PDF');return;}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OTG Payroll (detailed) ${range}</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:"Barlow",Arial,sans-serif;color:#141218;margin:0;padding:40px;max-width:680px}
+      .mark{font-family:"Archivo",Arial,sans-serif;font-weight:700;font-size:13px;
+        text-transform:uppercase;letter-spacing:.14em;background:#000;color:#fff;display:inline-block;padding:5px 9px}
+      h1{font-family:"Archivo",Arial,sans-serif;font-size:22px;margin:16px 0 2px}
+      .sub{color:#6E6B77;font-size:13px;margin:0 0 24px}
+      .emp{margin-bottom:26px;page-break-inside:avoid}
+      .emp h2{font-family:"Archivo",Arial,sans-serif;font-size:15px;margin:0 0 8px;padding-bottom:5px;border-bottom:2px solid #141218}
+      table.detail{width:100%;border-collapse:collapse;font-size:13px}
+      table.detail th{text-align:left;font-family:"Archivo",Arial,sans-serif;font-size:9.5px;letter-spacing:.08em;
+        text-transform:uppercase;color:#6E6B77;border-bottom:1px solid #DEDCE2;padding:6px 6px}
+      table.detail td{padding:8px 6px;border-bottom:1px solid #EBE9EE}
+      .n{text-align:right;font-family:"IBM Plex Mono",monospace}
+      .none{color:#8A8792;font-style:italic}
+      .subt{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin-top:9px;font-size:12.5px;
+        font-family:"IBM Plex Mono",monospace;color:#4A4553}
+      .subt .tot{margin-left:auto;font-weight:700;color:#141218}
+      .rbline{font-size:11.5px;color:#8A8792;font-family:"IBM Plex Mono",monospace;margin:5px 0 0}
+      .note{color:#8A8792;font-size:11px;margin-top:14px}
+    </style></head><body>
+    <span class="mark">OTG</span>
+    <h1>Payroll — detailed time record</h1>
+    <p class="sub">${range}</p>
+    ${sections}
+    <p class="note">Every clock-in and clock-out for the period. Hours are to the minute. Est. pay = hours × rate; no overtime rules applied. Total = est. pay + reimbursements.</p>
     <scr`+`ipt>window.onload=function(){setTimeout(function(){window.print();},200);}</scr`+`ipt>
     </body></html>`);
   w.document.close();
