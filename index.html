@@ -196,6 +196,7 @@
   .cell .ev{cursor:pointer}
   .role-row.inactive{opacity:.6}
   .inactive-tag{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:#F0EEF3;color:#8A8792;border-radius:20px;padding:2px 7px;margin-left:4px}
+  .owner-tag{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:var(--purple);color:#fff;border-radius:20px;padding:2px 8px;margin-left:4px}
   .rl-deact:hover{border-color:#A81E27;color:#A81E27}
   .rq-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
   .rq-approve,.rq-deny{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:22px;font-family:"Archivo";font-weight:700;font-size:12.5px;cursor:pointer;border:1px solid}
@@ -814,10 +815,14 @@ function openShift(id){return shifts.find(s=>s.empId===id&&s.clockOut===null);}
 function daysFor(id){return shifts.filter(s=>s.empId===id).sort((a,b)=>b.clockIn-a.clockIn);}
 function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s.clockIn>=w).reduce((t,s)=>t+netMs(s),0);}
 /* role helpers — managers and co-managers share management powers; co-managers + employees clock in */
-/* owner = sees and uses EVERYTHING (employee + co-manager + manager); just kept off payroll */
-function isOwner(u){return !!u&&u.role==='owner';}
-function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager'||u.role==='owner');}
-function clocksIn(u){return !!u&&u.role!=='manager';}
+/* OWNER = a normal co-manager whose email is listed here. Full co-manager access + clock features,
+   the one difference being they are never on payroll (salaried). We do NOT use a database "owner"
+   role, so the database's security rules always recognize the account as a co-manager and never
+   hide data. To transfer ownership later, just change the email(s) in this list. */
+const OWNER_EMAILS=['lslocum@onetelgem.com'];
+function isOwner(u){return !!u&&OWNER_EMAILS.includes((u.email||'').trim().toLowerCase());}
+function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager'||isOwner(u));}
+function clocksIn(u){return !!u&&(u.role!=='manager'||isOwner(u));}
 function lastName(n){const p=(n||'').trim().split(/\s+/);return p.length>1?p[p.length-1]:(p[0]||'');}
 function byLast(a,b){return lastName(a.name).localeCompare(lastName(b.name))||a.name.localeCompare(b.name);}
 function isActive(e){return !!e&&e.active!==false;}
@@ -825,11 +830,13 @@ function activeAll(){return employees.filter(isActive).sort(byLast);}
 function hourlyStaff(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&isActive(e)).sort(byLast);}
 function inactiveHourly(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&!isActive(e)).sort(byLast);}
 function hadShiftsIn(id,p){return shifts.some(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;});}
-/* who shows on a pay period: all active hourly staff, plus any deactivated person who actually
-   worked hours inside this period (so past payroll stays intact, but the current/next periods drop them) */
+/* payroll excludes owners (salaried) — they keep every other ability, just aren't paid hourly */
+function payrollStaff(){return hourlyStaff().filter(e=>!isOwner(e));}
+/* who shows on a pay period: active hourly staff (minus owners), plus any deactivated person who
+   actually worked hours inside this period (so past payroll stays intact) — owners never appear */
 function periodStaff(p){
-  const active=hourlyStaff();
-  const past=inactiveHourly().filter(e=>hadShiftsIn(e.id,p));
+  const active=payrollStaff();
+  const past=inactiveHourly().filter(e=>!isOwner(e)&&hadShiftsIn(e.id,p));
   return [...active,...past].sort(byLast);
 }
 function periodMs(id,p){return shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
@@ -915,7 +922,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 33 · Owner sees everything (employee+co-manager+manager), off payroll</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 34 · Owner = co-manager, labeled Owner, off payroll (no DB role, safe)</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1540,7 +1547,8 @@ function closeMenu(){menuOpen=false;paintMenu();}
 function paintMenu(){
   const p=document.getElementById('menuPanel'),b=document.getElementById('menuBtn');
   if(!currentUser){p.classList.add('hide');b.classList.remove('open');return;}
-  p.innerHTML=TABS[currentUser.role].map(t=>
+  const tabs=TABS[currentUser.role]||TABS.comanager;   /* never crash on an unexpected role */
+  p.innerHTML=tabs.map(t=>
     `<button class="menu-item ${activeTab===t.id&&!selectedEmpId?'active':''}" onclick="goTab('${t.id}')">${t.label}<span class="tick">&#9642;</span></button>`
   ).join('');
   p.classList.toggle('hide',!menuOpen);
@@ -2513,12 +2521,11 @@ function rolesCard(){
     const btn=me?'':(off?`<button class="btn btn-line btn-sm" onclick="setActive('${e.id}',true)">Reactivate</button>`
                         :`<button class="btn btn-line btn-sm rl-deact" onclick="askDeactivate('${e.id}')">Deactivate</button>`);
     return `<div class="role-row ${off?'inactive':''}">
-      <span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b>${off?' <span class="inactive-tag">Inactive</span>':''}<span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
+      <span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b>${isOwner(e)?' <span class="owner-tag">Owner</span>':''}${off?' <span class="inactive-tag">Inactive</span>':''}<span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
       <select class="role-sel" ${off?'disabled':''} onchange="changeRole('${e.id}',this.value)">
         <option value="employee" ${e.role==='employee'?'selected':''}>Employee</option>
         <option value="comanager" ${e.role==='comanager'?'selected':''}>Co-manager</option>
         <option value="manager" ${e.role==='manager'?'selected':''}>Manager</option>
-        <option value="owner" ${e.role==='owner'?'selected':''}>Owner</option>
       </select>${btn}</div>`;
   }).join('');
   const pend=pendingRoles.length?pendingRoles.map(p=>`<div class="role-row">
@@ -2533,7 +2540,7 @@ function rolesCard(){
         <p class="mini" style="margin:0 0 12px">Set someone's role before they sign up. When they create their account with this email, the role applies automatically — then send them the site link.</p>
         <div class="inline-form">
           <div class="field grow"><label>Email</label><input type="email" id="prEmail" placeholder="name@onetelgem.com"></div>
-          <div class="field"><label>Role</label><select id="prRole"><option value="employee">Employee</option><option value="comanager">Co-manager</option><option value="manager">Manager</option><option value="owner">Owner</option></select></div>
+          <div class="field"><label>Role</label><select id="prRole"><option value="employee">Employee</option><option value="comanager">Co-manager</option><option value="manager">Manager</option></select></div>
           <button class="btn btn-primary btn-sm" onclick="addPendingRole()">Pre-assign</button>
         </div><div class="err" id="prErr"></div>
         <div style="margin-top:14px">${pend}</div>
@@ -2606,7 +2613,7 @@ function openEmp(id){selectedEmpId=id;openDay=null;render();}
 function closeEmp(){selectedEmpId=null;openDay=null;render();}
 
 function payTab(){
-  const team=hourlyStaff();
+  const team=payrollStaff();
   const rateRows=team.map(e=>`<tr><td>${e.name}</td>
     <td class="num"><input type="number" class="rate-in" min="0" step="0.25" value="${e.rate.toFixed(2)}" onchange="setRate('${e.id}',this.value)"></td>
     <td class="ml" style="text-align:left;width:60px">/ hr</td></tr>`).join('');
