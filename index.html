@@ -922,7 +922,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 34 · Owner = co-manager, labeled Owner, off payroll (no DB role, safe)</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 35 · payroll PDFs: larger date range + company total time &amp; pay</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -2719,6 +2719,8 @@ function downloadPeriodPDF(id){
     const main=`<tr${rb.length?' class="rb-parent"':''}><td>${esc(e.name)}</td><td class="n">${fmtDur(ms)}</td><td class="n">${money(e.rate)}/hr</td><td class="n">${money(amt)}</td><td class="n">${rbTotal>0?money(rbTotal):'—'}</td><td class="n"><b>${money(amt+rbTotal)}</b></td></tr>`;
     const sub=rb.length?`<tr class="rb-sub"><td colspan="6">Reimbursements: ${rb.map(r=>esc(r.label)+' — '+money(r.amount)).join(' · ')}</td></tr>`:'';
     return main+sub;}).join('');
+  const totalMs=team.reduce((t,e)=>t+periodMs(e.id,p),0);
+  const totalPay=team.reduce((t,e)=>{const ms=periodMs(e.id,p);const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((s,r)=>s+r.amount,0);return t+(ms/HR)*e.rate+rb;},0);
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to download the PDF');return;}
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OTG Payroll ${range}</title>
@@ -2727,8 +2729,13 @@ function downloadPeriodPDF(id){
       body{font-family:"Barlow",Arial,sans-serif;color:#141218;margin:0;padding:40px;max-width:660px}
       .mark{font-family:"Archivo",Arial,sans-serif;font-weight:700;letter-spacing:-.01em;font-size:13px;
         text-transform:uppercase;letter-spacing:.14em;background:#000;color:#fff;display:inline-block;padding:5px 9px}
-      h1{font-family:"Archivo",Arial,sans-serif;font-size:22px;margin:16px 0 2px}
-      .sub{color:#6E6B77;font-size:13px;margin:0 0 22px}
+      h1{font-family:"Archivo",Arial,sans-serif;font-size:22px;margin:16px 0 4px}
+      .phead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:0 0 22px}
+      .range{color:#141218;font-family:"Archivo",Arial,sans-serif;font-weight:700;font-size:17px;margin:0}
+      .totbox{display:flex;gap:26px;flex-wrap:wrap}
+      .tot{display:flex;flex-direction:column;text-align:right}
+      .tl{font-family:"Archivo",Arial,sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6E6B77}
+      .tv{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;color:#141218;margin-top:2px}
       table{width:100%;border-collapse:collapse;font-size:13.5px}
       th{text-align:left;font-family:"Archivo",Arial,sans-serif;font-size:10px;letter-spacing:.08em;
         text-transform:uppercase;color:#6E6B77;border-bottom:2px solid #141218;padding:8px 6px}
@@ -2739,8 +2746,10 @@ function downloadPeriodPDF(id){
       .rb-sub td{padding:0 6px 11px;color:#8A8792;font-size:11.5px;font-family:"IBM Plex Mono",monospace;border-bottom:1px solid #DEDCE2}
     </style></head><body>
     <span class="mark">OTG</span>
-    <h1>Payroll — pay period</h1>
-    <p class="sub">${range}</p>
+    <div class="phead">
+      <div><h1>Payroll — pay period</h1><p class="range">${range}</p></div>
+      <div class="totbox"><div class="tot"><span class="tl">Total time</span><span class="tv">${fmtDur(totalMs)}</span></div><div class="tot"><span class="tl">Total pay</span><span class="tv">${money(totalPay)}</span></div></div>
+    </div>
     <table><thead><tr><th>Employee</th><th class="n">Total time</th><th class="n">Rate</th><th class="n">Exact pay</th><th class="n">Reimb</th><th class="n">Total</th></tr></thead>
     <tbody>${rows}</tbody></table>
     <p class="note">Exact pay = hours worked × hourly rate, to the minute. No overtime rules applied. Total = exact pay + reimbursements.</p>
@@ -2786,6 +2795,8 @@ function downloadPeriodDetailPDF(id){
       ${reimbLine}
     </div>`;
   }).join('');
+  const totalMs=team.reduce((t,e)=>t+periodMs(e.id,p),0);
+  const totalPay=team.reduce((t,e)=>{const ms=periodMs(e.id,p);const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((s,r)=>s+r.amount,0);return t+(ms/HR)*e.rate+rb;},0);
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to download the PDF');return;}
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OTG Payroll (detailed) ${range}</title>
@@ -2794,8 +2805,13 @@ function downloadPeriodDetailPDF(id){
       body{font-family:"Barlow",Arial,sans-serif;color:#141218;margin:0;padding:40px;max-width:680px}
       .mark{font-family:"Archivo",Arial,sans-serif;font-weight:700;font-size:13px;
         text-transform:uppercase;letter-spacing:.14em;background:#000;color:#fff;display:inline-block;padding:5px 9px}
-      h1{font-family:"Archivo",Arial,sans-serif;font-size:22px;margin:16px 0 2px}
-      .sub{color:#6E6B77;font-size:13px;margin:0 0 24px}
+      h1{font-family:"Archivo",Arial,sans-serif;font-size:22px;margin:16px 0 4px}
+      .phead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:0 0 24px}
+      .range{color:#141218;font-family:"Archivo",Arial,sans-serif;font-weight:700;font-size:17px;margin:0}
+      .totbox{display:flex;gap:26px;flex-wrap:wrap}
+      .htot{display:flex;flex-direction:column;text-align:right}
+      .tl{font-family:"Archivo",Arial,sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6E6B77}
+      .tv{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600;color:#141218;margin-top:2px}
       .emp{margin-bottom:26px;page-break-inside:avoid}
       .emp h2{font-family:"Archivo",Arial,sans-serif;font-size:15px;margin:0 0 8px;padding-bottom:5px;border-bottom:2px solid #141218}
       table.detail{width:100%;border-collapse:collapse;font-size:13px}
@@ -2811,8 +2827,10 @@ function downloadPeriodDetailPDF(id){
       .note{color:#8A8792;font-size:11px;margin-top:14px}
     </style></head><body>
     <span class="mark">OTG</span>
-    <h1>Payroll — detailed time record</h1>
-    <p class="sub">${range}</p>
+    <div class="phead">
+      <div><h1>Payroll — detailed time record</h1><p class="range">${range}</p></div>
+      <div class="totbox"><div class="htot"><span class="tl">Total time</span><span class="tv">${fmtDur(totalMs)}</span></div><div class="htot"><span class="tl">Total pay</span><span class="tv">${money(totalPay)}</span></div></div>
+    </div>
     ${sections}
     <p class="note">Every clock-in and clock-out for the period. Hours are to the minute. Est. pay = hours × rate; no overtime rules applied. Total = est. pay + reimbursements.</p>
     <scr`+`ipt>window.onload=function(){setTimeout(function(){window.print();},200);}</scr`+`ipt>
