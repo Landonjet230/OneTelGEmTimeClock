@@ -100,6 +100,8 @@
   .um-item b{color:#fff}
   .um-item .t{font-family:"IBM Plex Mono";font-size:10px;color:#8B8496;display:block;margin-top:2px}
   .um-item.um-click{cursor:pointer}
+  button.um-item{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid rgba(255,255,255,.09);font:inherit;font-size:12px;color:#CFC9D8;line-height:1.4;padding:9px 0}
+  button.um-item:hover{color:#fff}
   .um-item.um-click:hover{color:#fff}
   .um-tag{display:inline-block;font-family:"IBM Plex Mono";font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
     color:var(--purple);border:1px solid rgba(155,100,177,.55);border-radius:20px;padding:1px 7px;margin-right:6px}
@@ -193,6 +195,106 @@
   .rq-reason{font-size:14px;margin:2px 0 0}
   .rq-decided{font-size:13px;color:var(--muted);margin:8px 0 0}
   .rq-added{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+  /* ---- #1 strikes ---- */
+  .strike-stat .v .of{font-size:14px;color:var(--muted);font-weight:500}
+  .strike-stat.maxed .v{color:#A81E27}
+  .strike-since{font-size:11px;color:var(--muted);margin-top:2px}
+  .strike-flag{display:inline-block;margin-top:6px;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:2px 8px}
+  .strike-flag.reeval{background:#FBEED2;color:#8A6D1B}
+  .strike-flag.removal{background:#E6F4EA;color:#0B6B33}
+  .strike-actions{display:flex;gap:14px;margin-top:7px}
+  .sh-row{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--rule-soft)}
+  .sh-row:last-child{border-bottom:0}
+  .sh-badge{flex:none;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:2px 8px;margin-top:2px}
+  .sh-badge.add{background:#F6E0E1;color:#A81E27}
+  .sh-badge.remove{background:#E6F4EA;color:#0B6B33}
+  .sh-main{flex:1;min-width:0}
+  .sh-reason{font-size:14px}
+  .sh-date{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:2px}
+  .sh-rule{font-size:11.5px;color:var(--muted);margin:14px 0 0;line-height:1.45}
+  /* ---- #2 questions of the week ---- */
+  .qw-mine{margin-bottom:22px}
+  .qw-mine .panel-head h2{font-size:14px}
+  .qw-due{color:#A81E27}
+  .qw-done{color:#0B6B33}
+  .qw-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 4px}
+  .qw-tools input[type=text]{flex:1;min-width:200px}
+  .qw-tools input[type=date]{width:auto}
+  .qw-weeks{margin-top:18px}
+  .qw-week{border:1px solid var(--rule-soft);background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .qw-week.current{border-color:var(--purple);box-shadow:0 0 0 1px var(--purple)}
+  .qw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .qw-date{font-family:"Archivo";font-weight:700;font-size:15px}
+  .qw-guest{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:var(--purple-wash);color:var(--purple-deep);border-radius:20px;padding:3px 10px}
+  .qw-row{display:flex;gap:14px;align-items:flex-start;padding:9px 10px;margin:0 -10px;border-top:1px solid var(--rule-soft);border-left:3px solid transparent;transition:background .12s}
+  .qw-row.st-answered{background:#E3F3E8;border-left-color:#0B8A3E}
+  .qw-row.st-unanswered{background:#F9E1E2;border-left-color:#C0262F}
+  .qw-marks{flex:none;display:flex;gap:5px}
+  .qw-mark{width:24px;height:24px;border-radius:50%;border:1px solid var(--rule);background:#fff;color:#8A8792;font-size:12px;line-height:1;display:grid;place-items:center;padding:0;cursor:pointer}
+  .qw-mark.ok:hover,.qw-mark.ok.on{border-color:#0B8A3E;color:#0B8A3E}
+  .qw-mark.no:hover,.qw-mark.no.on{border-color:#C0262F;color:#C0262F}
+  .qw-mark.ok.on{background:#0B8A3E;color:#fff}
+  .qw-mark.no.on{background:#C0262F;color:#fff}
+  .qw-tally{margin-left:auto;font-size:12px;color:var(--muted)}
+  .qw-tally .t-ok{color:#0B6B33;font-weight:600}
+  .qw-tally .t-no{color:#A81E27;font-weight:600}
+  /* ---- #7 time off tracker ---- */
+  .pto-stat{display:flex;gap:26px;flex-wrap:wrap}
+  .pto-block{min-width:190px}
+  .pto-bar{height:10px;border-radius:99px;background:#ECE7F1;overflow:hidden;margin:9px 0 6px;width:200px;max-width:100%}
+  .pto-bar span{display:block;height:100%;border-radius:99px;background:var(--purple);transition:width .3s}
+  .pto-bar.over span{background:#6F4783}
+  .pto-bar.red{background:#F6E3E4}
+  .pto-bar.red span{background:#D6333D}
+  .pto-txt{font-size:11.5px;color:var(--muted)}
+  .pto-txt b{color:var(--text);font-weight:600}
+  .pto-over{color:#A81E27;font-weight:600}
+  /* ---- #6 hours check ---- */
+  .hc-bar{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;padding:14px 16px;background:#fff;border:1px solid var(--rule-soft);border-radius:14px}
+  .hc-bar .field{gap:4px}
+  .hc-bar input[type=date]{width:auto}
+  .hc-bar input[type=number]{width:110px}
+  .hc-title{align-self:center;color:var(--purple-deep)}
+  .hc-pill{border-radius:999px;padding-left:24px;padding-right:24px}
+  .hc-sum{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;margin:12px 2px 18px}
+  .hc-count{margin-left:auto;display:flex;gap:14px}
+  .hc-light{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+  .hc-light i{width:11px;height:11px;border-radius:50%;display:block}
+  .hc-light.ok{color:#0B6B33}.hc-light.ok i{background:#10A34A;box-shadow:0 0 8px rgba(16,163,74,.55)}
+  .hc-light.no{color:#A81E27}.hc-light.no i{background:#D6333D;box-shadow:0 0 8px rgba(214,51,61,.5)}
+  .hc-detail{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+  /* ---- #5 trainings placeholder ---- */
+  .soon-card{text-align:center;padding:64px 20px;border:1px dashed var(--rule);border-radius:18px;background:#fff}
+  .soon-ic{width:64px;height:64px;margin:0 auto 16px;border-radius:50%;background:var(--purple-wash);color:var(--purple-deep);display:grid;place-items:center}
+  .soon-card h2{font-size:20px;margin-bottom:6px}
+  .soon-card p{color:var(--muted);margin:0}
+  /* ---- #4 time zones ---- */
+  .tz-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 16px}
+  .tz-sel{width:auto}
+  .modal.dark select{background:#17131F;color:#fff;border:1px solid #2E2838;border-radius:8px;padding:9px 11px;font-family:"Barlow";font-size:14px;width:100%}
+  /* ---- #3 anonymous survey ---- */
+  .sv-btn .um-ct{margin-left:4px}
+  .sv-privacy{font-size:12px;color:var(--muted);background:var(--purple-wash);border-radius:10px;padding:10px 12px;line-height:1.45}
+  .modal.sv-modal{max-width:560px}
+  .sv-send{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#FBEED2;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:16px}
+  .sv-sent{background:#E6F4EA;color:#0B6B33;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:16px}
+  .sv-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .sv-count{font-size:12px;color:var(--muted)}
+  .sv-row{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--rule-soft)}
+  .sv-row:last-child{border-bottom:0}
+  .sv-cat{flex:none;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:2px 8px;margin-top:2px;background:#F0EEF3;color:#6E6B77}
+  .sv-advice{background:#E6F4EA;color:#0B6B33}
+  .sv-problem{background:#F6E0E1;color:#A81E27}
+  .sv-concern{background:#FBEED2;color:#8A6D1B}
+  .sv-body{flex:1;min-width:0;font-size:14px;line-height:1.5}
+  .sv-list{max-height:48vh;overflow:auto}
+  .qw-who{flex:none;width:78px;font-weight:600;font-size:13.5px}
+  .qw-q{flex:1;min-width:0;font-size:14px;line-height:1.45}
+  .qw-vac{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;background:#F0EEF3;color:#6E6B77;border-radius:20px;padding:2px 8px}
+  .qw-missing{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);padding-top:9px;border-top:1px solid var(--rule-soft)}
+  .qw-missing span,.qw-add{font-size:12px;border:1px dashed var(--rule);border-radius:20px;padding:2px 9px;background:none;color:var(--muted)}
+  .qw-add{cursor:pointer}
+  .qw-add:hover{border-color:var(--purple);color:var(--purple-deep)}
   .cell .ev{cursor:pointer}
   .role-row.inactive{opacity:.6}
   .inactive-tag{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:#F0EEF3;color:#8A8792;border-radius:20px;padding:2px 7px;margin-left:4px}
@@ -769,6 +871,10 @@ let seq=100; const nid=()=>'s'+(seq++);
    are still in-memory in this phase — they migrate to Supabase next. */
 let shifts=[];
 let workLogs={};
+let strikes=[];   /* #1 strike ledger: {id,empId,action:'add'|'remove',reason,date,byName,ts} */
+let qotwEntries=[], qotwGuests={}, qwDraft=null;   /* #2 Questions of the Week */
+let surveyResponses=[], surveyRounds={}, surveyMine=new Set();   /* #3 anonymous survey */
+let timeOffCat={};   /* #7 time_off id -> 'regular' | 'emergency' (leaders see all; employees only their own) */
 
 /* weekly schedule — employee sets their own */
 const DOW=['sun','mon','tue','wed','thu','fri','sat'];
@@ -802,6 +908,68 @@ let logReminder=false;
 
 /* ================= HELPERS ================= */
 function fmtTime(ts){if(ts==null)return '—';const d=new Date(ts);let h=d.getHours(),m=d.getMinutes();const ap=h<12?'AM':'PM';h=h%12||12;return h+':'+pad(m)+' '+ap;}
+/* ================= TIME ZONES (#4) =================
+   Each person has a home time zone (profiles.timezone). Their clock times and schedule are shown in
+   THEIR zone to everyone (a 9–5 in Oregon reads 9–5 for a manager in Utah or New York).
+   Which DAY a shift counts toward — daily rows, weeks, pay periods — always uses company time (Utah). */
+const COMPANY_TZ='America/Denver';
+const TZ_CHOICES=[['America/New_York','Eastern Time'],['America/Chicago','Central Time'],['America/Denver','Mountain Time'],
+  ['America/Phoenix','Arizona Time'],['America/Los_Angeles','Pacific Time'],['America/Anchorage','Alaska Time'],['Pacific/Honolulu','Hawaii Time']];
+function deviceTZ(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||COMPANY_TZ;}catch(e){return COMPANY_TZ;}}
+function tzOf(id){const e=employees.find(x=>x.id===id);return (e&&e.timezone)||(currentUser&&id===currentUser.id?deviceTZ():COMPANY_TZ);}
+function tzLabel(tz){const c=TZ_CHOICES.find(x=>x[0]===tz);if(c)return c[1];
+  try{const p=new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'long'}).formatToParts(new Date()).find(x=>x.type==='timeZoneName');return p?p.value:tz;}catch(e){return tz;}}
+const _tzF={};
+function partsIn(ts,tz){
+  let f=_tzF[tz]; if(!f){f=_tzF[tz]=new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',weekday:'short',hourCycle:'h23'});}
+  const o={}; f.formatToParts(new Date(ts)).forEach(x=>o[x.type]=x.value);
+  return {y:+o.year,mo:+o.month,d:+o.day,h:(+o.hour)%24,mi:+o.minute,dow:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(o.weekday)};
+}
+function fmtTimeTZ(ts,tz){if(ts==null)return '—';const p=partsIn(ts,tz);let h=p.h;const ap=h<12?'AM':'PM';h=h%12||12;return h+':'+pad(p.mi)+' '+ap;}
+function fmtTimeFor(id,ts){return fmtTimeTZ(ts,tzOf(id));}
+function companyDateKey(ts){const p=partsIn(ts,COMPANY_TZ);return p.y+'-'+pad(p.mo)+'-'+pad(p.d);}
+function todayKey(){return companyDateKey(Date.now());}
+function fmtCoDay(k){return keyToDate(k).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});}
+function tzSelect(id,value,onchange){
+  const list=TZ_CHOICES.slice(); if(value&&!list.some(x=>x[0]===value))list.push([value,tzLabel(value)]);
+  return `<select class="role-sel tz-sel" id="${id}" ${onchange?`onchange="${onchange}"`:''}>${list.map(([v,l])=>`<option value="${v}" ${v===value?'selected':''}>${l}</option>`).join('')}</select>`;
+}
+async function setPersonTZ(id,tz){
+  if(!canManage(currentUser))return;
+  const e=employees.find(x=>x.id===id);if(!e)return;
+  const old=e.timezone||'';e.timezone=tz;
+  if(live()){const {error}=await sb.from('profiles').update({timezone:tz}).eq('id',id);
+    if(error){e.timezone=old;render();toast('Time zone not saved: '+error.message);return;}}
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:e.name,field:'Time zone',old:old?tzLabel(old):'—',new:tzLabel(tz),reason:''});
+  render();toast(e.name.split(' ')[0]+' is now on '+tzLabel(tz));
+}
+async function saveMyTZ(tz,quiet){
+  currentUser.timezone=tz;
+  if(live()){const {error}=await sb.from('profiles').update({timezone:tz}).eq('id',currentUser.id);
+    if(error&&!quiet)toast('Time zone not saved: '+error.message);}
+  closeModal();render();if(!quiet)toast('Time zone set to '+tzLabel(tz));
+}
+/* at sign-in: fill in a missing zone from the device; if the device zone differs (travel), ask */
+function checkTimezone(){
+  if(!currentUser)return;
+  const dev=deviceTZ(),cur=currentUser.timezone;
+  if(!cur){saveMyTZ(dev,true);return;}
+  if(cur===dev)return;
+  let skip='';try{skip=sessionStorage.getItem('otgTzSkip')||'';}catch(e){}
+  if(skip===cur+'>'+dev)return;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay"><div class="modal">
+    <h3>Switch to ${tzLabel(dev)}?</h3><p class="sub">Time zone</p>
+    <p style="margin:0 0 6px;font-size:14px">Your device is on <b>${tzLabel(dev)}</b>, but your account is set to <b>${tzLabel(cur)}</b>. Your clock times and schedule show in your account's time zone.</p>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="keepTZ()">Keep ${tzLabel(cur)}</button>
+      <button class="btn btn-primary btn-sm" onclick="saveMyTZ('${dev}')">Switch to ${tzLabel(dev)}</button></div></div></div>`;
+}
+function keepTZ(){try{sessionStorage.setItem('otgTzSkip',currentUser.timezone+'>'+deviceTZ());}catch(e){}closeModal();}
+/* minutes the zone is ahead of UTC at that instant */
+function tzOffsetMin(ts,tz){const p=partsIn(ts,tz);return (Date.UTC(p.y,p.mo-1,p.d,p.h,p.mi)-Math.floor(ts/60000)*60000)/60000;}
+/* a wall-clock time in a zone -> exact timestamp */
+function wallToTs(y,mo,d,h,mi,tz){const g=Date.UTC(y,mo-1,d,h,mi);let off=tzOffsetMin(g,tz),ts=g-off*60000;const off2=tzOffsetMin(ts,tz);if(off2!==off)ts=g-off2*60000;return ts;}
+function tsToInputTZ(ts,tz){const p=partsIn(ts,tz);return p.y+'-'+pad(p.mo)+'-'+pad(p.d)+'T'+pad(p.h)+':'+pad(p.mi);}
+function inputToTsTZ(v,tz){const m=(v||'').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);return m?wallToTs(+m[1],+m[2],+m[3],+m[4],+m[5],tz):null;}
 function fmtHM(hm){if(!hm)return '—';let [h,m]=hm.split(':').map(Number);const ap=h<12?'AM':'PM';h=h%12||12;return h+':'+pad(m)+' '+ap;}
 function fmtDay(ts){return new Date(ts).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});}
 function fmtDayKey(k){return keyToDate(k).toLocaleDateString(undefined,{month:'short',day:'numeric'});}
@@ -829,7 +997,7 @@ function isActive(e){return !!e&&e.active!==false;}
 function activeAll(){return employees.filter(isActive).sort(byLast);}
 function hourlyStaff(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&isActive(e)).sort(byLast);}
 function inactiveHourly(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&!isActive(e)).sort(byLast);}
-function hadShiftsIn(id,p){return shifts.some(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;});}
+function hadShiftsIn(id,p){return shifts.some(s=>{const k=companyDateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;});}
 /* payroll excludes owners (salaried) — they keep every other ability, just aren't paid hourly */
 function payrollStaff(){return hourlyStaff().filter(e=>!isOwner(e));}
 /* who shows on a pay period: active hourly staff (minus owners), plus any deactivated person who
@@ -839,19 +1007,19 @@ function periodStaff(p){
   const past=inactiveHourly().filter(e=>!isOwner(e)&&hadShiftsIn(e.id,p));
   return [...active,...past].sort(byLast);
 }
-function periodMs(id,p){return shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
+function periodMs(id,p){return shifts.filter(s=>{const k=companyDateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
 function nameOf(id){const e=employees.find(x=>x.id===id);return e?e.name:'—';}
 function hmToMin(hm){const [h,m]=hm.split(':').map(Number);return h*60+m;}
 function slotHours(sl){const v=(hmToMin(sl.end)-hmToMin(sl.start))/60;return v>0?v:0;}
 function dayHours(day){if(!Array.isArray(day)||!day.length)return 0;return day.reduce((t,sl)=>t+slotHours(sl),0);}
 function weekHours(id){const s=schedules[id];if(!s)return 0;return DOW.reduce((t,k)=>t+dayHours(s[k]),0);}
-function slotsForDate(id,ts){const s=schedules[id];if(!s)return [];const d=s[DOW[new Date(ts).getDay()]];return Array.isArray(d)?d:[];}
+function slotsForDate(id,ts){const s=schedules[id];if(!s)return [];const d=s[DOW[partsIn(ts,tzOf(id)).dow]];return Array.isArray(d)?d:[];}
 function slotsOverlap(a,b){return hmToMin(a.start)<hmToMin(b.end)&&hmToMin(b.start)<hmToMin(a.end);}
 function isOutsideSchedule(id,ts){const slots=slotsForDate(id,ts);if(!slots.length)return true;
-  const m=new Date(ts).getHours()*60+new Date(ts).getMinutes();return !slots.some(sl=>m>=hmToMin(sl.start)&&m<=hmToMin(sl.end));}
-function weekStartKey(){const d=new Date(now);d.setDate(d.getDate()-d.getDay());return dateKey(d);}
+  const p=partsIn(ts,tzOf(id)),m=p.h*60+p.mi;return !slots.some(sl=>m>=hmToMin(sl.start)&&m<=hmToMin(sl.end));}
+function weekStartKey(){const k=todayKey();return addDaysKey(k,-keyToDate(k).getDay());}
 function workedThisWeek(id){const ws=weekStartKey();
-  return shifts.filter(s=>s.empId===id&&dateKey(s.clockIn)>=ws).reduce((t,s)=>t+netMs(s),0);}
+  return shifts.filter(s=>s.empId===id&&companyDateKey(s.clockIn)>=ws).reduce((t,s)=>t+netMs(s),0);}
 /* ---- live Supabase state (real session only; demo bypass stays in-memory) ---- */
 let liveSession=false;
 function live(){return !!sb&&liveSession;}
@@ -922,7 +1090,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 35 · payroll PDFs: larger date range + company total time &amp; pay</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 36 · strikes · Questions of the Week · anonymous survey · time zones · trainings · hours check · time off tracker</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -959,7 +1127,7 @@ async function loadProfiles(){
   const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
   if(error)throw error;
   employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role,rate:Number(p.rate)||0,
-    avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||'',active:p.active!==false}));
+    avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||'',active:p.active!==false,timezone:p.timezone||''}));
 }
 async function loadPendingRoles(){
   if(!canManage(currentUser)){pendingRoles=[];return;}
@@ -1078,15 +1246,9 @@ async function loadTimeOff(){
   timeOff=(data||[]).filter(r=>r.user_id&&r.start_date&&r.end_date).map(offFromRow);
   cleanupPassedTimeOff();
 }
-function cleanupPassedTimeOff(){
-  const tk=dateKey(now);
-  const passed=timeOff.filter(t=>t.end<tk);
-  if(!passed.length)return;
-  timeOff=timeOff.filter(t=>t.end>=tk);                       /* hide once the dates are behind us */
-  if(live()&&canManage(currentUser)){                          /* only managers can actually delete */
-    passed.forEach(t=>sb.from('time_off').delete().eq('id',t.id).then(()=>{}));
-  }
-}
+/* Finished time off is now KEPT (it feeds the hours check and the yearly time-off tracker).
+   It's only hidden from the requests list once its dates have passed. */
+function cleanupPassedTimeOff(){}
 async function deleteTimeOff(id){
   if(live()){const {error}=await sb.from('time_off').delete().eq('id',id);if(error){toast('Could not delete: '+error.message);return;}}
   timeOff=timeOff.filter(t=>t.id!==id);
@@ -1139,6 +1301,24 @@ function subscribeMisc(){
       else if(payload.new){ const row=msgFromRow(payload.new);
         const i=messages.findIndex(m=>m.id===row.id); if(i>=0)messages[i]=row; else messages.push(row); }
       paintUserMenu();render();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'time_off_categories'},()=>{
+      loadTimeOffCats().then(()=>render()).catch(()=>{});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'survey_responses'},()=>{
+      loadSurvey().then(()=>{paintUserMenu();}).catch(()=>{});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'survey_rounds'},()=>{
+      loadSurvey().then(()=>{paintUserMenu();}).catch(()=>{});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'qotw_entries'},()=>{
+      loadQotw().then(()=>render()).catch(()=>{});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'qotw_weeks'},()=>{
+      loadQotw().then(()=>render()).catch(()=>{});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'strikes'},()=>{
+      loadStrikes().then(()=>render()).catch(()=>{});
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'work_logs'},payload=>{
       const row=payload.new||payload.old; if(!row)return;
@@ -1351,12 +1531,13 @@ function openRequestDetail(id){
   const decided=t.status!=='pending'?`<p class="rq-decided">${t.status==='approved'?'Approved':'Denied'} by ${esc(t.decidedByName||'a manager')}${t.response?' · “'+esc(t.response)+'”':''}</p>`:'';
   const addNote=t.decidedByName?`<p class="rq-added">Added to the calendar by ${esc(t.decidedByName)} (approved this request)</p>`:(t.addedBy?`<p class="rq-added">Added to the calendar by ${esc(t.addedBy)}</p>`:'');
   const del=mgr?`<button class="del-shift" title="Delete this request" onclick="deleteTimeOff('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`:'';
+  const typeCtl=mgr?`<div class="field"><label>Type <span class="opt">leaders only</span></label>${offTypePicker('rqType',offCat(t.id),(!pending&&t.status==='approved')?`changeOffType('${id}',this)`:'')}</div>`:'';
   const actions=(mgr&&pending)
-    ? `<div class="field"><label>Response <span class="opt">optional</span></label><input type="text" id="rqResp" placeholder="Add a note back (optional)"></div>
+    ? `${typeCtl}<div class="field"><label>Response <span class="opt">optional</span></label><input type="text" id="rqResp" placeholder="Add a note back (optional)"></div>
        <div class="err" id="rqErr"></div>
        <div class="modal-actions edit-actions">${del}<span class="ea-right"><button class="rq-deny" onclick="decideRequest('${id}',false)" title="Deny">${xGlyph()} Deny</button>
          <button class="rq-approve" onclick="decideRequest('${id}',true)" title="Approve">${checkGlyph()} Approve</button></span></div>`
-    : `<div class="modal-actions edit-actions">${del}<span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div>`;
+    : `${(mgr&&t.status==='approved')?typeCtl:''}<div class="modal-actions edit-actions">${del}<span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div>`;
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Time off request</h3><p class="sub">${esc(nameOf(t.empId))} ${statusChip}</p>
     ${miniRangeCal(t.start,t.end)}
@@ -1368,13 +1549,15 @@ function openRequestDetail(id){
 async function decideRequest(id,approve){
   const t=timeOff.find(x=>x.id===id);if(!t)return;
   const resp=(document.getElementById('rqResp')?document.getElementById('rqResp').value:'').trim();
+  const typeEl=document.getElementById('rqType'),cat=typeEl?typeEl.value:'regular';
   const patch={status:approve?'approved':'denied',response:resp||null,decided_by:currentUser.id,decided_by_name:currentUser.name,decided_at:new Date().toISOString()};
   if(live()){
     const {error}=await sb.from('time_off').update(patch).eq('id',id);
     if(error){const e=document.getElementById('rqErr');if(e)e.textContent='Could not save: '+error.message;return;}
   }
   t.status=patch.status;t.response=resp;t.decidedBy=currentUser.id;t.decidedByName=currentUser.name;t.decidedAt=Date.now();
-  closeModal();render();toast(approve?'Request approved':'Request denied');
+  if(approve)await setOffType(id,cat);
+  closeModal();render();toast(approve?'Request approved'+(cat==='emergency'?' · emergency/sick':''):'Request denied');
 }
 function miniRangeCal(startK,endK){
   const [sy,sm]=startK.split('-').map(Number);
@@ -1415,7 +1598,8 @@ function chatListView(){
       <h1>Messages</h1></div>
     ${requestsSection()}
     <div class="cv-actions"><button class="btn btn-primary btn-sm" onclick="openNewDM()">New message</button>
-      <button class="btn btn-line btn-sm" onclick="openNewGroup()">New group</button></div>
+      <button class="btn btn-line btn-sm" onclick="openNewGroup()">New group</button>
+      ${surveyButton()}</div>
     <div class="cv-list">${rows}</div>
     ${sorted.length?'<p class="cv-hint">Double-tap a chat to remove it from your list.</p>':''}</div>`;
 }
@@ -1424,6 +1608,7 @@ function requestsSection(){
   let items=mgr
     ? timeOff.filter(t=>t.status&&t.empId!==undefined).filter(t=>t.status==='pending'||(t.decidedBy&&t.decidedAt))   /* incoming + recently handled */
     : myRequests();
+  items=items.filter(t=>t.status==='pending'||t.end>=todayKey());   /* past, already-decided requests drop off the list */
   if(mgr){ items=[...items].sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||b.start.localeCompare(a.start)); }
   else { items=[...items].sort((a,b)=>b.start.localeCompare(a.start)); }
   if(!items.length)return '';
@@ -1502,6 +1687,10 @@ async function enterApp(session){
   try{ await loadReimb(); }catch(e){ toast('Could not load reimbursements: '+(e.message||e)); }
   try{ await loadMessages(); }catch(e){ toast('Could not load messages: '+(e.message||e)); }
   try{ await loadWorkLogs(); }catch(e){ toast('Could not load work logs: '+(e.message||e)); }
+  try{ await loadStrikes(); }catch(e){ toast('Could not load strikes: '+(e.message||e)); }
+  try{ await loadQotw(); }catch(e){ toast('Could not load Questions of the Week: '+(e.message||e)); }
+  try{ await loadSurvey(); }catch(e){ toast('Could not load anonymous feedback: '+(e.message||e)); }
+  try{ await loadTimeOffCats(); }catch(e){ toast('Could not load time off types: '+(e.message||e)); }
   try{ await loadTimeOff(); }catch(e){ toast('Could not load time off: '+(e.message||e)); }
   try{ await loadPriorities(); }catch(e){ toast('Could not load projects: '+(e.message||e)); }
   try{ await loadNotices(); }catch(e){ toast('Could not load notices: '+(e.message||e)); }
@@ -1518,6 +1707,7 @@ async function enterApp(session){
   paintTopAvatar();
   document.getElementById('tbName').textContent=currentUser.name;
   render();
+  checkTimezone();
 }
 async function initAuth(){
   renderLogin();
@@ -1531,10 +1721,10 @@ async function initAuth(){
   }catch(e){ renderLogin('Can\'t reach the server — check your internet and refresh.',true); }
 }
 const TABS={
-  owner:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'}]
+  owner:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'}]
 };
 function signOut(){
   stopAlarm();clearInterval(breakTimer);breakActive=false;
@@ -1589,6 +1779,7 @@ function openProfile(ev){ev.stopPropagation();closeUserMenu();profileTarget='bg'
       </div>
     </div>
     <div class="field"><label>Name</label><input type="text" id="pfName" value="${esc(u.name)}"></div>
+    <div class="field"><label>Time zone</label>${tzSelect('pfTz',tzOf(u.id),'')}</div>
     ${showRate?`<div class="field"><label>Hourly rate</label><div class="pf-ro">${money(u.rate||0)} / hr</div></div>`:''}
     <div class="field"><label>New password <span class="opt">8+ characters, optional</span></label><div class="pw-wrap"><input type="password" id="pfPass" autocomplete="new-password">${pwEyeBtn('pfPass')}</div></div>
     <div class="err" id="pfErr"></div>
@@ -1615,14 +1806,15 @@ function setProfileColor(color){
 async function saveProfile(){
   const err=document.getElementById('pfErr');
   const name=(document.getElementById('pfName').value||'').trim();
+  const tzEl=document.getElementById('pfTz'),tzNew=tzEl?tzEl.value:currentUser.timezone;
   const pass=document.getElementById('pfPass').value||'';
   if(!name){err.textContent='Name can\'t be blank.';return;}
   if(pass&&pass.length<8){err.textContent='Password needs at least 8 characters.';return;}
-  currentUser.name=name;
+  currentUser.name=name; if(tzNew)currentUser.timezone=tzNew;
   document.getElementById('tbName').textContent=name;
   paintTopAvatar();
   if(live()){
-    const {error}=await sb.from('profiles').update({name,avatar_bg:currentUser.avatarColor||null,avatar_fg:currentUser.initialsColor||null}).eq('id',currentUser.id);
+    const {error}=await sb.from('profiles').update({name,avatar_bg:currentUser.avatarColor||null,avatar_fg:currentUser.initialsColor||null,timezone:tzNew||null}).eq('id',currentUser.id);
     if(error){err.textContent='Could not save: '+error.message;return;}
   }
   if(pass){ try{ const {error}=await sb.auth.updateUser({password:pass}); if(error){err.textContent=error.message;return;} }catch(e){ err.textContent='Could not reach the server to update the password.';return; } }
@@ -1705,6 +1897,8 @@ function renderBody(){
     case 'hours':return hoursTab();
     case 'schedule':return scheduleTab(currentUser.id,true);
     case 'calendar':return calendarTab(canManage(currentUser)?null:currentUser.id,canManage(currentUser));
+    case 'qotw':return qotwTab();
+    case 'trainings':return trainingsTab();
     case 'team':return teamTab();
     case 'pay':return payTab();
     case 'audit':return auditTab();
@@ -1718,13 +1912,17 @@ function paintUserMenu(){
   const mgrNotices=canManage(currentUser)?notices:[];
   const msgItems=myMsgs.map(m=>`<div class="um-item um-click" onclick="readMessage(event,'${m.id}')" title="Click to mark read"><b>${esc(m.from)}</b>${m.subject?` <span class="um-subj">${esc(m.subject)}</span>`:''} ${esc(m.text)}<span class="t">${fmtDay(m.ts)} · ${fmtTime(m.ts)}</span></div>`).join('');
   const noticeItems=mgrNotices.map(n=>`<div class="um-item"><b>${nameOf(n.empId)}</b> clocked in outside their schedule.
-        ${n.reason?'“'+esc(n.reason)+'”':''}<span class="t">${fmtDay(n.ts)} · ${fmtTime(n.ts)}</span>
+        ${n.reason?'“'+esc(n.reason)+'”':''}<span class="t">${fmtDay(n.ts)} · ${fmtTimeFor(n.empId,n.ts)}</span>
         <button class="dz" onclick="event.stopPropagation();dismissNotice('${n.id}')">Dismiss</button></div>`).join('');
   const pReq=pendingRequestCount();
   const reqLine=pReq?`<button class="um-item um-click" onclick="openChatPage(event)"><b>${pReq} time off request${pReq>1?'s':''}</b> waiting for your review.</button>`:'';
-  const body=(reqLine+msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
-  const count=myMsgs.length+mgrNotices.length+pReq;
-  dot.classList.toggle('hide',myMsgs.length===0&&mgrNotices.length===0&&pReq===0);
+  const svDue=surveyReminderDue();
+  const svLine=svDue?`<button class="um-item um-click" onclick="event.stopPropagation();closeUserMenu();openSurveyReader()"><span class="um-tag">Monthly</span><b>Send out the anonymous survey</b> for ${surveyMonthLabel(svDue)}.</button>`:'';
+  const qwDue=qotwReminderDue();
+  const qwLine=qwDue?`<button class="um-item um-click" onclick="event.stopPropagation();closeUserMenu();goTab('qotw')"><span class="um-tag">Reminder</span><b>Add your Question of the Week</b> — due ${fmtDayKey(qwDue)}.</button>`:'';
+  const body=(reqLine+svLine+qwLine+msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
+  const count=myMsgs.length+mgrNotices.length+pReq+(qwDue?1:0)+(svDue?1:0);
+  dot.classList.toggle('hide',count===0);
   const reqBtn=!canManage(currentUser)?`<button class="um-req" onclick="openTimeOffRequest(event)">Request time off</button>`:'';
   const inbox=`<div class="um-notif"><div class="um-label"><button class="um-open" onclick="openChatPage(event)" title="Open messages">Notifications${count?` <span class="um-ct">${count}</span>`:''}</button>`
     +`<button class="um-send" onclick="openSendNotif(event)" title="Send a message" aria-label="Send a message"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M3 11.5 21 3l-8.5 18-2.2-7.3z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></button>`
@@ -1854,7 +2052,7 @@ function widgetBody(k){
     const mainBtn=s?`<button class="btn btn-primary btn-sm w-clockbtn" onclick="clockOut()">Clock out</button>`
                    :`<button class="btn btn-primary btn-sm w-clockbtn" onclick="clockIn()">Clock in</button>`;
     return `<div class="w-time" id="wClock">${s?fmtWatch(netMs(s)):'00:00:00'}</div>
-      <div class="w-sub">${s?'Clocked in '+fmtTime(s.clockIn):'Not clocked in'}</div>
+      <div class="w-sub">${s?'Clocked in '+fmtTimeFor(u.id,s.clockIn):'Not clocked in'}</div>
       <div style="text-align:center">${mainBtn}</div>`;
   }
   if(k==='break'){
@@ -2050,7 +2248,7 @@ async function saveLogBlur(empId,dk){
 function toggleDay(k){openDay=(openDay===k)?null:k;render();}
 function shiftsByDay(empId){
   const map={};
-  shifts.filter(s=>s.empId===empId).forEach(s=>{const dk=dateKey(s.clockIn);(map[dk]=map[dk]||[]).push(s);});
+  shifts.filter(s=>s.empId===empId).forEach(s=>{const dk=companyDateKey(s.clockIn);(map[dk]=map[dk]||[]).push(s);});
   Object.values(map).forEach(arr=>arr.sort((a,b)=>a.clockIn-b.clockIn));
   return map;
 }
@@ -2066,7 +2264,7 @@ function dayList(empId,{logEditable=false,editTimes=false}={}){
     const anyActive=day.some(s=>s.clockOut===null);
     const lastOut=anyActive?null:Math.max.apply(null,day.map(s=>s.clockOut));
     const edited=day.some(s=>s.edited);
-    const outCell=anyActive?'<span class="st on"><i></i>active</span>':fmtTime(lastOut);
+    const outCell=anyActive?'<span class="st on"><i></i>active</span>':fmtTimeFor(empId,lastOut);
     const multi=day.length>1?`<span class="shift-count">${day.length} shifts</span>`:'';
     const rowEdit=editTimes
       ? (day.length===1
@@ -2074,13 +2272,13 @@ function dayList(empId,{logEditable=false,editTimes=false}={}){
           : `<button class="day-edit" title="Open this day to edit each shift" onclick="event.stopPropagation();openDay='${ek}';render()">${pencil}</button>`)
       : '';
     let html=`<tr class="day-row" onclick="toggleDay('${ek}')">
-      <td><span class="day-cell"><span class="caret ${isOpen?'open':''}">&rsaquo;</span>${fmtDay(firstIn)}${edited?'<span class="edited">edited</span>':''}${multi}${rowEdit}</span></td>
-      <td class="num">${fmtTime(firstIn)}</td><td class="num">${outCell}</td><td class="num">${fmtDur(totalMs)}</td></tr>`;
+      <td><span class="day-cell"><span class="caret ${isOpen?'open':''}">&rsaquo;</span>${fmtCoDay(dk)}${edited?'<span class="edited">edited</span>':''}${multi}${rowEdit}</span></td>
+      <td class="num">${fmtTimeFor(empId,firstIn)}</td><td class="num">${outCell}</td><td class="num">${fmtDur(totalMs)}</td></tr>`;
     if(isOpen){
       const shiftRows=day.map(s=>{
-        const out=s.clockOut?fmtTime(s.clockOut):'<span class="st on"><i></i>active</span>';
+        const out=s.clockOut?fmtTimeFor(empId,s.clockOut):'<span class="st on"><i></i>active</span>';
         const edit=editTimes?`<button class="day-edit" title="Edit clock-in / clock-out" onclick="event.stopPropagation();openEditDay('${s.id}')">${pencil}</button>`:'';
-        return `<li class="shift-line"><span class="shift-times">${fmtTime(s.clockIn)} &ndash; ${out}</span><span class="shift-dur mono">${fmtDur(netMs(s))}</span>${edit}</li>`;
+        return `<li class="shift-line"><span class="shift-times">${fmtTimeFor(empId,s.clockIn)} &ndash; ${out}</span><span class="shift-dur mono">${fmtDur(netMs(s))}</span>${edit}</li>`;
       }).join('');
       const shiftBlock=`<div class="shift-block"><div class="shift-block-h">Clock in / out${day.length>1?' &middot; '+day.length+' shifts':''}</div><ul class="shift-list">${shiftRows}</ul></div>`;
       html+=`<tr class="expand"><td colspan="4"><div class="expand-in">${shiftBlock}${logPanel(empId,dk,logEditable)}</div></td></tr>`;
@@ -2355,7 +2553,8 @@ function daSwap(k){
     ? `<div class="field"><label>Person</label><select id="daWho">${people}</select></div>
        <div class="field"><label>Reason</label><input type="text" id="daNote" placeholder="Vacation"></div>
        <div class="field"><label>From</label><input type="date" id="daStart" value="${k}"></div>
-       <div class="field"><label>To</label><input type="date" id="daEnd" value="${k}"></div>`
+       <div class="field"><label>To</label><input type="date" id="daEnd" value="${k}"></div>
+       <div class="field"><label>Type</label>${offTypePicker('daCat','regular','')}</div>`
     : `<div class="field"><label>Title</label><input type="text" id="daNote" placeholder="Quarterly inventory count"></div>
        <div class="field"><label>Due <span class="opt">optional</span></label><input type="date" id="daStart" value="${k}"></div>
        <label class="da-nodue"><input type="checkbox" id="daNoDue" onchange="document.getElementById('daStart').disabled=this.checked"> No due date</label>`;
@@ -2366,16 +2565,18 @@ function saveDayAdd(k){
   if(!note){err.textContent=t==='off'?'Add a reason.':'Add a title.';return;}
   if(t==='off'){
     const who=document.getElementById('daWho').value;
+    const cat=document.getElementById('daCat')?document.getElementById('daCat').value:'regular';
     const s=document.getElementById('daStart').value,e=document.getElementById('daEnd').value;
     if(!s||!e){err.textContent='Pick both dates.';return;}
     if(e<s){err.textContent='End date must be after the start date.';return;}
     if(live()){
       sb.from('time_off').insert({user_id:who,start_date:s,end_date:e,note,status:'approved',added_by:currentUser.name}).select().single().then(({data,error})=>{
         if(error){toast('Time off not saved: '+error.message);return;}
-        if(!timeOff.some(t=>t.id===data.id)){timeOff.push(offFromRow(data));render();}
+        if(!timeOff.some(t=>t.id===data.id)){timeOff.push(offFromRow(data));}
+        setOffType(data.id,cat).then(()=>render());
       });
     }else{
-      timeOff.push({id:'t'+Date.now(),empId:who,start:s,end:e,note,status:'approved',addedBy:currentUser.name});
+      const tid='t'+Date.now();timeOff.push({id:tid,empId:who,start:s,end:e,note,status:'approved',addedBy:currentUser.name});timeOffCat[tid]=cat;
     }
     closeModal();render();toast('Time off added');
   }else{
@@ -2396,13 +2597,13 @@ function saveDayAdd(k){
 /* ================= EMPLOYEE ================= */
 /* ================= TIMECARD / HOURS ================= */
 function hoursTab(){
-  return pageHead('My hours','last 7 days')
+  return pageHead('My hours','last 7 days · '+tzLabel(tzOf(currentUser.id)))
     +`<div class="sec first">${dayList(currentUser.id,{logEditable:true})}
-      <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div></div></div>
+      <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div>${strikeStat(currentUser.id,false)}${timeOffStat(currentUser.id,false)}</div></div>
       <div class="sec"><div class="note">Your times are read-only. If something is wrong, ask a manager — every correction is recorded.</div></div>`;
 }
 function timecardTab(){
-  const dk=dateKey(now),s=openShift(currentUser.id);
+  const dk=todayKey(),s=openShift(currentUser.id);
   const sched=slotsForDate(currentUser.id,now);
   const status=s?(breakActive?'On paid break':'On the clock'):'Clocked out';
   const rem=breakRemaining();
@@ -2424,11 +2625,11 @@ function timecardTab(){
       <span class="mini">30-minute daily break — end early and the rest stays for later today. An alarm sounds at zero; keep this tab open.</span></div>`;
   }
   const reminder=logReminder?`<div class="note warn" style="margin-top:22px">Don't forget to submit your work log for today.</div>`:'';
-  return pageHead('TimeCard',new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))
+  return pageHead('TimeCard',new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+' · '+tzLabel(tzOf(currentUser.id)))
     +`<div class="clockpanel">
         <span class="st ${s?'on':'off'}"><i></i>${status}</span>
         <span class="liveclock" id="liveClock">${s?fmtWatch(netMs(s)):'00:00:00'}</span>
-        <span class="since">${s?'Clocked in '+fmtTime(s.clockIn):'Not clocked in'}</span>
+        <span class="since">${s?'Clocked in '+fmtTimeFor(currentUser.id,s.clockIn):'Not clocked in'}</span>
         <div class="clock-actions">${actions}</div>
         ${breakNote}
         <span class="sched-today">${sched.length?'Scheduled today '+sched.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join(', '):'Not scheduled today'}</span>
@@ -2459,7 +2660,7 @@ function scheduleTab(empId,editable){
       <span class="sched-hrs">${day.length?fmtHrs(dayHours(day)):'—'}</span></div>`;
   }).join('');
   const total=weekHours(empId);
-  return pageHead(editable?'My schedule':'Schedule',editable?'visible to your manager':nameOf(empId))
+  return pageHead(editable?'My schedule':'Schedule',(editable?'visible to your manager':nameOf(empId))+' · '+tzLabel(tzOf(empId)))
     +`<div class="sec first">${editable?'<p class="lede">Tap the purple + on a day to add a time block, then type the hours — "9-5", "9am-5:30pm", and "09:00-17:00" all work. Add as many blocks a day as you need; tap a block and hit the × to remove it.</p>':''}
       ${rows}
       <div class="totals"><div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(total)}</div></div>
@@ -2487,19 +2688,26 @@ function setSlot(empId,day,i,el){
 function teamTab(){
   const team=hourlyStaff();
   const live=team.filter(e=>openShift(e.id)).length;
+  const hc=(hoursCheck&&canManage(currentUser))?hoursCheck:null;
+  let nMet=0,nShort=0;
   const rows=team.map(e=>{
     const s=openShift(e.id);
     const st=s?`<span class="st on"><i></i>On the clock</span>`:`<span class="st off"><i></i>Clocked out</span>`;
-    const since=s?`<span class="mini mono" style="margin-left:10px">${fmtTime(s.clockIn)}</span>`:'';
+    let hcCell='';
+    if(hc&&isOwner(e)){hcCell=`<td class="num"><span class="hc-detail">Salaried</span></td>`;}
+    else if(hc){const r=hoursCheckFor(e.id);r.ok?nMet++:nShort++;
+      hcCell=`<td class="num"><span class="hc-light ${r.ok?'ok':'no'}"><i></i>${r.ok?'Met':'Short'}</span>
+        <span class="hc-detail">${fmtDur(r.worked)} / ${fmtHrs(r.reqH)}${r.off?` · ${r.off} day${r.off>1?'s':''} off`:''}</span></td>`;}
+    const since=s?`<span class="mini mono" style="margin-left:10px">${fmtTimeFor(e.id,s.clockIn)}</span>`:'';
     return `<tr class="rowlink" onclick="openEmp('${e.id}')">
       <td><span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span>${e.name}</span></td>
       <td>${st}${since}</td><td class="num">${fmtDur(weekTotal(e.id))}</td>
-      <td class="num">${fmtHrs(weekHours(e.id))}</td>
+      <td class="num">${fmtHrs(weekHours(e.id))}</td>${hcCell}
       <td style="text-align:right"><button class="linkish">View</button></td></tr>`;
   }).join('');
   const roster=team.length
     ? `<table><thead><tr><th>Employee</th><th>Status</th>
-      <th class="num">Worked</th><th class="num">Scheduled</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+      <th class="num">Worked</th><th class="num">Scheduled</th>${hc?'<th class="num">Hours check</th>':''}<th></th></tr></thead><tbody>${rows}</tbody></table>`
     : '<div class="empty">No hourly people yet — they\'ll appear here once they create accounts.</div>';
   const gone=inactiveHourly();
   const inactiveRows=gone.map(e=>`<tr class="rowlink" onclick="openEmp('${e.id}')">
@@ -2511,7 +2719,7 @@ function teamTab(){
         <table><tbody>${inactiveRows}</tbody></table></div>`
     : '';
   return pageHead('Team',live+' of '+team.length+' on the clock')
-    +`<div class="sec first">${roster}</div>`
+    +`<div class="sec first">${hoursCheckBar(hc,nMet,nShort)}${roster}</div>`
     +inactiveSec
     +rolesCard();
 }
@@ -2587,7 +2795,7 @@ function dismissNotice(id){notices=notices.filter(n=>n.id!==id);render();
 function employeeDetail(id){
   const e=employees.find(x=>x.id===id),s=schedules[id]||blankWeek();
   const off=!isActive(e);
-  const heading=pageHead(e.name+(off?' <span class="inactive-tag">Inactive</span>':''),money(e.rate)+' / hr');
+  const heading=pageHead(e.name+(off?' <span class="inactive-tag">Inactive</span>':''),money(e.rate)+' / hr · '+tzLabel(tzOf(id)));
   if(off){
     /* deactivated: past records only, fully read-only, no schedule / current-week / add-day */
     return `<button class="back" onclick="closeEmp()">&larr; Team</button>`
@@ -2601,10 +2809,12 @@ function employeeDetail(id){
     <td class="num">${day.length?fmtHrs(dayHours(day)):'—'}</td></tr>`;}).join('');
   return `<button class="back" onclick="closeEmp()">&larr; Team</button>`
     +heading
-    +`<div class="sec first"><p class="lede">Tap the pencil on a day to edit clock times. Open a day to edit its work log.</p>
+    +`<div class="sec first"><div class="tz-row"><span class="ml">Time zone</span>${tzSelect('tzEmp',tzOf(id),`setPersonTZ('${id}',this.value)`)}<span class="mini">Their clock times and schedule show in this zone for everyone.</span></div>
+      <p class="lede">Tap the pencil on a day to edit clock times. Open a day to edit its work log.</p>
       ${dayList(id,{logEditable:true,editTimes:true})}
       <div class="totals"><div class="stat"><div class="k">Worked this week</div><div class="v">${fmtDur(workedThisWeek(id))}</div></div>
-        <div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(weekHours(id))}</div></div></div>
+        <div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(weekHours(id))}</div></div>
+        ${strikeStat(id,true)}${timeOffStat(id,true)}</div>
       <div style="margin-top:24px"><button class="btn btn-line btn-sm" onclick="openAdd('${id}')">Add a missing day</button></div></div>
       <div class="sec"><div class="sec-head"><h2>Their schedule</h2><span class="ml meta">set by ${e.name.split(' ')[0]}</span></div>
         <table><thead><tr><th>Day</th><th class="num">Hours</th><th class="num">Total</th></tr></thead><tbody>${schedRows}</tbody></table></div>`;
@@ -2779,12 +2989,12 @@ function downloadPeriodDetailPDF(id){
   const team=periodStaff(p);
   const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
   const sections=team.map(e=>{
-    const es=shifts.filter(s=>{const k=dateKey(s.clockIn);return s.empId===e.id&&k>=p.start&&k<=p.end;}).sort((a,b)=>a.clockIn-b.clockIn);
+    const es=shifts.filter(s=>{const k=companyDateKey(s.clockIn);return s.empId===e.id&&k>=p.start&&k<=p.end;}).sort((a,b)=>a.clockIn-b.clockIn);
     const ms=periodMs(e.id,p), amt=(ms/HR)*e.rate;
     const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id);
     const rbTotal=rb.reduce((t,r)=>t+r.amount,0);
     const shiftRows=es.length
-      ? es.map(s=>`<tr><td>${fmtDay(s.clockIn)}</td><td class="n">${fmtTime(s.clockIn)}</td><td class="n">${s.clockOut?fmtTime(s.clockOut):'in progress'}</td><td class="n">${fmtDur(netMs(s))}</td></tr>`).join('')
+      ? es.map(s=>`<tr><td>${fmtCoDay(companyDateKey(s.clockIn))}</td><td class="n">${fmtTimeFor(e.id,s.clockIn)}</td><td class="n">${s.clockOut?fmtTimeFor(e.id,s.clockOut):'in progress'}</td><td class="n">${fmtDur(netMs(s))}</td></tr>`).join('')
       : `<tr><td colspan="4" class="none">No shifts recorded this period.</td></tr>`;
     const reimbLine=rb.length?`<p class="rbline">Reimbursements: ${rb.map(r=>esc(r.label)+' — '+money(r.amount)).join(' · ')}</p>`:'';
     return `<div class="emp">
@@ -2851,13 +3061,464 @@ function auditTab(){
       <tbody>${rows}</tbody></table></div>`;
 }
 
+/* ================= STRIKES (#1) =================
+   Ledger of add/remove events. Active count = adds minus removes (never below 0).
+   Clock for eligibility starts at the most recent strike activity (add OR remove):
+   6 months later -> "Eligible for reevaluation", 12 months later -> "Eligible for removal".
+   A manager/co-manager decides and removes with a reason. Employees only ever load their own rows. */
+const STRIKE_MAX=3;
+function strikeFromRow(r){return {id:r.id,empId:r.user_id,action:r.action,reason:r.reason||'',
+  date:r.strike_date||dateKey(new Date(r.created_at).getTime()),byName:r.created_by_name||'',ts:new Date(r.created_at).getTime()};}
+async function loadStrikes(){
+  const {data,error}=await sb.from('strikes').select('*').order('strike_date',{ascending:true}).order('created_at',{ascending:true});
+  if(error)throw error;
+  strikes=(data||[]).filter(r=>r.user_id&&(r.action==='add'||r.action==='remove')).map(strikeFromRow);
+}
+function strikesFor(id){return strikes.filter(s=>s.empId===id).sort((a,b)=>a.date.localeCompare(b.date)||a.ts-b.ts);}
+function strikeCount(id){let n=0;strikesFor(id).forEach(s=>{n+=s.action==='add'?1:-1;if(n<0)n=0;});return n;}
+function lastStrikeAdd(id){const a=strikesFor(id).filter(s=>s.action==='add');return a.length?a[a.length-1].date:null;}
+function lastStrikeEvent(id){const a=strikesFor(id);return a.length?a[a.length-1].date:null;}
+function addMonthsKey(k,n){const d=keyToDate(k),day=d.getDate();d.setMonth(d.getMonth()+n);if(d.getDate()!==day)d.setDate(0);return dateKey(d);}
+function fmtDayKeyYear(k){return keyToDate(k).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
+/* calendar difference from a date key to today, e.g. "1 yr 2 mo 5 days" */
+function timeSinceKey(k){
+  const a=keyToDate(k),b=keyToDate(dateKey(Date.now()));
+  if(b<=a)return 'today';
+  let y=b.getFullYear()-a.getFullYear(),m=b.getMonth()-a.getMonth(),d=b.getDate()-a.getDate();
+  if(d<0){m--;d+=new Date(b.getFullYear(),b.getMonth(),0).getDate();}
+  if(m<0){y--;m+=12;}
+  const p=[];if(y)p.push(y+(y===1?' yr':' yrs'));if(m)p.push(m+' mo');if(d)p.push(d+(d===1?' day':' days'));
+  return p.join(' ')||'today';
+}
+function strikeStatus(id){
+  const n=strikeCount(id),last=lastStrikeAdd(id),clock=lastStrikeEvent(id),today=dateKey(Date.now());
+  let flag='';
+  if(n>0&&clock){ if(today>=addMonthsKey(clock,12))flag='removal'; else if(today>=addMonthsKey(clock,6))flag='reeval'; }
+  return {n,last,flag};
+}
+function strikeStat(id,mgr){
+  const st=strikeStatus(id);
+  const since=st.last?`Time since last strike · ${timeSinceKey(st.last)}`:'No strikes on record';
+  const flag=(mgr&&st.flag)?`<span class="strike-flag ${st.flag}">${st.flag==='removal'?'Eligible for removal':'Eligible for reevaluation'}</span>`:'';
+  const acts=`<button class="linkish" onclick="openStrikeHistory('${id}')">History</button>`
+    +(mgr?`<button class="linkish" onclick="openStrikeForm('${id}','add')">+ Add</button>`
+      +(st.n>0?`<button class="linkish" onclick="openStrikeForm('${id}','remove')">&minus; Remove</button>`:''):'');
+  return `<div class="stat strike-stat ${st.n>=STRIKE_MAX?'maxed':''}">
+      <div class="k">Strikes</div>
+      <div class="v">${st.n}<span class="of"> / ${STRIKE_MAX}</span></div>
+      <div class="strike-since">${since}</div>${flag}
+      <div class="strike-actions">${acts}</div></div>`;
+}
+function openStrikeForm(id,action){
+  if(!canManage(currentUser))return;
+  const e=employees.find(x=>x.id===id);if(!e)return;
+  const add=action==='add',n=strikeCount(id),today=dateKey(Date.now());
+  const warn=(add&&n+1>=STRIKE_MAX)?`<div class="note warn" style="margin-bottom:18px">This will be strike ${n+1} of ${STRIKE_MAX}. All managers and co-managers will be notified.</div>`:'';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>${add?'Add a strike':'Remove a strike'}</h3><p class="sub">${esc(e.name)} · currently ${n} / ${STRIKE_MAX}</p>
+    ${warn}
+    <div class="field"><label>Date</label><input type="date" id="skDate" value="${today}" max="${today}"></div>
+    <div class="field"><label>Reason <span class="req">required</span></label><textarea class="log-area" id="skReason" rows="3" placeholder="Write the reason for ${add?'this strike':'removing this strike'}"></textarea></div>
+    <div class="err" id="skErr"></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn ${add?'btn-danger':'btn-primary'} btn-sm" onclick="saveStrike('${id}','${action}')">${add?'Add strike':'Remove strike'}</button></div></div></div>`;
+}
+async function saveStrike(id,action){
+  const err=document.getElementById('skErr');
+  const reason=(document.getElementById('skReason').value||'').trim();
+  const date=document.getElementById('skDate').value;
+  const today=dateKey(Date.now());
+  if(!reason){err.textContent='Add a reason — it is saved with the strike.';return;}
+  if(!date){err.textContent='Pick a date.';return;}
+  if(date>today){err.textContent='The date can\'t be in the future.';return;}
+  const before=strikeCount(id);
+  if(action==='remove'&&before<=0){err.textContent='There are no active strikes to remove.';return;}
+  const row={user_id:id,action,reason,strike_date:date,created_by:currentUser.id,created_by_name:currentUser.name};
+  if(live()){
+    const {data,error}=await sb.from('strikes').insert(row).select().single();
+    if(error){err.textContent='Could not save: '+error.message;return;}
+    if(!strikes.some(s=>s.id===data.id))strikes.push(strikeFromRow(data));
+  }else{
+    strikes.push({id:'sk'+Date.now(),empId:id,action,reason,date,byName:currentUser.name,ts:Date.now()});
+  }
+  const after=strikeCount(id);
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(id),field:action==='add'?'Strike added':'Strike removed',
+    old:before+' / '+STRIKE_MAX,new:after+' / '+STRIKE_MAX,reason});
+  if(action==='add'&&before<STRIKE_MAX&&after>=STRIKE_MAX)notifyStrikeMax(id);
+  closeModal();render();toast(action==='add'?'Strike added':'Strike removed');
+}
+/* 3/3 reached -> notify every other active manager/co-manager */
+function notifyStrikeMax(id){
+  const text=`${nameOf(id)} has reached ${STRIKE_MAX} of ${STRIKE_MAX} strikes.`;
+  const leaders=activeAll().filter(x=>canManage(x)&&x.id!==currentUser.id);
+  if(!leaders.length)return;
+  if(live()){
+    sb.from('messages').insert(leaders.map(l=>({to_user:l.id,from_user:currentUser.id,from_name:currentUser.name,subject:'Strike alert',body:text})))
+      .then(({error})=>{ if(error)toast('Strike alert not sent: '+error.message); });
+  }else{
+    leaders.forEach(l=>messages.push({id:'nt'+(++msgSeq),to:l.id,from:currentUser.name,subject:'Strike alert',text,ts:Date.now(),read:false}));
+  }
+}
+function openStrikeHistory(id){
+  const mgr=canManage(currentUser);
+  if(!mgr&&id!==currentUser.id)return;   /* employees can only ever open their own */
+  const e=employees.find(x=>x.id===id);if(!e)return;
+  const list=strikesFor(id).slice().reverse();
+  const rows=list.length?list.map(s=>`<div class="sh-row"><span class="sh-badge ${s.action}">${s.action==='add'?'Added':'Removed'}</span>
+      <div class="sh-main"><div class="sh-reason">${esc(s.reason)||'—'}</div>
+      <div class="sh-date">${fmtDayKeyYear(s.date)}${mgr&&s.byName?' · by '+esc(s.byName):''}</div></div></div>`).join('')
+    :'<div class="empty">No strikes on record.</div>';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Strike history</h3><p class="sub">${esc(e.name)} · ${strikeCount(id)} / ${STRIKE_MAX} active</p>
+    <div class="sh-list">${rows}</div>
+    <p class="sh-rule">A strike is eligible for reevaluation 6 months after the most recent strike activity, and for removal after a full year without a new strike.</p>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div></div></div>`;
+}
+
+/* ================= QUESTIONS OF THE WEEK (#2) =================
+   One entry per person per week. A week is keyed by its Friday send-by date.
+   Everyone sees everything; each person edits their own; leaders edit any + set the Special Guest.
+   Imported rows may be name-only (no account yet) — they're matched to an account by first name. */
+function qeFromRow(r){return {id:r.id,week:r.week_date,userId:r.user_id||null,personName:r.person_name||'',question:r.question||'',vacation:!!r.is_vacation,status:r.answer_status||''};}
+async function loadQotw(){
+  const [er,wr]=await Promise.all([sb.from('qotw_entries').select('*'),sb.from('qotw_weeks').select('*')]);
+  if(er.error)throw er.error; if(wr.error)throw wr.error;
+  qotwEntries=(er.data||[]).filter(r=>r.week_date).map(qeFromRow);
+  qotwGuests={};(wr.data||[]).forEach(r=>{if(r.week_date&&r.guest)qotwGuests[r.week_date]=r.guest;});
+}
+function firstNameOf(n){return (n||'').trim().split(/\s+/)[0].toLowerCase();}
+function qPersonKey(en){
+  if(en.userId)return en.userId;
+  const fn=firstNameOf(en.personName),m=employees.find(e=>firstNameOf(e.name)===fn);
+  return m?m.id:'name:'+fn;
+}
+function isQParticipant(u){return !!u&&(u.role==='comanager'||u.role==='employee')&&isActive(u)&&!isOwner(u);}
+function qParticipants(){
+  const map=new Map();
+  employees.filter(isQParticipant).forEach(e=>map.set(e.id,{key:e.id,name:e.name}));
+  qotwEntries.forEach(en=>{const k=qPersonKey(en);if(!map.has(k)){const emp=employees.find(e=>e.id===k);
+    map.set(k,{key:k,name:emp?emp.name:(en.personName||k.replace(/^name:/,''))});}});
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+function qEntry(week,key){return qotwEntries.find(en=>en.week===week&&qPersonKey(en)===key)||null;}
+function fridayOnOrAfter(k){const d=keyToDate(k);d.setDate(d.getDate()+((5-d.getDay()+7)%7));return dateKey(d);}
+function currentQWeek(){return fridayOnOrAfter(dateKey(Date.now()));}
+function fmtQWeek(k){return keyToDate(k).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});}
+/* Monday reminder: from Monday until the question for this Friday is in (vacation counts as done) */
+function qotwReminderDue(){
+  if(!isQParticipant(currentUser))return null;
+  const dow=new Date().getDay(); if(dow<1||dow>5)return null;
+  const wk=currentQWeek(); return qEntry(wk,currentUser.id)?null:wk;
+}
+function qCanEdit(key){return canManage(currentUser)||key===currentUser.id;}
+function qotwTab(){
+  const me=currentUser,mgr=canManage(me),wk=currentQWeek(),people=qParticipants();
+  let mine='';
+  if(isQParticipant(me)){
+    const en=qEntry(wk,me.id),vac=!!(en&&en.vacation);
+    const val=qwDraft!==null?qwDraft:(en&&!vac?en.question:'');
+    mine=`<div class="panel qw-mine"><div class="panel-head"><h2>Your question · due ${fmtQWeek(wk)}</h2>
+        <span class="ml meta ${en?'qw-done':'qw-due'}">${en?(vac?'on vacation':'submitted'):'not submitted yet'}</span></div>
+      <textarea class="log-area" id="qwMine" rows="3" placeholder="Write your question for this week…" oninput="qwDraft=this.value" ${vac?'disabled':''}>${esc(val)}</textarea>
+      <label class="chk-line"><input type="checkbox" id="qwVac" ${vac?'checked':''} onchange="document.getElementById('qwMine').disabled=this.checked"> I'm on vacation this week</label>
+      <div class="log-actions"><button class="btn btn-primary btn-sm" onclick="saveMyQuestion()">Save</button></div></div>`;
+  }
+  const tools=mgr?`<div class="qw-tools"><span class="ml">Special guest</span>
+      <input type="date" id="qgDate" value="${wk}"><input type="text" id="qgName" placeholder="Guest name (e.g. Val — Operations)">
+      <button class="btn btn-line btn-sm" onclick="saveGuest()">Save guest</button></div><div class="err" id="qgErr"></div>`:'';
+  const weekSet=new Set([wk,...qotwEntries.map(e=>e.week),...Object.keys(qotwGuests)]);
+  const weeks=[...weekSet].filter(k=>k<=wk||qotwGuests[k]).sort((a,b)=>b.localeCompare(a));
+  const pencil=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+  const cards=weeks.map(k=>{
+    const guest=qotwGuests[k]||'';
+    const rows=[],missing=[];
+    let nAns=0,nOpen=0;
+    people.forEach(pp=>{const en=qEntry(k,pp.key);
+      if(en){
+        const st=en.vacation?'':en.status;
+        if(st==='answered')nAns++; else if(st==='unanswered')nOpen++;
+        const marks=(mgr&&!en.vacation)?`<span class="qw-marks">
+            <button class="qw-mark ok ${st==='answered'?'on':''}" title="Mark answered" onclick="setQStatus('${en.id}','answered')">&#10003;</button>
+            <button class="qw-mark no ${st==='unanswered'?'on':''}" title="Mark not answered" onclick="setQStatus('${en.id}','unanswered')">&#10005;</button></span>`:'';
+        rows.push(`<div class="qw-row ${st?'st-'+st:''}"><span class="qw-who">${esc(pp.name.split(' ')[0])}</span>
+        <span class="qw-q">${en.vacation?'<span class="qw-vac">Vacation</span>':esc(en.question)}</span>${marks}
+        ${qCanEdit(pp.key)?`<button class="day-edit" title="Edit" onclick="openQEdit('${k}','${pp.key}')">${pencil}</button>`:''}</div>`);
+      } else missing.push(pp);});
+    const tally=(nAns||nOpen)?`<span class="qw-tally">${nAns?`<b class="t-ok">${nAns} answered</b>`:''}${nAns&&nOpen?' · ':''}${nOpen?`<b class="t-no">${nOpen} not answered</b>`:''}</span>`:'';
+    const miss=missing.length?`<div class="qw-missing">No question yet: ${missing.map(pp=>qCanEdit(pp.key)
+        ?`<button class="qw-add" onclick="openQEdit('${k}','${pp.key}')">${esc(pp.name.split(' ')[0])}</button>`
+        :`<span>${esc(pp.name.split(' ')[0])}</span>`).join('')}</div>`:'';
+    return `<div class="qw-week ${k===wk?'current':''}"><div class="qw-head">
+        <span class="qw-date">${fmtQWeek(k)}</span>${k===wk?'<span class="period-tag">This week</span>':''}
+        ${guest?`<span class="qw-guest">Special guest · ${esc(guest)}</span>`:''}${tally}</div>
+      ${rows.join('')||'<div class="empty" style="padding:6px 0">No questions yet.</div>'}${miss}</div>`;
+  }).join('');
+  return pageHead('Questions of the Week','due Fridays · '+people.length+' people')
+    +`<div class="sec first">${mine}${tools}<div class="qw-weeks">${cards}</div></div>`;
+}
+/* create / update / clear one person's entry for a week */
+async function upsertQ(week,key,question,vacation){
+  const existing=qEntry(week,key);
+  const emp=employees.find(e=>e.id===key);
+  const person=emp?emp.name:(existing?existing.personName:key.replace(/^name:/,''));
+  question=(question||'').trim();
+  if(!question&&!vacation){
+    if(existing){
+      if(live()){const {error}=await sb.from('qotw_entries').delete().eq('id',existing.id);if(error){toast('Not saved: '+error.message);return false;}}
+      qotwEntries=qotwEntries.filter(x=>x!==existing);
+    }
+    return true;
+  }
+  const row={week_date:week,user_id:emp?emp.id:null,person_name:person,question:vacation?'':question,is_vacation:!!vacation,updated_by:currentUser.id,updated_at:new Date().toISOString()};
+  if(live()){
+    const q=existing?sb.from('qotw_entries').update(row).eq('id',existing.id):sb.from('qotw_entries').insert(row);
+    const {data,error}=await q.select().single();
+    if(error){toast('Not saved: '+error.message);return false;}
+    if(existing)Object.assign(existing,qeFromRow(data)); else qotwEntries.push(qeFromRow(data));
+  }else{
+    const loc={week,userId:row.user_id,personName:person,question:row.question,vacation:!!vacation};
+    if(existing)Object.assign(existing,loc); else qotwEntries.push({id:'qe'+Date.now(),...loc});
+  }
+  return true;
+}
+async function setQStatus(id,status){
+  if(!canManage(currentUser))return;
+  const en=qotwEntries.find(x=>x.id===id);if(!en)return;
+  const next=en.status===status?'':status;
+  const prev=en.status; en.status=next; render();
+  if(live()){
+    const {error}=await sb.from('qotw_entries').update({answer_status:next||null}).eq('id',id);
+    if(error){en.status=prev;render();toast('Not saved: '+error.message);}
+  }
+}
+async function saveMyQuestion(){
+  const vac=document.getElementById('qwVac').checked,text=document.getElementById('qwMine').value;
+  if(!vac&&!text.trim()){toast('Write your question, or tick "on vacation"');return;}
+  if(await upsertQ(currentQWeek(),currentUser.id,text,vac)){qwDraft=null;render();toast('Question saved');}
+}
+function openQEdit(week,key){
+  if(!qCanEdit(key))return;
+  const en=qEntry(week,key),pp=qParticipants().find(x=>x.key===key),vac=!!(en&&en.vacation);
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>${esc(pp?pp.name:'Question')}</h3><p class="sub">Week due ${fmtQWeek(week)}</p>
+    <div class="field"><label>Question</label><textarea class="log-area" id="qeText" rows="4" ${vac?'disabled':''}>${esc(en&&!vac?en.question:'')}</textarea></div>
+    <label class="chk-line"><input type="checkbox" id="qeVac" ${vac?'checked':''} onchange="document.getElementById('qeText').disabled=this.checked"> On vacation this week</label>
+    <div class="modal-actions">${en?`<button class="btn btn-line btn-sm" onclick="saveQEdit('${week}','${key}',true)">Clear</button>`:''}
+      <button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveQEdit('${week}','${key}')">Save</button></div></div></div>`;
+}
+async function saveQEdit(week,key,clear){
+  const text=clear?'':document.getElementById('qeText').value,vac=clear?false:document.getElementById('qeVac').checked;
+  if(await upsertQ(week,key,text,vac)){closeModal();render();toast(clear?'Cleared':'Saved');}
+}
+async function saveGuest(){
+  if(!canManage(currentUser))return;
+  const err=document.getElementById('qgErr');
+  let week=document.getElementById('qgDate').value;const guest=(document.getElementById('qgName').value||'').trim();
+  if(!week){err.textContent='Pick the week.';return;}
+  week=fridayOnOrAfter(week);   /* snap to that week's Friday */
+  if(live()){
+    const {error}=guest?await sb.from('qotw_weeks').upsert({week_date:week,guest}):await sb.from('qotw_weeks').delete().eq('week_date',week);
+    if(error){err.textContent='Not saved: '+error.message;return;}
+  }
+  if(guest)qotwGuests[week]=guest; else delete qotwGuests[week];
+  render();toast(guest?'Guest saved for '+fmtDayKey(week):'Guest removed');
+}
+
+/* ================= ANONYMOUS SURVEY (#3) =================
+   Once per calendar month (company time, Utah). The comment is stored with NO name and NO timestamp.
+   A separate private marker ("you sent one this month") is readable only by that same person.
+   Leaders get a monthly bell reminder to send the survey out; sending notifies the team. */
+const SURVEY_MSG="This month's anonymous survey is open. Share advice, problems or concerns — your name is never attached. Open Messages → Anonymous feedback.";
+function surveyMonth(){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Denver',year:'numeric',month:'2-digit'}).format(new Date()).slice(0,7);}
+function surveyMonthLabel(m){return new Date(m+'-01T00:00:00').toLocaleDateString(undefined,{month:'long',year:'numeric'});}
+function nextSurveyMonthLabel(){const d=new Date(surveyMonth()+'-01T00:00:00');d.setMonth(d.getMonth()+1);return d.toLocaleDateString(undefined,{month:'long',day:'numeric'});}
+async function loadSurvey(){
+  const resp=[],rounds={},mine=new Set();
+  if(canManage(currentUser)){
+    const [r1,r2]=await Promise.all([sb.from('survey_responses').select('*'),sb.from('survey_rounds').select('*')]);
+    if(r1.error)throw r1.error; if(r2.error)throw r2.error;
+    (r1.data||[]).forEach(r=>resp.push({id:r.id,month:r.month,body:r.body||''}));
+    (r2.data||[]).forEach(r=>{rounds[r.month]={by:r.sent_by_name||'',at:new Date(r.sent_at).getTime()};});
+  }
+  const r3=await sb.from('survey_submissions').select('month').eq('user_id',currentUser.id);
+  if(r3.error)throw r3.error;
+  (r3.data||[]).forEach(r=>mine.add(r.month));
+  surveyResponses=resp;surveyRounds=rounds;surveyMine=mine;
+}
+function surveyReminderDue(){const m=surveyMonth();return (canManage(currentUser)&&!surveyRounds[m])?m:null;}
+function surveyButton(){
+  const sent=isQParticipant(currentUser)&&surveyMine.has(surveyMonth());
+  const n=canManage(currentUser)?surveyResponses.filter(r=>r.month===surveyMonth()).length:0;
+  return `<button class="btn btn-line btn-sm sv-btn" onclick="openSurvey()">Anonymous feedback${n?` <span class="um-ct">${n}</span>`:''}${sent&&!canManage(currentUser)?' ✓':''}</button>`;
+}
+function openSurvey(){ if(canManage(currentUser))openSurveyReader(); else openSurveyForm(); }
+function openSurveyForm(){
+  if(!isQParticipant(currentUser)){toast('Anonymous feedback is for team members.');return;}
+  const m=surveyMonth();
+  if(surveyMine.has(m)){
+    document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+      <h3>Thanks — feedback sent</h3><p class="sub">${surveyMonthLabel(m)}</p>
+      <p style="margin:0;font-size:14px">You've already shared your anonymous feedback this month. You can send another starting ${nextSurveyMonthLabel()}.</p>
+      <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div></div></div>`;
+    return;
+  }
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal compose">
+    <h3>Anonymous feedback</h3><p class="cmp-sub">${surveyMonthLabel(m)} · one per month</p>
+    <div class="cmp-field"><textarea id="svBody" rows="7" aria-label="Your anonymous feedback"></textarea></div>
+    <div class="sv-privacy">Your name is never attached to this — not in the app and not in the database. Leadership only sees what you write.</div>
+    <div class="err" id="svErr"></div>
+    <div class="cmp-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="submitSurvey()">Send anonymously</button></div></div></div>`;
+}
+async function submitSurvey(){
+  const err=document.getElementById('svErr'),body=(document.getElementById('svBody').value||'').trim();
+  if(!body){err.textContent='Write a comment first.';return;}
+  const m=surveyMonth();
+  if(live()){
+    const {error}=await sb.rpc('otg_submit_survey',{p_body:body});
+    if(error){err.textContent=error.message;return;}
+  }else if(canManage(currentUser)){surveyResponses.push({id:'sv'+Date.now(),month:m,body});}
+  surveyMine.add(m);closeModal();render();toast('Feedback sent anonymously');
+}
+function openSurveyReader(month){
+  if(!canManage(currentUser))return;
+  const cur=surveyMonth(),m=month||cur;
+  const months=[...new Set([cur,...surveyResponses.map(r=>r.month)])].sort((a,b)=>b.localeCompare(a));
+  const list=surveyResponses.filter(r=>r.month===m);
+  const round=surveyRounds[cur];
+  const sendBox=round?`<div class="sv-sent">This month's survey was sent out ${fmtDay(round.at)}${round.by?' by '+esc(round.by):''}.</div>`
+    :`<div class="sv-send"><span>${surveyMonthLabel(cur)}'s survey hasn't been sent out yet.</span><button class="btn btn-primary btn-sm" onclick="sendOutSurvey()">Send out survey</button></div>`;
+  const rows=list.length?list.map(r=>`<div class="sv-row"><div class="sv-body">${esc(r.body).replace(/\n/g,'<br>')}</div></div>`).join('')
+    :'<div class="empty">No feedback for this month yet.</div>';
+  const own=isQParticipant(currentUser)?`<button class="btn btn-line btn-sm" onclick="openSurveyForm()">${surveyMine.has(cur)?'Your feedback ✓':'Share your own'}</button>`:'';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal sv-modal">
+    <h3>Anonymous feedback</h3><p class="sub">Names are never stored · managers &amp; co-managers only</p>
+    ${sendBox}
+    <div class="sv-head"><select class="role-sel" onchange="openSurveyReader(this.value)">${months.map(x=>`<option value="${x}" ${x===m?'selected':''}>${surveyMonthLabel(x)}</option>`).join('')}</select>
+      <span class="sv-count">${list.length} response${list.length===1?'':'s'}</span></div>
+    <div class="sv-list">${rows}</div>
+    <div class="modal-actions edit-actions">${own||'<span></span>'}<span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div></div></div>`;
+}
+async function sendOutSurvey(){
+  if(!canManage(currentUser))return;
+  const m=surveyMonth(); if(surveyRounds[m]){openSurveyReader();return;}
+  const recips=activeAll().filter(e=>isQParticipant(e)&&e.id!==currentUser.id);
+  if(live()){
+    const {error}=await sb.from('survey_rounds').insert({month:m,sent_by_name:currentUser.name});
+    if(error){toast('Could not send: '+error.message);return;}
+    if(recips.length){
+      const {error:e2}=await sb.from('messages').insert(recips.map(r=>({to_user:r.id,from_user:currentUser.id,from_name:currentUser.name,subject:'Anonymous survey',body:SURVEY_MSG})));
+      if(e2)toast('Survey marked sent, but the team notice failed: '+e2.message);
+    }
+  }else{
+    recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:currentUser.name,subject:'Anonymous survey',text:SURVEY_MSG,ts:Date.now(),read:false}));
+  }
+  surveyRounds[m]={by:currentUser.name,at:Date.now()};
+  paintUserMenu();openSurveyReader();toast('Survey sent to '+recips.length+' people');
+}
+
+/* ================= HOURS CHECK (#6) — managers & co-managers only =================
+   Custom From/To dates + custom required hours. Worked = hours whose shifts fall on those company (Utah) days.
+   Approved time off lowers the target: required x (weekdays not off / weekdays in range). */
+let hoursCheck=null;   /* {start,end,hours} for this session */
+function isWeekdayKey(k){const d=keyToDate(k).getDay();return d>0&&d<6;}
+function weekdaysIn(a,b){let n=0;for(let k=a;k<=b;k=addDaysKey(k,1))if(isWeekdayKey(k))n++;return n;}
+function offWeekdaysIn(id,a,b){let n=0;
+  for(let k=a;k<=b;k=addDaysKey(k,1))if(isWeekdayKey(k)&&timeOff.some(t=>t.empId===id&&t.status==='approved'&&k>=t.start&&k<=t.end))n++;
+  return n;}
+function hoursCheckFor(id){
+  const c=hoursCheck,worked=periodMs(id,{start:c.start,end:c.end});
+  const W=weekdaysIn(c.start,c.end),off=offWeekdaysIn(id,c.start,c.end);
+  const reqH=W?c.hours*(W-off)/W:c.hours;
+  return {worked,reqH,off,ok:worked>=Math.round(reqH*HR)};
+}
+function hoursCheckBar(hc,nMet,nShort){
+  const v=hc||{start:'',end:'',hours:''};
+  const summary=hc?`<div class="hc-sum"><b>${fmtDayKeyYear(hc.start)} – ${fmtDayKeyYear(hc.end)}</b> · ${fmtHrs(hc.hours)} required
+      <span class="mini">(lowered for approved weekday time off)</span>
+      <span class="hc-count"><span class="hc-light ok"><i></i>${nMet} met</span><span class="hc-light no"><i></i>${nShort} short</span></span></div>`:'';
+  return `<div class="hc-bar"><span class="ml hc-title">Hours check</span>
+      <div class="field"><label>From</label><input type="date" id="hcStart" value="${v.start}"></div>
+      <div class="field"><label>To</label><input type="date" id="hcEnd" value="${v.end}"></div>
+      <div class="field"><label>Required hours</label><input type="number" id="hcHours" min="0" step="0.25" value="${v.hours}" placeholder="20" onkeydown="if(event.key==='Enter')runHoursCheck()"></div>
+      <button class="btn btn-primary btn-sm hc-pill" onclick="runHoursCheck()">Check</button>
+      ${hc?'<button class="btn btn-line btn-sm hc-pill" onclick="hoursCheck=null;render()">Clear</button>':''}</div>
+    <div class="err" id="hcErr"></div>${summary}`;
+}
+function runHoursCheck(){
+  if(!canManage(currentUser))return;
+  const a=document.getElementById('hcStart').value,b=document.getElementById('hcEnd').value;
+  const h=parseFloat(document.getElementById('hcHours').value),err=document.getElementById('hcErr');
+  if(!a||!b){err.textContent='Pick a From and To date.';return;}
+  if(b<a){err.textContent='The To date must be on or after the From date.';return;}
+  if(!(h>0)){err.textContent='Enter the required hours (more than 0).';return;}
+  hoursCheck={start:a,end:b,hours:h};render();
+}
+
+/* ================= TIME OFF TRACKER (#7) =================
+   4 weeks = 20 workdays (Mon–Fri) of unpaid time off per calendar year, reset every Jan 1 (company time).
+   Only APPROVED time off counts. Leaders mark each one Regular or Emergency/sick; emergency days
+   don't count against the 20 and appear only in the red bar, which only managers/co-managers see. */
+const PTO_DAYS=20;
+async function loadTimeOffCats(){
+  const {data,error}=await sb.from('time_off_categories').select('time_off_id,category');
+  if(error)throw error;
+  const m={};(data||[]).forEach(r=>{m[r.time_off_id]=r.category;});timeOffCat=m;
+}
+function offCat(id){return timeOffCat[String(id)]==='emergency'?'emergency':'regular';}
+function offTypePicker(elId,value,onchange){
+  return `<select class="role-sel" id="${elId}" ${onchange?`onchange="${onchange}"`:''}>
+    <option value="regular" ${value!=='emergency'?'selected':''}>Regular — counts toward the 4 weeks</option>
+    <option value="emergency" ${value==='emergency'?'selected':''}>Emergency / sick — doesn't count</option></select>`;
+}
+async function setOffType(id,cat){
+  if(!canManage(currentUser))return true;
+  const t=timeOff.find(x=>x.id===id);
+  if(live()){
+    const {error}=await sb.from('time_off_categories').upsert({time_off_id:String(id),user_id:t?t.empId:null,category:cat,set_by:currentUser.id,set_at:new Date().toISOString()});
+    if(error){toast('Type not saved: '+error.message);return false;}
+  }
+  timeOffCat[String(id)]=cat;return true;
+}
+async function changeOffType(id,el){if(await setOffType(id,el.value)){render();toast('Marked '+(el.value==='emergency'?'emergency / sick':'regular'));}}
+function ptoYear(){const y=todayKey().slice(0,4);return {y,a:y+'-01-01',b:y+'-12-31'};}
+function offDaysByCat(id){
+  const {a,b}=ptoYear(),reg=new Set(),em=new Set();
+  timeOff.filter(t=>t.empId===id&&t.status==='approved').forEach(t=>{
+    const bucket=offCat(t.id)==='emergency'?em:reg;
+    const s0=t.start<a?a:t.start,e0=t.end>b?b:t.end;
+    for(let k=s0;k<=e0;k=addDaysKey(k,1))if(isWeekdayKey(k))bucket.add(k);
+  });
+  em.forEach(k=>reg.delete(k));   /* a day marked emergency never also counts as regular */
+  return {regular:reg.size,emergency:em.size};
+}
+function timeOffStat(id,mgr){
+  const {regular,emergency}=offDaysByCat(id),{y}=ptoYear();
+  const left=PTO_DAYS-regular,pct=Math.min(100,regular/PTO_DAYS*100);
+  const main=`<div class="pto-block"><div class="k">Time off · ${y}</div>
+      <div class="pto-bar ${left<0?'over':''}"><span style="width:${pct}%"></span></div>
+      <div class="pto-txt"><b>${Math.max(0,left)} day${Math.max(0,left)===1?'':'s'} left</b> · ${regular} of ${PTO_DAYS} used${left<0?` · <span class="pto-over">over by ${-left}</span>`:''}</div></div>`;
+  const red=mgr?`<div class="pto-block"><div class="k">Emergency / sick · ${y}</div>
+      <div class="pto-bar red"><span style="width:${Math.min(100,emergency/PTO_DAYS*100)}%"></span></div>
+      <div class="pto-txt"><b>${emergency} day${emergency===1?'':'s'}</b> · no limit · leaders only</div></div>`:'';
+  return `<div class="stat pto-stat">${main}${red}</div>`;
+}
+
+/* ================= TRAININGS (#5) — placeholder ================= */
+function trainingsTab(){
+  return pageHead('Trainings','')
+    +`<div class="sec first"><div class="soon-card"><div class="soon-ic"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5"/></svg></div>
+      <h2>Coming soon</h2><p>Trainings will live here. Check back soon.</p></div></div>`;
+}
+
 /* ================= CORRECTIONS ================= */
 function tsToInput(ts){const d=new Date(ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());}
 function inputToTs(v){return v?new Date(v).getTime():null;}
 function openAdd(empId){
-  const e=employees.find(x=>x.id===empId),base=tsToInput(now);
+  const e=employees.find(x=>x.id===empId),base=tsToInputTZ(Date.now(),tzOf(empId));
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Add a missing day</h3><p class="sub">${e.name}</p>
+    <h3>Add a missing day</h3><p class="sub">${e.name} · times in ${tzLabel(tzOf(empId))}</p>
     <div class="field"><label>Clock in</label><input type="datetime-local" id="edIn" value="${base}"></div>
     <label class="chk-line"><input type="checkbox" id="edActive" onchange="toggleAddActive()"> Currently clocked in <span class="opt">no clock-out · today only</span></label>
     <div class="field" id="edOutWrap"><label>Clock out</label><input type="datetime-local" id="edOut" value="${base}"></div>
@@ -2872,13 +3533,14 @@ async function saveAdd(empId){
   const err=document.getElementById('edErr'),reason=document.getElementById('edReason').value.trim();
   if(!reason){err.textContent='Add a reason — it goes in the change log.';return;}
   const active=document.getElementById('edActive')&&document.getElementById('edActive').checked;
-  const nIn=inputToTs(document.getElementById('edIn').value);
-  const nOut=active?null:inputToTs(document.getElementById('edOut').value);
+  const tz=tzOf(empId);
+  const nIn=inputToTsTZ(document.getElementById('edIn').value,tz);
+  const nOut=active?null:inputToTsTZ(document.getElementById('edOut').value,tz);
   if(!nIn){err.textContent='Clock-in time is required.';return;}
   if(active){
-    if(dateKey(nIn)!==dateKey(now)){err.textContent='“Currently clocked in” only works for today.';return;}
+    if(companyDateKey(nIn)!==todayKey()){err.textContent='“Currently clocked in” only works for today.';return;}
   }else{
-    if(!nOut&&dateKey(nIn)!==dateKey(now)){err.textContent='Clock-out is required for a past day.';return;}
+    if(!nOut&&companyDateKey(nIn)!==todayKey()){err.textContent='Clock-out is required for a past day.';return;}
     if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
   }
   if(live()){
@@ -2888,7 +3550,7 @@ async function saveAdd(empId){
   }else{
     shifts.push({id:nid(),empId,clockIn:nIn,clockOut:nOut,edited:true});
   }
-  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(empId),field:'Day added',old:'—',new:fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'currently clocked in'),reason});
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:nameOf(empId),field:'Day added',old:'—',new:fmtTimeTZ(nIn,tz)+' – '+(nOut?fmtTimeTZ(nOut,tz):'currently clocked in'),reason});
   closeModal();render();toast('Day added');
 }
 function toggleAddActive(){
@@ -2898,12 +3560,12 @@ function toggleAddActive(){
 function openEditDay(shiftId){
   const s=shifts.find(x=>x.id===shiftId);if(!s)return;
   const e=employees.find(x=>x.id===s.empId);
-  const inToday=dateKey(s.clockIn)===dateKey(now);
+  const tz=tzOf(s.empId),inToday=companyDateKey(s.clockIn)===todayKey();
   const outHint=inToday?'<span class="opt">leave blank if still clocked in</span>':'<span class="opt">required for a past day</span>';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Edit day</h3><p class="sub">${e.name} · ${fmtDay(s.clockIn)}</p>
-    <div class="field"><label>Clock in</label><input type="datetime-local" id="edIn" value="${tsToInput(s.clockIn)}"></div>
-    <div class="field"><label>Clock out ${outHint}</label><input type="datetime-local" id="edOut" value="${s.clockOut?tsToInput(s.clockOut):''}"></div>
+    <h3>Edit day</h3><p class="sub">${e.name} · ${fmtCoDay(companyDateKey(s.clockIn))} · times in ${tzLabel(tz)}</p>
+    <div class="field"><label>Clock in</label><input type="datetime-local" id="edIn" value="${tsToInputTZ(s.clockIn,tz)}"></div>
+    <div class="field"><label>Clock out ${outHint}</label><input type="datetime-local" id="edOut" value="${s.clockOut?tsToInputTZ(s.clockOut,tz):''}"></div>
     <div class="err" id="edErr"></div>
     <div class="modal-actions edit-actions"><button class="del-shift" title="Delete this time record" onclick="deleteShift('${shiftId}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
     <span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
@@ -2912,13 +3574,14 @@ function openEditDay(shiftId){
 async function saveEditDay(shiftId){
   const s=shifts.find(x=>x.id===shiftId);if(!s)return;
   const err=document.getElementById('edErr');
-  const nIn=inputToTs(document.getElementById('edIn').value),nOut=inputToTs(document.getElementById('edOut').value);
+  const tz=tzOf(s.empId);
+  const nIn=inputToTsTZ(document.getElementById('edIn').value,tz),nOut=inputToTsTZ(document.getElementById('edOut').value,tz);
   if(!nIn){err.textContent='Clock-in time is required.';return;}
-  const inToday=dateKey(nIn)===dateKey(now);
+  const inToday=companyDateKey(nIn)===todayKey();
   if(!nOut&&!inToday){err.textContent='Clock-out is required for a past day.';return;}   /* only today's shift may stay open */
   if(nOut&&nOut<nIn){err.textContent='Clock-out must be after clock-in.';return;}
-  const oldStr=fmtTime(s.clockIn)+' – '+(s.clockOut?fmtTime(s.clockOut):'active');
-  const newStr=fmtTime(nIn)+' – '+(nOut?fmtTime(nOut):'active');
+  const oldStr=fmtTimeTZ(s.clockIn,tz)+' – '+(s.clockOut?fmtTimeTZ(s.clockOut,tz):'active');
+  const newStr=fmtTimeTZ(nIn,tz)+' – '+(nOut?fmtTimeTZ(nOut,tz):'active');
   if(live()){
     const {error}=await sb.from('shifts').update({clock_in:new Date(nIn).toISOString(),clock_out:nOut?new Date(nOut).toISOString():null,edited:true}).eq('id',shiftId);
     if(error){err.textContent='Could not save: '+error.message;return;}
@@ -2930,7 +3593,7 @@ async function saveEditDay(shiftId){
 async function deleteShift(shiftId){
   const s=shifts.find(x=>x.id===shiftId);if(!s)return;
   const err=document.getElementById('edErr');
-  const oldStr=fmtTime(s.clockIn)+' – '+(s.clockOut?fmtTime(s.clockOut):'active');
+  const oldStr=fmtTimeFor(s.empId,s.clockIn)+' – '+(s.clockOut?fmtTimeFor(s.empId,s.clockOut):'active');
   if(live()){
     const {error}=await sb.from('shifts').delete().eq('id',shiftId);
     if(error){if(err)err.textContent='Could not delete: '+error.message;return;}
@@ -2957,7 +3620,7 @@ function askNotify(ts){
   const slots=slotsForDate(currentUser.id,ts);
   const line=slots.length?`You're scheduled ${slots.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join(', ')} today.`:`You're not scheduled to work today.`;
   document.getElementById('modalMount').innerHTML=`<div class="overlay"><div class="modal">
-    <h3>Working outside your schedule</h3><p class="sub">Clocked in ${fmtTime(ts)}</p>
+    <h3>Working outside your schedule</h3><p class="sub">Clocked in ${fmtTimeFor(currentUser.id,ts)}</p>
     <p style="margin:0 0 20px;font-size:14px">${line} Send your manager a notice so they know?</p>
     <div class="field"><label>Reason (optional)</label><input type="text" id="nfReason" placeholder="Covering for Devin"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Not now</button>
@@ -2986,7 +3649,7 @@ async function clockOut(){
   render();promptWorkLog();
 }
 function promptWorkLog(){
-  const dk=dateKey(now), text=logText(currentUser.id,dk);
+  const dk=todayKey(), text=logText(currentUser.id,dk);
   document.getElementById('modalMount').innerHTML=`<div class="overlay"><div class="modal">
     <h3>Before you go</h3><p class="sub">Work log · ${fmtDayKey(dk)}</p>
     <div class="field"><label>What did you work on today? <span class="opt">one running note — add to it any time</span></label>
@@ -2996,13 +3659,13 @@ function promptWorkLog(){
 }
 async function wlSkip(){
   const el=document.getElementById('wlInput');
-  if(el){const v=el.value.trim(); if(v)await saveLogText(currentUser.id,dateKey(now),v);}   /* keep whatever they typed */
-  logReminder=!logText(currentUser.id,dateKey(now)).trim();
+  if(el){const v=el.value.trim(); if(v)await saveLogText(currentUser.id,todayKey(),v);}   /* keep whatever they typed */
+  logReminder=!logText(currentUser.id,todayKey()).trim();
   closeModal();render();
 }
 async function wlDone(){
   const el=document.getElementById('wlInput'), v=el?el.value.trim():'';
-  const ok=await saveLogText(currentUser.id,dateKey(now),v);
+  const ok=await saveLogText(currentUser.id,todayKey(),v);
   if(!ok)return;
   logReminder=!v;
   closeModal();render();toast(v?'Work log saved':'Work log still empty');
