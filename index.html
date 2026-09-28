@@ -238,6 +238,42 @@
   .qw-tally{margin-left:auto;font-size:12px;color:var(--muted)}
   .qw-tally .t-ok{color:#0B6B33;font-weight:600}
   .qw-tally .t-no{color:#A81E27;font-weight:600}
+  /* ---- Build 37: clickable stats, + bubble, upcoming segments, widgets ---- */
+  .click-stat{cursor:pointer;border-radius:10px;transition:background .12s}
+  .stat.click-stat{padding:6px 10px;margin:-6px -10px}
+  .click-stat:hover{background:var(--purple-wash)}
+  .plus-bub{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:8px;border-radius:50%;border:0;background:var(--purple);color:#fff;
+    font-family:"Archivo",sans-serif;font-size:15px;font-weight:700;line-height:1;padding:0;vertical-align:middle;cursor:pointer;
+    box-shadow:0 3px 10px -2px rgba(155,100,177,.65);transition:transform .12s,background .12s}
+  .plus-bub:hover{background:var(--purple-deep);transform:scale(1.12)}
+  .pto-bar{display:flex}
+  .pto-bar .seg-used{background:var(--purple)}
+  .pto-bar .seg-up{background:repeating-linear-gradient(45deg,#C9A6D8 0 5px,#DCC4E6 5px 10px)}
+  .pto-bar.over .seg-used{background:#6F4783}
+  .pto-bar.red .seg-used{background:#D6333D}
+  .pto-bar.red .seg-up{background:repeating-linear-gradient(45deg,#EE9A9F 0 5px,#F5C1C4 5px 10px)}
+  .pto-bar span{border-radius:0}
+  .pto-up{color:var(--purple-deep);font-weight:600}
+  .pto-up.red{color:#A81E27}
+  .pto-block.click-stat{padding:6px 10px;margin:-6px -10px}
+  .oh-badge{flex:none;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:2px 8px;margin-top:2px}
+  .oh-badge.used{background:#EDEBF0;color:#4A4553}
+  .oh-badge.now{background:var(--purple);color:#fff}
+  .oh-badge.up{background:var(--purple-wash);color:var(--purple-deep)}
+  .oh-badge.wait{background:#FBEED2;color:#8A6D1B}
+  .oh-sel{flex:none;width:auto;max-width:170px;font-size:11.5px;padding:4px 6px}
+  .oh-wait-h{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 2px}
+  .ea-left{display:flex;gap:8px;flex-wrap:wrap}
+  .um-acts{display:flex;gap:16px;margin-top:4px}
+  .sv-send-acts{display:flex;gap:8px;flex-wrap:wrap}
+  .sv-skip{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#F0EEF3;color:#4A4553;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:16px}
+  .w-strk{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;min-height:70px;padding:4px}
+  .w-strk-n{font-family:"IBM Plex Mono";font-size:30px;font-weight:700;color:var(--purple-deep)}
+  .w-strk-n span{font-size:14px;color:var(--muted);font-weight:500}
+  .w-strk.maxed .w-strk-n{color:#A81E27}
+  .w-pto{display:flex;gap:22px;flex-wrap:wrap;padding-top:4px}
+  .w-pto .pto-bar{width:170px}
+  .w-pto .k{font-family:"IBM Plex Mono";font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
   /* ---- #7 time off tracker ---- */
   .pto-stat{display:flex;gap:26px;flex-wrap:wrap}
   .pto-block{min-width:190px}
@@ -1090,7 +1126,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 36 · strikes · Questions of the Week · anonymous survey · time zones · trainings · hours check · time off tracker</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 37 · survey dismiss · upcoming time off · strike &amp; time off history · new widgets</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1917,7 +1953,8 @@ function paintUserMenu(){
   const pReq=pendingRequestCount();
   const reqLine=pReq?`<button class="um-item um-click" onclick="openChatPage(event)"><b>${pReq} time off request${pReq>1?'s':''}</b> waiting for your review.</button>`:'';
   const svDue=surveyReminderDue();
-  const svLine=svDue?`<button class="um-item um-click" onclick="event.stopPropagation();closeUserMenu();openSurveyReader()"><span class="um-tag">Monthly</span><b>Send out the anonymous survey</b> for ${surveyMonthLabel(svDue)}.</button>`:'';
+  const svLine=svDue?`<div class="um-item"><span class="um-tag">Monthly</span><b>Send out the anonymous survey</b> for ${surveyMonthLabel(svDue)}.
+      <div class="um-acts"><button class="dz" onclick="event.stopPropagation();closeUserMenu();openSurveyReader()">Open</button><button class="dz" onclick="event.stopPropagation();skipSurvey()">Dismiss for this month</button></div></div>`:'';
   const qwDue=qotwReminderDue();
   const qwLine=qwDue?`<button class="um-item um-click" onclick="event.stopPropagation();closeUserMenu();goTab('qotw')"><span class="um-tag">Reminder</span><b>Add your Question of the Week</b> — due ${fmtDayKey(qwDue)}.</button>`:'';
   const body=(reqLine+svLine+qwLine+msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
@@ -1942,6 +1979,8 @@ const WIDGETS=[
   {key:'notifications',label:'Notifications'},
   {key:'time',label:'Time'},
   {key:'todos',label:'To-do list'},
+  {key:'strikes',label:'Strikes'},
+  {key:'timeoff',label:'Time off'},
 ];
 function defaultWidgets(u){return u.role==='manager'?['time','priorities','notifications']:['clock','break','time','priorities'];}
 function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u).slice();
@@ -1950,7 +1989,7 @@ function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u
 function userStore(u){if(!widgetStore[u.id])widgetStore[u.id]={reminders:[],todos:[]};return widgetStore[u.id];}
 function availableWidgets(u){return WIDGETS.filter(w=>!w.clockOnly||clocksIn(u));}
 const GRID_COLS=4, GRID_MAXR=40; /* 4 columns wide; board grows down */
-const WDIM={time:{w:4,h:1},clock:{w:2,h:2},break:{w:1,h:1},priorities:{w:1,h:2},notifications:{w:2,h:1},calendar:{w:2,h:2},todos:{w:2,h:2}};
+const WDIM={time:{w:4,h:1},clock:{w:2,h:2},break:{w:1,h:1},priorities:{w:1,h:2},notifications:{w:2,h:1},calendar:{w:2,h:2},todos:{w:2,h:2},strikes:{w:1,h:1},timeoff:{w:2,h:1}};
 let homeSize={};   /* userId -> { widgetKey: {w,h} } chosen sizes */
 function dimOf(k){const s=(homeSize[currentUser.id]||{})[k];return s||WDIM[k]||{w:2,h:1};}
 function posMap(u){if(!homePos[u.id])homePos[u.id]={};return homePos[u.id];}
@@ -2110,6 +2149,15 @@ function widgetBody(k){
     const body=msgLines+rest;
     if(body)return body;
     return canManage(u)?'<div class="w-empty">No new notifications.</div>':'<div class="w-empty">You\'re all caught up.</div>';
+  }
+  if(k==='strikes'){   /* always the signed-in person's own */
+    const st=strikeStatus(u.id);
+    return `<div class="w-strk click-stat ${st.n>=STRIKE_MAX?'maxed':''}" onclick="openStrikeHistory('${u.id}')" title="See strike history">
+      <div class="w-strk-n">${st.n}<span> / ${STRIKE_MAX}</span></div>
+      <div class="w-sub">${st.last?'Last strike '+timeSinceKey(st.last)+' ago':'No strikes on record'}</div></div>`;
+  }
+  if(k==='timeoff'){   /* always the signed-in person's own; leaders also see their own red bar */
+    return `<div class="w-pto">${timeOffBlocks(u.id,canManage(u))}</div>`;
   }
   if(k==='todos'){
     const arr=userStore(u).todos;
@@ -3100,14 +3148,11 @@ function strikeStat(id,mgr){
   const st=strikeStatus(id);
   const since=st.last?`Time since last strike · ${timeSinceKey(st.last)}`:'No strikes on record';
   const flag=(mgr&&st.flag)?`<span class="strike-flag ${st.flag}">${st.flag==='removal'?'Eligible for removal':'Eligible for reevaluation'}</span>`:'';
-  const acts=`<button class="linkish" onclick="openStrikeHistory('${id}')">History</button>`
-    +(mgr?`<button class="linkish" onclick="openStrikeForm('${id}','add')">+ Add</button>`
-      +(st.n>0?`<button class="linkish" onclick="openStrikeForm('${id}','remove')">&minus; Remove</button>`:''):'');
-  return `<div class="stat strike-stat ${st.n>=STRIKE_MAX?'maxed':''}">
+  const plus=mgr?`<button class="plus-bub" title="Add a strike" onclick="event.stopPropagation();openStrikeForm('${id}','add')">+</button>`:'';
+  return `<div class="stat strike-stat click-stat ${st.n>=STRIKE_MAX?'maxed':''}" onclick="openStrikeHistory('${id}')" title="See strike history">
       <div class="k">Strikes</div>
-      <div class="v">${st.n}<span class="of"> / ${STRIKE_MAX}</span></div>
-      <div class="strike-since">${since}</div>${flag}
-      <div class="strike-actions">${acts}</div></div>`;
+      <div class="v">${st.n}<span class="of"> / ${STRIKE_MAX}</span>${plus}</div>
+      <div class="strike-since">${since}</div>${flag}</div>`;
 }
 function openStrikeForm(id,action){
   if(!canManage(currentUser))return;
@@ -3172,7 +3217,9 @@ function openStrikeHistory(id){
     <h3>Strike history</h3><p class="sub">${esc(e.name)} · ${strikeCount(id)} / ${STRIKE_MAX} active</p>
     <div class="sh-list">${rows}</div>
     <p class="sh-rule">A strike is eligible for reevaluation 6 months after the most recent strike activity, and for removal after a full year without a new strike.</p>
-    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div></div></div>`;
+    <div class="modal-actions edit-actions"><span class="ea-left">${mgr?`<button class="btn btn-danger btn-sm" onclick="openStrikeForm('${id}','add')">+ Add strike</button>`
+        +(strikeCount(id)>0?`<button class="btn btn-line btn-sm" onclick="openStrikeForm('${id}','remove')">Remove a strike</button>`:''):''}</span>
+      <span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div></div></div>`;
 }
 
 /* ================= QUESTIONS OF THE WEEK (#2) =================
@@ -3339,7 +3386,7 @@ async function loadSurvey(){
     const [r1,r2]=await Promise.all([sb.from('survey_responses').select('*'),sb.from('survey_rounds').select('*')]);
     if(r1.error)throw r1.error; if(r2.error)throw r2.error;
     (r1.data||[]).forEach(r=>resp.push({id:r.id,month:r.month,body:r.body||''}));
-    (r2.data||[]).forEach(r=>{rounds[r.month]={by:r.sent_by_name||'',at:new Date(r.sent_at).getTime()};});
+    (r2.data||[]).forEach(r=>{rounds[r.month]={by:r.sent_by_name||'',at:new Date(r.sent_at).getTime(),status:r.status||'sent'};});
   }
   const r3=await sb.from('survey_submissions').select('month').eq('user_id',currentUser.id);
   if(r3.error)throw r3.error;
@@ -3387,8 +3434,11 @@ function openSurveyReader(month){
   const months=[...new Set([cur,...surveyResponses.map(r=>r.month)])].sort((a,b)=>b.localeCompare(a));
   const list=surveyResponses.filter(r=>r.month===m);
   const round=surveyRounds[cur];
-  const sendBox=round?`<div class="sv-sent">This month's survey was sent out ${fmtDay(round.at)}${round.by?' by '+esc(round.by):''}.</div>`
-    :`<div class="sv-send"><span>${surveyMonthLabel(cur)}'s survey hasn't been sent out yet.</span><button class="btn btn-primary btn-sm" onclick="sendOutSurvey()">Send out survey</button></div>`;
+  const sendBox=!round
+    ?`<div class="sv-send"><span>${surveyMonthLabel(cur)}'s survey hasn't been sent out yet.</span><span class="sv-send-acts"><button class="btn btn-line btn-sm" onclick="skipSurvey()">Skip this month</button><button class="btn btn-primary btn-sm" onclick="sendOutSurvey()">Send out survey</button></span></div>`
+    :round.status==='skipped'
+      ?`<div class="sv-skip"><span>This month's survey was skipped${round.by?' by '+esc(round.by):''} · the reminder returns next month.</span><button class="btn btn-line btn-sm" onclick="sendOutSurvey()">Send it anyway</button></div>`
+      :`<div class="sv-sent">This month's survey was sent out ${fmtDay(round.at)}${round.by?' by '+esc(round.by):''}.</div>`;
   const rows=list.length?list.map(r=>`<div class="sv-row"><div class="sv-body">${esc(r.body).replace(/\n/g,'<br>')}</div></div>`).join('')
     :'<div class="empty">No feedback for this month yet.</div>';
   const own=isQParticipant(currentUser)?`<button class="btn btn-line btn-sm" onclick="openSurveyForm()">${surveyMine.has(cur)?'Your feedback ✓':'Share your own'}</button>`:'';
@@ -3402,10 +3452,10 @@ function openSurveyReader(month){
 }
 async function sendOutSurvey(){
   if(!canManage(currentUser))return;
-  const m=surveyMonth(); if(surveyRounds[m]){openSurveyReader();return;}
+  const m=surveyMonth(); if(surveyRounds[m]&&surveyRounds[m].status!=='skipped'){openSurveyReader();return;}
   const recips=activeAll().filter(e=>isQParticipant(e)&&e.id!==currentUser.id);
   if(live()){
-    const {error}=await sb.from('survey_rounds').insert({month:m,sent_by_name:currentUser.name});
+    const {error}=await sb.from('survey_rounds').upsert({month:m,status:'sent',sent_by:currentUser.id,sent_by_name:currentUser.name,sent_at:new Date().toISOString()});
     if(error){toast('Could not send: '+error.message);return;}
     if(recips.length){
       const {error:e2}=await sb.from('messages').insert(recips.map(r=>({to_user:r.id,from_user:currentUser.id,from_name:currentUser.name,subject:'Anonymous survey',body:SURVEY_MSG})));
@@ -3414,8 +3464,21 @@ async function sendOutSurvey(){
   }else{
     recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:currentUser.name,subject:'Anonymous survey',text:SURVEY_MSG,ts:Date.now(),read:false}));
   }
-  surveyRounds[m]={by:currentUser.name,at:Date.now()};
+  surveyRounds[m]={by:currentUser.name,at:Date.now(),status:'sent'};
   paintUserMenu();openSurveyReader();toast('Survey sent to '+recips.length+' people');
+}
+/* skip this month's survey for ALL leadership — the reminder comes back on the 1st */
+async function skipSurvey(){
+  if(!canManage(currentUser))return;
+  const m=surveyMonth(); if(surveyRounds[m])return;
+  if(live()){
+    const {error}=await sb.from('survey_rounds').insert({month:m,status:'skipped',sent_by:currentUser.id,sent_by_name:currentUser.name});
+    if(error){toast('Could not dismiss: '+error.message);return;}
+  }
+  surveyRounds[m]={by:currentUser.name,at:Date.now(),status:'skipped'};
+  closeUserMenu();paintUserMenu();
+  if(document.querySelector('.sv-modal'))openSurveyReader();
+  toast('Survey reminder dismissed for '+surveyMonthLabel(m).split(' ')[0]+' — it comes back next month');
 }
 
 /* ================= HOURS CHECK (#6) — managers & co-managers only =================
@@ -3467,10 +3530,10 @@ async function loadTimeOffCats(){
   const m={};(data||[]).forEach(r=>{m[r.time_off_id]=r.category;});timeOffCat=m;
 }
 function offCat(id){return timeOffCat[String(id)]==='emergency'?'emergency':'regular';}
-function offTypePicker(elId,value,onchange){
-  return `<select class="role-sel" id="${elId}" ${onchange?`onchange="${onchange}"`:''}>
-    <option value="regular" ${value!=='emergency'?'selected':''}>Regular — counts toward the 4 weeks</option>
-    <option value="emergency" ${value==='emergency'?'selected':''}>Emergency / sick — doesn't count</option></select>`;
+function offTypePicker(elId,value,onchange,short){
+  return `<select class="role-sel${short?' oh-sel':''}" id="${elId}" ${onchange?`onchange="${onchange}"`:''}>
+    <option value="regular" ${value!=='emergency'?'selected':''}>${short?'Regular':'Regular — counts toward the 4 weeks'}</option>
+    <option value="emergency" ${value==='emergency'?'selected':''}>${short?'Emergency / sick':'Emergency / sick — doesn\'t count'}</option></select>`;
 }
 async function setOffType(id,cat){
   if(!canManage(currentUser))return true;
@@ -3483,26 +3546,63 @@ async function setOffType(id,cat){
 }
 async function changeOffType(id,el){if(await setOffType(id,el.value)){render();toast('Marked '+(el.value==='emergency'?'emergency / sick':'regular'));}}
 function ptoYear(){const y=todayKey().slice(0,4);return {y,a:y+'-01-01',b:y+'-12-31'};}
+/* weekdays in this year's approved time off, split by type and by used (date has arrived) vs upcoming */
 function offDaysByCat(id){
-  const {a,b}=ptoYear(),reg=new Set(),em=new Set();
+  const {a,b}=ptoYear(),today=todayKey(),reg=new Set(),em=new Set();
   timeOff.filter(t=>t.empId===id&&t.status==='approved').forEach(t=>{
     const bucket=offCat(t.id)==='emergency'?em:reg;
     const s0=t.start<a?a:t.start,e0=t.end>b?b:t.end;
     for(let k=s0;k<=e0;k=addDaysKey(k,1))if(isWeekdayKey(k))bucket.add(k);
   });
   em.forEach(k=>reg.delete(k));   /* a day marked emergency never also counts as regular */
-  return {regular:reg.size,emergency:em.size};
+  const split=set=>{let used=0,up=0;set.forEach(k=>k<=today?used++:up++);return {used,up};};
+  const r=split(reg),e=split(em);
+  return {regular:reg.size,emergency:em.size,regUsed:r.used,regUp:r.up,emUsed:e.used,emUp:e.up};
 }
-function timeOffStat(id,mgr){
-  const {regular,emergency}=offDaysByCat(id),{y}=ptoYear();
-  const left=PTO_DAYS-regular,pct=Math.min(100,regular/PTO_DAYS*100);
-  const main=`<div class="pto-block"><div class="k">Time off · ${y}</div>
-      <div class="pto-bar ${left<0?'over':''}"><span style="width:${pct}%"></span></div>
-      <div class="pto-txt"><b>${Math.max(0,left)} day${Math.max(0,left)===1?'':'s'} left</b> · ${regular} of ${PTO_DAYS} used${left<0?` · <span class="pto-over">over by ${-left}</span>`:''}</div></div>`;
-  const red=mgr?`<div class="pto-block"><div class="k">Emergency / sick · ${y}</div>
-      <div class="pto-bar red"><span style="width:${Math.min(100,emergency/PTO_DAYS*100)}%"></span></div>
-      <div class="pto-txt"><b>${emergency} day${emergency===1?'':'s'}</b> · no limit · leaders only</div></div>`:'';
-  return `<div class="stat pto-stat">${main}${red}</div>`;
+function daysWord(n){return n+' day'+(n===1?'':'s');}
+function ptoBar(used,up,cls){
+  const u=Math.min(100,used/PTO_DAYS*100),p=Math.min(100-u,up/PTO_DAYS*100);
+  return `<div class="pto-bar ${cls}"><span class="seg-used" style="width:${u}%"></span><span class="seg-up" style="width:${p}%"></span></div>`;
+}
+function timeOffBlocks(id,showRed){
+  const d=offDaysByCat(id),{y}=ptoYear(),left=PTO_DAYS-d.regular;
+  const main=`<div class="pto-block click-stat" onclick="openTimeOffHistory('${id}','regular')" title="See time off history">
+      <div class="k">Time off · ${y}</div>${ptoBar(d.regUsed,d.regUp,left<0?'over':'')}
+      <div class="pto-txt"><b>${daysWord(Math.max(0,left))} left</b>${d.regUp?` <span class="pto-up">(${daysWord(d.regUp)} upcoming)</span>`:''}
+        · ${d.regUsed} used${left<0?` · <span class="pto-over">over by ${-left}</span>`:''}</div></div>`;
+  const red=showRed?`<div class="pto-block click-stat" onclick="openTimeOffHistory('${id}','emergency')" title="See emergency / sick history">
+      <div class="k">Emergency / sick · ${y}</div>${ptoBar(d.emUsed,d.emUp,'red')}
+      <div class="pto-txt"><b>${daysWord(d.emergency)}</b>${d.emUp?` <span class="pto-up red">(${daysWord(d.emUp)} upcoming)</span>`:''} · no limit · leaders only</div></div>`:'';
+  return main+red;
+}
+function timeOffStat(id,mgr){return `<div class="stat pto-stat">${timeOffBlocks(id,mgr)}</div>`;}
+/* history of one person's time off this year, for one type */
+function openTimeOffHistory(id,cat){
+  const mgr=canManage(currentUser);
+  if(!mgr&&id!==currentUser.id)return;
+  if(cat==='emergency'&&!mgr)return;          /* emergency / sick history is leaders only */
+  const e=employees.find(x=>x.id===id);if(!e)return;
+  const {a,b,y}=ptoYear(),today=todayKey();
+  const inYear=t=>t.end>=a&&t.start<=b;
+  const approved=timeOff.filter(t=>t.empId===id&&t.status==='approved'&&inYear(t)&&offCat(t.id)===cat).sort((x,z)=>z.start.localeCompare(x.start));
+  const wd=t=>{const s0=t.start<a?a:t.start,e0=t.end>b?b:t.end;let n=0;for(let k=s0;k<=e0;k=addDaysKey(k,1))if(isWeekdayKey(k))n++;return n;};
+  const range=t=>t.start===t.end?fmtDayKeyYear(t.start):`${fmtDayKey(t.start)} – ${fmtDayKeyYear(t.end)}`;
+  const state=t=>t.start>today?['up','Upcoming']:(t.end>today?['now','In progress']:['used','Used']);
+  const row=t=>{const [c,l]=state(t);
+    return `<div class="sh-row"><span class="oh-badge ${c}">${l}</span><div class="sh-main"><div class="sh-reason">${range(t)} · ${daysWord(wd(t))}</div>
+      <div class="sh-date">${esc(t.note)||'—'}${mgr&&t.decidedByName?' · approved by '+esc(t.decidedByName):(mgr&&t.addedBy?' · added by '+esc(t.addedBy):'')}</div></div>
+      ${mgr?offTypePicker('oh_'+t.id,offCat(t.id),`changeOffType('${t.id}',this).then(()=>openTimeOffHistory('${id}','${cat}'))`,true):''}</div>`;};
+  const waiting=cat==='regular'?timeOff.filter(t=>t.empId===id&&t.status==='pending'&&inYear(t)).sort((x,z)=>x.start.localeCompare(z.start)):[];
+  const d=offDaysByCat(id);
+  const sum=cat==='regular'
+    ?`${daysWord(Math.max(0,PTO_DAYS-d.regular))} left of ${PTO_DAYS} · ${d.regUsed} used${d.regUp?' · '+d.regUp+' upcoming':''}`
+    :`${daysWord(d.emergency)} this year${d.emUp?' · '+d.emUp+' upcoming':''} · no limit`;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal sv-modal">
+    <h3>${cat==='regular'?'Time off':'Emergency / sick'} · ${y}</h3><p class="sub">${esc(e.name)} · ${sum}</p>
+    <div class="sh-list">${approved.length?approved.map(row).join(''):`<div class="empty">No ${cat==='regular'?'time off':'emergency / sick days'} this year.</div>`}</div>
+    ${waiting.length?`<div class="oh-wait-h">Awaiting approval · doesn't count yet</div>${waiting.map(t=>`<div class="sh-row"><span class="oh-badge wait">Pending</span><div class="sh-main"><div class="sh-reason">${range(t)} · ${daysWord(wd(t))}</div><div class="sh-date">${esc(t.note)||'—'}</div></div></div>`).join('')}`:''}
+    <p class="sh-rule">Counts weekdays only. 4 weeks = ${PTO_DAYS} workdays per year, resetting Jan 1. Approved days are "upcoming" until the date arrives, then "used"${cat==='regular'?'; both count toward days left':''}.</p>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div></div></div>`;
 }
 
 /* ================= TRAININGS (#5) — placeholder ================= */
