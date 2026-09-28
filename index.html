@@ -16,6 +16,10 @@
     --black:#000000; --white:#FFFFFF;
     --page:#FBFBFC; --rule:#DEDCE2; --rule-soft:#EBE9EE;
     --muted:#6E6B77; --text:#141218;
+    /* Build 38 design system (MongoDB-style structure, OTG colors & fonts) */
+    --hair-strong:#C9C5D0;
+    --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-xxl:24px; --r-full:9999px;
+    --sp-xxs:4px; --sp-xs:8px; --sp-sm:12px; --sp-md:16px; --sp-lg:20px; --sp-xl:24px; --sp-xxl:32px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -218,8 +222,21 @@
   .qw-due{color:#A81E27}
   .qw-done{color:#0B6B33}
   .qw-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 4px}
-  .qw-tools input[type=text]{flex:1;min-width:200px}
+  .qw-tool-grp{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .qw-tools input[type=text].qg-name{flex:0 0 190px;width:190px;min-width:0}
   .qw-tools input[type=date]{width:auto}
+  .qw-rand-btn{margin-left:auto}
+  .qw-addguest{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:none;border:1px dashed var(--hair-strong);color:var(--muted);border-radius:var(--r-full);padding:3px 10px;cursor:pointer}
+  .qw-addguest:hover{border-color:var(--purple);color:var(--purple-deep)}
+  button.qw-guest-btn{border:0;cursor:pointer}
+  button.qw-guest-btn:hover{background:#E9DDF0}
+  .qr-list{display:flex;flex-direction:column;gap:10px}
+  .qr-item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--rule);border-radius:var(--r-lg);padding:14px 16px;background:#fff}
+  .qr-num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--purple-wash);color:var(--purple-deep);display:grid;place-items:center;font-family:"IBM Plex Mono";font-size:12px;font-weight:600}
+  .qr-main{flex:1;min-width:0}
+  .qr-q{font-size:14.5px;line-height:1.45}
+  .qr-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);margin-top:4px}
+  .sv-prompt-t{font-size:14px;line-height:1.5;margin:0}
   .qw-weeks{margin-top:18px}
   .qw-week{border:1px solid var(--rule-soft);background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px}
   .qw-week.current{border-color:var(--purple);box-shadow:0 0 0 1px var(--purple)}
@@ -228,24 +245,23 @@
   .qw-guest{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:var(--purple-wash);color:var(--purple-deep);border-radius:20px;padding:3px 10px}
   .qw-row{display:flex;gap:14px;align-items:flex-start;padding:9px 10px;margin:0 -10px;border-top:1px solid var(--rule-soft);border-left:3px solid transparent;transition:background .12s}
   .qw-row.st-answered{background:#E3F3E8;border-left-color:#0B8A3E}
-  .qw-row.st-unanswered{background:#F9E1E2;border-left-color:#C0262F}
   .qw-marks{flex:none;display:flex;gap:5px}
   .qw-mark{width:24px;height:24px;border-radius:50%;border:1px solid var(--rule);background:#fff;color:#8A8792;font-size:12px;line-height:1;display:grid;place-items:center;padding:0;cursor:pointer}
   .qw-mark.ok:hover,.qw-mark.ok.on{border-color:#0B8A3E;color:#0B8A3E}
-  .qw-mark.no:hover,.qw-mark.no.on{border-color:#C0262F;color:#C0262F}
   .qw-mark.ok.on{background:#0B8A3E;color:#fff}
-  .qw-mark.no.on{background:#C0262F;color:#fff}
   .qw-tally{margin-left:auto;font-size:12px;color:var(--muted)}
   .qw-tally .t-ok{color:#0B6B33;font-weight:600}
-  .qw-tally .t-no{color:#A81E27;font-weight:600}
   /* ---- Build 37: clickable stats, + bubble, upcoming segments, widgets ---- */
   .click-stat{cursor:pointer;border-radius:10px;transition:background .12s}
   .stat.click-stat{padding:6px 10px;margin:-6px -10px}
   .click-stat:hover{background:var(--purple-wash)}
-  .plus-bub{display:inline-grid;place-items:center;width:22px;height:22px;margin-left:8px;border-radius:50%;border:0;background:var(--purple);color:#fff;
-    font-family:"Archivo",sans-serif;font-size:15px;font-weight:700;line-height:1;padding:0;vertical-align:middle;cursor:pointer;
-    box-shadow:0 3px 10px -2px rgba(155,100,177,.65);transition:transform .12s,background .12s}
-  .plus-bub:hover{background:var(--purple-deep);transform:scale(1.12)}
+  .strike-stat .v{display:flex;align-items:baseline}
+  .plus-bub{position:relative;align-self:center;flex:none;display:inline-block;width:24px;height:24px;margin-left:10px;border-radius:50%;
+    border:1.5px solid var(--purple);background:#fff;padding:0;font-size:0;line-height:0;color:transparent;cursor:pointer;transition:background .12s,transform .12s}
+  .plus-bub::before,.plus-bub::after{content:"";position:absolute;top:50%;left:50%;background:var(--purple);border-radius:1px;transform:translate(-50%,-50%)}
+  .plus-bub::before{width:11px;height:2px}
+  .plus-bub::after{width:2px;height:11px}
+  .plus-bub:hover{background:var(--purple-wash);transform:scale(1.08)}
   .pto-bar{display:flex}
   .pto-bar .seg-used{background:var(--purple)}
   .pto-bar .seg-up{background:repeating-linear-gradient(45deg,#C9A6D8 0 5px,#DCC4E6 5px 10px)}
@@ -464,10 +480,10 @@
   /* ============ FORMS ============ */
   .field{display:flex;flex-direction:column;gap:7px}
   .field label{font-family:"IBM Plex Mono";font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
-  input[type=text],input[type=date],input[type=datetime-local],input[type=number],input[type=time],select{
-    font-family:"Barlow";font-size:14.5px;border:0;border-bottom:1px solid var(--black);padding:8px 0;
-    width:100%;background:transparent;color:var(--text)}
-  input:focus,select:focus{outline:0;border-bottom-color:var(--purple);box-shadow:0 1px 0 0 var(--purple)}
+  input[type=text],input[type=date],input[type=datetime-local],input[type=number],input[type=time],input[type=email],select{
+    font-family:"Barlow";font-size:14.5px;border:1px solid var(--hair-strong);border-radius:var(--r-md);padding:9px 12px;min-height:42px;
+    width:100%;background:#fff;color:var(--text);color-scheme:only light}
+  input:focus,select:focus{outline:0;border-color:var(--purple);box-shadow:0 0 0 1px var(--purple)}
   input[type=date],input[type=datetime-local],input[type=number],input[type=time]{font-family:"IBM Plex Mono";font-size:13.5px}
   select{font-family:"Barlow"}
   .inline-form{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
@@ -817,6 +833,84 @@
   .pdf-opt:hover{border-color:var(--purple);background:var(--purple-wash)}
   .pdf-opt-t{font-family:"Archivo";font-weight:700;font-size:14px;color:var(--text)}
   .pdf-opt-d{font-size:12.5px;color:var(--muted);line-height:1.4}
+
+  /* =====================================================================
+     BUILD 38 DESIGN SYSTEM — structure from the MongoDB design guide,
+     OTG colors (purple / black / white) and fonts (Archivo · Barlow · IBM Plex Mono).
+     Rules: every button & status badge is a pill (--r-full) · cards 12px (--r-lg)
+     with a 1px hairline and little/no shadow · inputs boxed 8px (--r-md), ~42px tall,
+     focus = purple ring · dark (black) bands carry the purple primary CTA · 4px spacing grid.
+     ===================================================================== */
+  /* buttons -> pills */
+  .btn{border-radius:var(--r-full);padding:11px 22px;line-height:1.2;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .btn-sm{padding:8px 16px}
+  .btn-xs{padding:5px 12px}
+  .btn-clock{border-radius:var(--r-full);padding:13px 28px}
+  .btn-line{border-color:var(--hair-strong);color:var(--text)}
+  .btn-line:hover{background:var(--text);border-color:var(--text);color:#fff}
+  .btn-cell{border-radius:var(--r-full);border-color:var(--hair-strong)}
+  .btn:disabled{background:var(--rule);border-color:var(--rule);color:var(--muted);cursor:default}
+  .alarm .btn{border-radius:var(--r-full)}
+  .dl-btn{border-radius:var(--r-md)}
+  .menu-btn{border-radius:var(--r-md)}
+  /* status badges & tags -> pills */
+  .period-tag,.edited,.badge,.soon{border-radius:var(--r-full)}
+  .st i{border-radius:50%}
+  /* avatars -> circles */
+  .sq-av,.user-btn .sq,.acct .sq,.pf-av{border-radius:50%}
+  /* cards & containers -> 12px, hairline, flat */
+  .panel{border:1px solid var(--rule);border-radius:var(--r-lg);padding:var(--sp-xl);box-shadow:0 1px 2px rgba(20,16,25,.04)}
+  .qw-week,.hc-bar,.rq-card,.pdf-opt,.mrc,.size-opt,.cal-grid{border-radius:var(--r-lg)}
+  .qw-week,.hc-bar{border-color:var(--rule)}
+  .soon-card{border-radius:var(--r-xl)}
+  .sv-send,.sv-sent,.sv-skip,.sv-privacy,.rb-pending{border-radius:var(--r-md)}
+  .note{border-left:0;border-radius:var(--r-md);padding:12px 16px}
+  .note.warn{color:#8E1A22}
+  .brk-strip{border-left:0;border-radius:var(--r-lg)}
+  .expand-in{border-left-width:2px}
+  /* section rules -> hairlines */
+  .page-head{border-bottom:1px solid var(--rule);padding-bottom:16px}
+  .page-head h1{font-size:24px}
+  th{border-bottom:1px solid var(--hair-strong)}
+  .period{border-top:1px solid var(--rule)}
+  .period.current{border-top:2px solid var(--purple)}
+  /* modals -> rounded cards */
+  .overlay{background:rgba(0,0,0,.55)}
+  .modal{border-top:0;border-radius:var(--r-xl);padding:28px;box-shadow:0 24px 60px -12px rgba(0,0,0,.35)}
+  .modal.dark{border:1px solid #2A2433}
+  /* menus -> rounded panels */
+  .menu-panel,.user-panel{border-radius:var(--r-lg);padding:6px;overflow:hidden}
+  .menu-item{border-radius:var(--r-md)}
+  .menu-item.active{box-shadow:none;background:rgba(155,100,177,.22)}
+  .user-panel .um-notif{padding:10px 10px 4px}
+  /* inputs -> boxed 8px */
+  .log-area{border:1px solid var(--hair-strong);border-radius:var(--r-md)}
+  .log-area:focus{border-color:var(--purple);box-shadow:0 0 0 1px var(--purple)}
+  .cmp-field input,.cmp-field textarea{border-color:var(--hair-strong);border-radius:var(--r-md)}
+  .cmp-field input:focus,.cmp-field textarea:focus{box-shadow:0 0 0 1px var(--purple)}
+  .chat-compose input{border-radius:var(--r-full);min-height:42px}
+  .role-sel{border-color:var(--hair-strong);border-radius:var(--r-md);padding:7px 10px;min-height:0}
+  .oh-sel{min-height:0;padding:5px 8px;border-radius:var(--r-sm)}
+  .pri-due-in{min-height:0;padding:3px 6px;border-radius:var(--r-sm)}
+  .w-add input{min-height:36px;padding:6px 10px}
+  .pri-add input{border-radius:var(--r-md)}
+  .modal.dark select{min-height:42px}
+  .pri-check{border-radius:var(--r-xs)}
+  input[type=number].rate-in{width:110px}
+  .role-sel{width:auto;min-width:150px}
+  .role-row .role-sel{margin-left:auto}
+  .cell{border-top:0;border-left:0}
+  .user-panel{min-width:230px}
+  button.um-item.um-sv{white-space:nowrap}
+  /* login (black band): pill tabs + boxed white inputs */
+  .auth-tabs{border-radius:var(--r-full);padding:3px;gap:3px;border-color:rgba(255,255,255,.22)}
+  .auth-tab{border-radius:var(--r-full)}
+  .login-wrap .afield input{border:1px solid #fff;border-radius:var(--r-md);padding:11px 12px;min-height:44px}
+  .login-wrap .afield input:focus{border-color:var(--purple);box-shadow:0 0 0 2px var(--purple)}
+  .auth-go{border-radius:var(--r-full)}
+  /* toast -> floating pill */
+  .toast{left:50%;right:auto;bottom:22px;transform:translateX(-50%);border-radius:var(--r-full);padding:12px 24px;
+    max-width:calc(100% - 32px);width:max-content;box-shadow:0 12px 30px -8px rgba(0,0,0,.45)}
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
@@ -1126,7 +1220,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 37 · survey dismiss · upcoming time off · strike &amp; time off history · new widgets</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 38 · new look · Hours tab · QOTW randomizer &amp; guests · survey reminder</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1757,10 +1851,10 @@ async function initAuth(){
   }catch(e){ renderLogin('Can\'t reach the server — check your internet and refresh.',true); }
 }
 const TABS={
-  owner:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  owner:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'Hours'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'My hours'},{id:'schedule',label:'My schedule'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'}]
+  comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'Hours'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
+  employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'Hours'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Trainings'}]
 };
 function signOut(){
   stopAlarm();clearInterval(breakTimer);breakActive=false;
@@ -1931,7 +2025,7 @@ function renderBody(){
   switch(activeTab){
     case 'today':return timecardTab();
     case 'hours':return hoursTab();
-    case 'schedule':return scheduleTab(currentUser.id,true);
+    case 'schedule':return hoursTab();   /* old tab id — merged into Hours */
     case 'calendar':return calendarTab(canManage(currentUser)?null:currentUser.id,canManage(currentUser));
     case 'qotw':return qotwTab();
     case 'trainings':return trainingsTab();
@@ -1953,8 +2047,7 @@ function paintUserMenu(){
   const pReq=pendingRequestCount();
   const reqLine=pReq?`<button class="um-item um-click" onclick="openChatPage(event)"><b>${pReq} time off request${pReq>1?'s':''}</b> waiting for your review.</button>`:'';
   const svDue=surveyReminderDue();
-  const svLine=svDue?`<div class="um-item"><span class="um-tag">Monthly</span><b>Send out the anonymous survey</b> for ${surveyMonthLabel(svDue)}.
-      <div class="um-acts"><button class="dz" onclick="event.stopPropagation();closeUserMenu();openSurveyReader()">Open</button><button class="dz" onclick="event.stopPropagation();skipSurvey()">Dismiss for this month</button></div></div>`:'';
+  const svLine=svDue?`<button class="um-item um-click um-sv" onclick="event.stopPropagation();closeUserMenu();openSurveyPrompt()"><span class="um-tag">Monthly</span><b>Survey reminder</b></button>`:'';
   const qwDue=qotwReminderDue();
   const qwLine=qwDue?`<button class="um-item um-click" onclick="event.stopPropagation();closeUserMenu();goTab('qotw')"><span class="um-tag">Reminder</span><b>Add your Question of the Week</b> — due ${fmtDayKey(qwDue)}.</button>`:'';
   const body=(reqLine+svLine+qwLine+msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
@@ -2644,11 +2737,14 @@ function saveDayAdd(k){
 
 /* ================= EMPLOYEE ================= */
 /* ================= TIMECARD / HOURS ================= */
+/* Hours = logged hours (top) + my schedule (below) — merged from the old "My hours" and "My schedule" tabs */
 function hoursTab(){
-  return pageHead('My hours','last 7 days · '+tzLabel(tzOf(currentUser.id)))
+  return pageHead('Hours','last 7 days · '+tzLabel(tzOf(currentUser.id)))
     +`<div class="sec first">${dayList(currentUser.id,{logEditable:true})}
-      <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div>${strikeStat(currentUser.id,false)}${timeOffStat(currentUser.id,false)}</div></div>
-      <div class="sec"><div class="note">Your times are read-only. If something is wrong, ask a manager — every correction is recorded.</div></div>`;
+      <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div>${strikeStat(currentUser.id,false)}${timeOffStat(currentUser.id,false)}</div>
+      <div class="note" style="margin-top:22px">Your times are read-only. If something is wrong, ask a manager — every correction is recorded.</div></div>
+      <div class="sec" id="mySchedule"><div class="sec-head"><h2>My schedule</h2><span class="ml meta">visible to your manager</span></div>
+      ${scheduleTab(currentUser.id,true,true)}</div>`;
 }
 function timecardTab(){
   const dk=todayKey(),s=openShift(currentUser.id);
@@ -2688,7 +2784,7 @@ function timecardTab(){
 }
 
 /* ---------- schedule ---------- */
-function scheduleTab(empId,editable){
+function scheduleTab(empId,editable,embed){
   const s=schedules[empId]||blankWeek();
   const rows=DOW.map(k=>{
     const day=Array.isArray(s[k])?s[k]:[];
@@ -2708,12 +2804,14 @@ function scheduleTab(empId,editable){
       <span class="sched-hrs">${day.length?fmtHrs(dayHours(day)):'—'}</span></div>`;
   }).join('');
   const total=weekHours(empId);
-  return pageHead(editable?'My schedule':'Schedule',(editable?'visible to your manager':nameOf(empId))+' · '+tzLabel(tzOf(empId)))
-    +`<div class="sec first">${editable?'<p class="lede">Tap the purple + on a day to add a time block, then type the hours — "9-5", "9am-5:30pm", and "09:00-17:00" all work. Add as many blocks a day as you need; tap a block and hit the × to remove it.</p>':''}
+  const inner=`${editable?'<p class="lede">Tap the purple + on a day to add a time block, then type the hours — "9-5", "9am-5:30pm", and "09:00-17:00" all work. Add as many blocks a day as you need; tap a block and hit the × to remove it.</p>':''}
       ${rows}
       <div class="totals"><div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(total)}</div></div>
         <div class="stat"><div class="k">Worked so far this week</div><div class="v">${fmtDur(workedThisWeek(empId))}</div></div>
-        <div class="stat"><div class="k">Days working</div><div class="v">${DOW.filter(k=>Array.isArray(s[k])&&s[k].length).length}</div></div></div></div>`;
+        <div class="stat"><div class="k">Days working</div><div class="v">${DOW.filter(k=>Array.isArray(s[k])&&s[k].length).length}</div></div></div>`;
+  if(embed)return inner;
+  return pageHead(editable?'My schedule':'Schedule',(editable?'visible to your manager':nameOf(empId))+' · '+tzLabel(tzOf(empId)))
+    +`<div class="sec first">${inner}</div>`;
 }
 function ensureWeek(empId){if(!schedules[empId])schedules[empId]=blankWeek();
   DOW.forEach(k=>{if(!Array.isArray(schedules[empId][k]))schedules[empId][k]=[];});return schedules[empId];}
@@ -3148,7 +3246,7 @@ function strikeStat(id,mgr){
   const st=strikeStatus(id);
   const since=st.last?`Time since last strike · ${timeSinceKey(st.last)}`:'No strikes on record';
   const flag=(mgr&&st.flag)?`<span class="strike-flag ${st.flag}">${st.flag==='removal'?'Eligible for removal':'Eligible for reevaluation'}</span>`:'';
-  const plus=mgr?`<button class="plus-bub" title="Add a strike" onclick="event.stopPropagation();openStrikeForm('${id}','add')">+</button>`:'';
+  const plus=mgr?`<button class="plus-bub" title="Add a strike" aria-label="Add a strike" onclick="event.stopPropagation();openStrikeForm('${id}','add')">+</button>`:'';
   return `<div class="stat strike-stat click-stat ${st.n>=STRIKE_MAX?'maxed':''}" onclick="openStrikeHistory('${id}')" title="See strike history">
       <div class="k">Strikes</div>
       <div class="v">${st.n}<span class="of"> / ${STRIKE_MAX}</span>${plus}</div>
@@ -3270,9 +3368,10 @@ function qotwTab(){
       <label class="chk-line"><input type="checkbox" id="qwVac" ${vac?'checked':''} onchange="document.getElementById('qwMine').disabled=this.checked"> I'm on vacation this week</label>
       <div class="log-actions"><button class="btn btn-primary btn-sm" onclick="saveMyQuestion()">Save</button></div></div>`;
   }
-  const tools=mgr?`<div class="qw-tools"><span class="ml">Special guest</span>
-      <input type="date" id="qgDate" value="${wk}"><input type="text" id="qgName" placeholder="Guest name (e.g. Val — Operations)">
-      <button class="btn btn-line btn-sm" onclick="saveGuest()">Save guest</button></div><div class="err" id="qgErr"></div>`:'';
+  const guestTool=mgr?`<span class="qw-tool-grp"><span class="ml">Special guest</span>
+      <input type="date" id="qgDate" value="${wk}"><input type="text" id="qgName" class="qg-name" placeholder="Guest name">
+      <button class="btn btn-line btn-sm" onclick="saveGuest()">Save guest</button></span>`:'';
+  const tools=`<div class="qw-tools">${guestTool}<button class="btn btn-primary btn-sm qw-rand-btn" onclick="openRandomizer()">&#8645; Randomizer</button></div><div class="err" id="qgErr"></div>`;
   const weekSet=new Set([wk,...qotwEntries.map(e=>e.week),...Object.keys(qotwGuests)]);
   const weeks=[...weekSet].filter(k=>k<=wk||qotwGuests[k]).sort((a,b)=>b.localeCompare(a));
   const pencil=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
@@ -3283,21 +3382,21 @@ function qotwTab(){
     people.forEach(pp=>{const en=qEntry(k,pp.key);
       if(en){
         const st=en.vacation?'':en.status;
-        if(st==='answered')nAns++; else if(st==='unanswered')nOpen++;
+        if(st==='answered')nAns++;
         const marks=(mgr&&!en.vacation)?`<span class="qw-marks">
-            <button class="qw-mark ok ${st==='answered'?'on':''}" title="Mark answered" onclick="setQStatus('${en.id}','answered')">&#10003;</button>
-            <button class="qw-mark no ${st==='unanswered'?'on':''}" title="Mark not answered" onclick="setQStatus('${en.id}','unanswered')">&#10005;</button></span>`:'';
-        rows.push(`<div class="qw-row ${st?'st-'+st:''}"><span class="qw-who">${esc(pp.name.split(' ')[0])}</span>
+            <button class="qw-mark ok ${st==='answered'?'on':''}" title="${st==='answered'?'Answered — click to undo':'Mark answered'}" onclick="setQStatus('${en.id}','answered')">&#10003;</button></span>`:'';
+        rows.push(`<div class="qw-row ${st==='answered'?'st-answered':''}"><span class="qw-who">${esc(pp.name.split(' ')[0])}</span>
         <span class="qw-q">${en.vacation?'<span class="qw-vac">Vacation</span>':esc(en.question)}</span>${marks}
         ${qCanEdit(pp.key)?`<button class="day-edit" title="Edit" onclick="openQEdit('${k}','${pp.key}')">${pencil}</button>`:''}</div>`);
       } else missing.push(pp);});
-    const tally=(nAns||nOpen)?`<span class="qw-tally">${nAns?`<b class="t-ok">${nAns} answered</b>`:''}${nAns&&nOpen?' · ':''}${nOpen?`<b class="t-no">${nOpen} not answered</b>`:''}</span>`:'';
+    const tally=nAns?`<span class="qw-tally"><b class="t-ok">${nAns} answered</b></span>`:'';
     const miss=missing.length?`<div class="qw-missing">No question yet: ${missing.map(pp=>qCanEdit(pp.key)
         ?`<button class="qw-add" onclick="openQEdit('${k}','${pp.key}')">${esc(pp.name.split(' ')[0])}</button>`
         :`<span>${esc(pp.name.split(' ')[0])}</span>`).join('')}</div>`:'';
     return `<div class="qw-week ${k===wk?'current':''}"><div class="qw-head">
         <span class="qw-date">${fmtQWeek(k)}</span>${k===wk?'<span class="period-tag">This week</span>':''}
-        ${guest?`<span class="qw-guest">Special guest · ${esc(guest)}</span>`:''}${tally}</div>
+        ${guest?(mgr?`<button class="qw-guest qw-guest-btn" title="Change or remove guest" onclick="openGuestEdit('${k}')">Special guest · ${esc(guest)}</button>`:`<span class="qw-guest">Special guest · ${esc(guest)}</span>`)
+          :(mgr?`<button class="qw-addguest" onclick="openGuestEdit('${k}')">+ Add guest</button>`:'')}${tally}</div>
       ${rows.join('')||'<div class="empty" style="padding:6px 0">No questions yet.</div>'}${miss}</div>`;
   }).join('');
   return pageHead('Questions of the Week','due Fridays · '+people.length+' people')
@@ -3331,7 +3430,7 @@ async function upsertQ(week,key,question,vacation){
 async function setQStatus(id,status){
   if(!canManage(currentUser))return;
   const en=qotwEntries.find(x=>x.id===id);if(!en)return;
-  const next=en.status===status?'':status;
+  const next=en.status==='answered'?'':'answered';
   const prev=en.status; en.status=next; render();
   if(live()){
     const {error}=await sb.from('qotw_entries').update({answer_status:next||null}).eq('id',id);
@@ -3361,15 +3460,58 @@ async function saveQEdit(week,key,clear){
 async function saveGuest(){
   if(!canManage(currentUser))return;
   const err=document.getElementById('qgErr');
-  let week=document.getElementById('qgDate').value;const guest=(document.getElementById('qgName').value||'').trim();
+  const week=document.getElementById('qgDate').value;const guest=(document.getElementById('qgName').value||'').trim();
   if(!week){err.textContent='Pick the week.';return;}
+  if(!guest){err.textContent='Type the guest\'s name.';return;}
+  const msg=await putGuest(week,guest); if(msg){err.textContent=msg;return;}
+  render();
+}
+/* write (or clear, when guest is blank) the Special Guest for a week; returns an error message or '' */
+async function putGuest(week,guest){
   week=fridayOnOrAfter(week);   /* snap to that week's Friday */
   if(live()){
     const {error}=guest?await sb.from('qotw_weeks').upsert({week_date:week,guest}):await sb.from('qotw_weeks').delete().eq('week_date',week);
-    if(error){err.textContent='Not saved: '+error.message;return;}
+    if(error)return 'Not saved: '+error.message;
   }
   if(guest)qotwGuests[week]=guest; else delete qotwGuests[week];
-  render();toast(guest?'Guest saved for '+fmtDayKey(week):'Guest removed');
+  toast(guest?'Guest saved for '+fmtDayKey(week):'Guest removed');
+  return '';
+}
+/* add a guest later / change / remove one, straight from a week card */
+function openGuestEdit(week){
+  if(!canManage(currentUser))return;
+  const cur=qotwGuests[week]||'';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>${cur?'Special guest':'Add a special guest'}</h3><p class="sub">Week due ${fmtQWeek(week)}</p>
+    <div class="field"><label>Guest name</label><input type="text" id="geName" class="qg-name" value="${esc(cur)}" placeholder="e.g. Val — Operations"></div>
+    <div class="err" id="geErr"></div>
+    <div class="modal-actions">${cur?`<button class="btn btn-line btn-sm" onclick="saveGuestEdit('${week}',true)">Remove guest</button>`:''}
+      <button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveGuestEdit('${week}')">Save</button></div></div></div>`;
+  setTimeout(()=>{const i=document.getElementById('geName');if(i)i.focus();},30);
+}
+async function saveGuestEdit(week,remove){
+  const guest=remove?'':(document.getElementById('geName').value||'').trim();
+  if(!remove&&!guest){document.getElementById('geErr').textContent='Type the guest\'s name.';return;}
+  const msg=await putGuest(week,guest); if(msg){document.getElementById('geErr').textContent=msg;return;}
+  closeModal();render();
+}
+/* Randomizer: 3 random questions (any week, past or future) that aren't marked answered yet */
+function qRandomPool(){return qotwEntries.filter(en=>!en.vacation&&(en.question||'').trim()&&en.status!=='answered');}
+function openRandomizer(){
+  const pool=qRandomPool().slice();
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const pick=pool.slice(0,3);
+  const nameFor=en=>{const k=qPersonKey(en),pp=qParticipants().find(x=>x.key===k);return (pp?pp.name:en.personName||'').split(' ')[0];};
+  const list=pick.length?pick.map((en,i)=>`<div class="qr-item"><span class="qr-num">${i+1}</span>
+      <div class="qr-main"><div class="qr-q">${esc(en.question)}</div>
+      <div class="qr-meta">${esc(nameFor(en))} · week of ${fmtDayKeyYear(en.week)}</div></div></div>`).join('')
+    :'<div class="empty">Every question has been answered — nice work.</div>';
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Randomizer</h3><p class="sub">${pick.length} of ${qRandomPool().length} questions not answered yet</p>
+    <div class="qr-list">${list}</div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button>
+      ${pool.length>3?'<button class="btn btn-primary btn-sm" onclick="openRandomizer()">Shuffle again</button>':''}</div></div></div>`;
 }
 
 /* ================= ANONYMOUS SURVEY (#3) =================
@@ -3435,7 +3577,7 @@ function openSurveyReader(month){
   const list=surveyResponses.filter(r=>r.month===m);
   const round=surveyRounds[cur];
   const sendBox=!round
-    ?`<div class="sv-send"><span>${surveyMonthLabel(cur)}'s survey hasn't been sent out yet.</span><span class="sv-send-acts"><button class="btn btn-line btn-sm" onclick="skipSurvey()">Skip this month</button><button class="btn btn-primary btn-sm" onclick="sendOutSurvey()">Send out survey</button></span></div>`
+    ?`<div class="sv-send"><span>${surveyMonthLabel(cur)}'s survey hasn't been sent out yet.</span><span class="sv-send-acts"><button class="btn btn-line btn-sm" onclick="skipSurvey()">Dismiss</button><button class="btn btn-primary btn-sm" onclick="sendOutSurvey()">Send out survey</button></span></div>`
     :round.status==='skipped'
       ?`<div class="sv-skip"><span>This month's survey was skipped${round.by?' by '+esc(round.by):''} · the reminder returns next month.</span><button class="btn btn-line btn-sm" onclick="sendOutSurvey()">Send it anyway</button></div>`
       :`<div class="sv-sent">This month's survey was sent out ${fmtDay(round.at)}${round.by?' by '+esc(round.by):''}.</div>`;
@@ -3450,7 +3592,7 @@ function openSurveyReader(month){
     <div class="sv-list">${rows}</div>
     <div class="modal-actions edit-actions">${own||'<span></span>'}<span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div></div></div>`;
 }
-async function sendOutSurvey(){
+async function sendOutSurvey(fromPrompt){
   if(!canManage(currentUser))return;
   const m=surveyMonth(); if(surveyRounds[m]&&surveyRounds[m].status!=='skipped'){openSurveyReader();return;}
   const recips=activeAll().filter(e=>isQParticipant(e)&&e.id!==currentUser.id);
@@ -3465,10 +3607,22 @@ async function sendOutSurvey(){
     recips.forEach(r=>messages.push({id:'nt'+(++msgSeq),to:r.id,from:currentUser.name,subject:'Anonymous survey',text:SURVEY_MSG,ts:Date.now(),read:false}));
   }
   surveyRounds[m]={by:currentUser.name,at:Date.now(),status:'sent'};
-  paintUserMenu();openSurveyReader();toast('Survey sent to '+recips.length+' people');
+  paintUserMenu();if(fromPrompt)closeModal(); else openSurveyReader();toast('Survey sent to '+recips.length+' people');
 }
 /* skip this month's survey for ALL leadership — the reminder comes back on the 1st */
-async function skipSurvey(){
+/* the small box the bell's "Survey reminder" opens: Send or Dismiss */
+function openSurveyPrompt(){
+  if(!canManage(currentUser))return;
+  const m=surveyMonth();
+  if(surveyRounds[m]){openSurveyReader();return;}
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal sv-prompt">
+    <h3>Survey reminder</h3><p class="sub">${surveyMonthLabel(m)}</p>
+    <p class="sv-prompt-t">This month's anonymous survey hasn't been sent out yet. Send it to the team now, or dismiss the reminder until next month.</p>
+    <div class="modal-actions edit-actions"><span><button class="linkish" onclick="openSurveyReader()">View feedback</button></span>
+      <span class="ea-right"><button class="btn btn-line btn-sm" onclick="skipSurvey(true)">Dismiss</button>
+      <button class="btn btn-primary btn-sm" onclick="sendOutSurvey(true)">Send</button></span></div></div></div>`;
+}
+async function skipSurvey(fromPrompt){
   if(!canManage(currentUser))return;
   const m=surveyMonth(); if(surveyRounds[m])return;
   if(live()){
@@ -3477,7 +3631,7 @@ async function skipSurvey(){
   }
   surveyRounds[m]={by:currentUser.name,at:Date.now(),status:'skipped'};
   closeUserMenu();paintUserMenu();
-  if(document.querySelector('.sv-modal'))openSurveyReader();
+  if(fromPrompt)closeModal(); else if(document.querySelector('.sv-modal'))openSurveyReader();
   toast('Survey reminder dismissed for '+surveyMonthLabel(m).split(' ')[0]+' — it comes back next month');
 }
 
