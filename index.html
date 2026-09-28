@@ -230,12 +230,17 @@
   .qw-addguest:hover{border-color:var(--purple);color:var(--purple-deep)}
   button.qw-guest-btn{border:0;cursor:pointer}
   button.qw-guest-btn:hover{background:#E9DDF0}
-  .qr-list{display:flex;flex-direction:column;gap:10px}
-  .qr-item{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--rule);border-radius:var(--r-lg);padding:14px 16px;background:#fff}
-  .qr-num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--purple-wash);color:var(--purple-deep);display:grid;place-items:center;font-family:"IBM Plex Mono";font-size:12px;font-weight:600}
-  .qr-main{flex:1;min-width:0}
-  .qr-q{font-size:14.5px;line-height:1.45}
-  .qr-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);margin-top:4px}
+  .qw-week.qr-sec{border-color:var(--purple);background:var(--purple-wash)}
+  .qr-sec .qw-row{border-top-color:rgba(111,71,131,.16);align-items:center}
+  .qr-left{font-size:12px;color:var(--muted)}
+  .qr-clear{margin-left:auto}
+  .qr-skip{flex:none;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:#fff;
+    border:1px solid var(--hair-strong);color:var(--muted);border-radius:var(--r-full);padding:4px 11px;cursor:pointer}
+  .qr-skip:hover{border-color:var(--purple);color:var(--purple-deep)}
+  .qr-from{display:block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:2px}
+  .qr-sec .qw-mark{background:#fff}
+  .qr-sec .qw-mark:hover{background:#0B8A3E;border-color:#0B8A3E;color:#fff}
+  @media (max-width:600px){ .qr-sec .qw-who{width:auto} }
   .sv-prompt-t{font-size:14px;line-height:1.5;margin:0}
   .qw-weeks{margin-top:18px}
   .qw-week{border:1px solid var(--rule-soft);background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px}
@@ -1003,6 +1008,7 @@ let shifts=[];
 let workLogs={};
 let strikes=[];   /* #1 strike ledger: {id,empId,action:'add'|'remove',reason,date,byName,ts} */
 let qotwEntries=[], qotwGuests={}, qwDraft=null;   /* #2 Questions of the Week */
+let qRand=null;   /* Randomizer round (leaders, this screen only): {ids:[entry ids pinned on top], skipped:Set} */
 let surveyResponses=[], surveyRounds={}, surveyMine=new Set();   /* #3 anonymous survey */
 let timeOffCat={};   /* #7 time_off id -> 'regular' | 'emergency' (leaders see all; employees only their own) */
 
@@ -1220,7 +1226,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 38 · new look · Hours tab · QOTW randomizer &amp; guests · survey reminder</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 39 · Randomizer pins questions to the top · skip &amp; swap</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -3371,15 +3377,20 @@ function qotwTab(){
   const guestTool=mgr?`<span class="qw-tool-grp"><span class="ml">Special guest</span>
       <input type="date" id="qgDate" value="${wk}"><input type="text" id="qgName" class="qg-name" placeholder="Guest name">
       <button class="btn btn-line btn-sm" onclick="saveGuest()">Save guest</button></span>`:'';
-  const tools=`<div class="qw-tools">${guestTool}<button class="btn btn-primary btn-sm qw-rand-btn" onclick="openRandomizer()">&#8645; Randomizer</button></div><div class="err" id="qgErr"></div>`;
+  const randBtn=mgr?`<button class="btn btn-primary btn-sm qw-rand-btn" onclick="startRandomizer()">&#8645; ${qRand?'New 3':'Randomizer'}</button>`:'';
+  const tools=(guestTool||randBtn)?`<div class="qw-tools">${guestTool}${randBtn}</div><div class="err" id="qgErr"></div>`:'';
+  if(qRand&&!mgr)qRand=null;
+  const pinned=new Set(qRand?qRand.ids:[]);
   const weekSet=new Set([wk,...qotwEntries.map(e=>e.week),...Object.keys(qotwGuests)]);
-  const weeks=[...weekSet].filter(k=>k<=wk||qotwGuests[k]).sort((a,b)=>b.localeCompare(a));
+  /* future weeks show once they have a guest or an answered question (so a question answered early still has a home) */
+  const weeks=[...weekSet].filter(k=>k<=wk||qotwGuests[k]||qotwEntries.some(e=>e.week===k&&e.status==='answered')).sort((a,b)=>b.localeCompare(a));
   const pencil=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
   const cards=weeks.map(k=>{
     const guest=qotwGuests[k]||'';
     const rows=[],missing=[];
     let nAns=0,nOpen=0;
     people.forEach(pp=>{const en=qEntry(k,pp.key);
+      if(en&&pinned.has(en.id))return;   /* pinned in the Randomizer section for now */
       if(en){
         const st=en.vacation?'':en.status;
         if(st==='answered')nAns++;
@@ -3400,7 +3411,7 @@ function qotwTab(){
       ${rows.join('')||'<div class="empty" style="padding:6px 0">No questions yet.</div>'}${miss}</div>`;
   }).join('');
   return pageHead('Questions of the Week','due Fridays · '+people.length+' people')
-    +`<div class="sec first">${mine}${tools}<div class="qw-weeks">${cards}</div></div>`;
+    +`<div class="sec first">${mine}${tools}<div class="qw-weeks">${qRandSection()}${cards}</div></div>`;
 }
 /* create / update / clear one person's entry for a week */
 async function upsertQ(week,key,question,vacation){
@@ -3496,22 +3507,56 @@ async function saveGuestEdit(week,remove){
   const msg=await putGuest(week,guest); if(msg){document.getElementById('geErr').textContent=msg;return;}
   closeModal();render();
 }
-/* Randomizer: 3 random questions (any week, past or future) that aren't marked answered yet */
-function qRandomPool(){return qotwEntries.filter(en=>!en.vacation&&(en.question||'').trim()&&en.status!=='answered');}
-function openRandomizer(){
-  const pool=qRandomPool().slice();
+/* Randomizer (leaders only, this screen only): pins 3 random not-yet-answered questions (any week, past or future)
+   to the top. ✓ marks one answered and sends it back to its own week. Skip swaps it for another random one;
+   skipped questions stay out for this round only. The section hides once all 3 are answered, or on Clear. */
+function qRandomPool(exclude){exclude=exclude||new Set();
+  return qotwEntries.filter(en=>!en.vacation&&(en.question||'').trim()&&en.status!=='answered'&&!exclude.has(en.id));}
+function qRandPick(n,exclude){
+  const pool=qRandomPool(exclude).slice();
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-  const pick=pool.slice(0,3);
+  return pool.slice(0,n).map(en=>en.id);
+}
+function startRandomizer(){
+  if(!canManage(currentUser))return;
+  const ids=qRandPick(3);
+  if(!ids.length){qRand=null;render();toast('Every question has been answered');return;}
+  qRand={ids,skipped:new Set()};render();
+  const el=document.getElementById('qRandSec');if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function clearRandomizer(){qRand=null;render();}
+function skipRandQ(id){
+  if(!qRand)return;
+  qRand.skipped.add(id);
+  const i=qRand.ids.indexOf(id);if(i<0)return;
+  const [rep]=qRandPick(1,new Set([...qRand.skipped,...qRand.ids]));
+  if(rep)qRand.ids[i]=rep; else{qRand.ids.splice(i,1);toast('No more unanswered questions to swap in');}
+  if(!qRand.ids.length)qRand=null;
+  render();
+}
+async function answerRandQ(id){
+  if(!qRand)return;
+  qRand.ids=qRand.ids.filter(x=>x!==id);
+  if(!qRand.ids.length)qRand=null;   /* all 3 done -> hide the section */
+  await setQStatus(id,'answered');
+  const en=qotwEntries.find(x=>x.id===id);
+  if(en&&en.status==='answered')toast('Answered · moved back to '+fmtDayKey(en.week));
+}
+function qRandSection(){
+  if(!qRand||!canManage(currentUser))return '';
+  /* drop anything answered/removed elsewhere in the meantime */
+  qRand.ids=qRand.ids.filter(id=>{const en=qotwEntries.find(x=>x.id===id);return en&&en.status!=='answered';});
+  if(!qRand.ids.length){qRand=null;return '';}
   const nameFor=en=>{const k=qPersonKey(en),pp=qParticipants().find(x=>x.key===k);return (pp?pp.name:en.personName||'').split(' ')[0];};
-  const list=pick.length?pick.map((en,i)=>`<div class="qr-item"><span class="qr-num">${i+1}</span>
-      <div class="qr-main"><div class="qr-q">${esc(en.question)}</div>
-      <div class="qr-meta">${esc(nameFor(en))} · week of ${fmtDayKeyYear(en.week)}</div></div></div>`).join('')
-    :'<div class="empty">Every question has been answered — nice work.</div>';
-  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Randomizer</h3><p class="sub">${pick.length} of ${qRandomPool().length} questions not answered yet</p>
-    <div class="qr-list">${list}</div>
-    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button>
-      ${pool.length>3?'<button class="btn btn-primary btn-sm" onclick="openRandomizer()">Shuffle again</button>':''}</div></div></div>`;
+  const rows=qRand.ids.map(id=>{const en=qotwEntries.find(x=>x.id===id);
+    return `<div class="qw-row qr-row"><button class="qr-skip" title="Skip — swap in another question" onclick="skipRandQ('${id}')">Skip</button>
+      <span class="qw-who">${esc(nameFor(en))}</span>
+      <span class="qw-q">${esc(en.question)}<span class="qr-from">from ${fmtQWeek(en.week)}</span></span>
+      <span class="qw-marks"><button class="qw-mark ok" title="Mark answered — moves it back to its week" onclick="answerRandQ('${id}')">&#10003;</button></span></div>`;}).join('');
+  const left=qRandomPool(new Set([...qRand.skipped,...qRand.ids])).length;
+  return `<div class="qw-week qr-sec" id="qRandSec"><div class="qw-head"><span class="qw-date">Randomizer</span>
+      <span class="period-tag">${qRand.ids.length} picked</span><span class="qr-left">${left} more to swap in</span>
+      <button class="btn btn-line btn-xs qr-clear" onclick="clearRandomizer()">Clear</button></div>${rows}</div>`;
 }
 
 /* ================= ANONYMOUS SURVEY (#3) =================
