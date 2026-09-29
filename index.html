@@ -916,6 +916,31 @@
   /* toast -> floating pill */
   .toast{left:50%;right:auto;bottom:22px;transform:translateX(-50%);border-radius:var(--r-full);padding:12px 24px;
     max-width:calc(100% - 32px);width:max-content;box-shadow:0 12px 30px -8px rgba(0,0,0,.45)}
+  /* ---- Build 40: owner controls, goals, own hours check ---- */
+  .sal-tag{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;background:var(--purple-wash);color:var(--purple-deep);border-radius:var(--r-full);padding:2px 8px;margin-left:4px}
+  .role-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+  .role-row .role-ctrls .role-sel{margin-left:0;min-width:130px}
+  .role-ro{margin-left:auto;font-size:13px;color:var(--muted)}
+  .role-na{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:130px;text-align:center}
+  .hrs-top{display:flex;flex-direction:column;gap:16px}
+  .goal-card{background:#fff;border:1px solid var(--rule);border-radius:var(--r-lg);padding:18px 20px}
+  .goal-card.empty-goal{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .goal-card.done{border-color:#10A34A}
+  .goal-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .goal-per{font-size:12.5px;color:var(--muted)}
+  .goal-acts{margin-left:auto;display:flex;gap:6px}
+  .goal-hint{font-size:13px;color:var(--muted);margin-top:4px}
+  .goal-nums{font-family:"IBM Plex Mono",monospace;font-size:14px;margin-top:12px;display:flex;align-items:baseline;gap:6px}
+  .goal-nums b{font-size:22px;color:var(--purple-deep)}
+  .goal-card.done .goal-nums b{color:#0B6B33}
+  .goal-pct{margin-left:auto;font-weight:600;color:var(--purple-deep)}
+  .goal-card.done .goal-pct{color:#0B6B33}
+  .goal-bar{height:12px;border-radius:var(--r-full);background:#ECE7F1;overflow:hidden;margin:10px 0 8px}
+  .goal-bar span{display:block;height:100%;border-radius:var(--r-full);background:var(--purple);transition:width .4s}
+  .goal-card.done .goal-bar span{background:#10A34A}
+  .goal-left{font-size:12px;color:var(--muted)}
+  .goal-custom{display:flex;gap:14px}
+  .goal-custom .field{flex:1}
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
@@ -1006,6 +1031,9 @@ let seq=100; const nid=()=>'s'+(seq++);
    are still in-memory in this phase — they migrate to Supabase next. */
 let shifts=[];
 let workLogs={};
+let payChanges=[];   /* Build 40: pay type history {empId,payType:'hourly'|'salary',at} */
+let goals={};        /* Build 40: userId -> {kind:'hours'|'pay',target,period:'week'|'payperiod'|'month'|'custom',start,end} */
+let myHoursCheck=null; /* Build 40: a person's own hours check {start,end,hours} (this session) */
 let strikes=[];   /* #1 strike ledger: {id,empId,action:'add'|'remove',reason,date,byName,ts} */
 let qotwEntries=[], qotwGuests={}, qwDraft=null;   /* #2 Questions of the Week */
 let qRand=null;   /* Randomizer round (leaders, this screen only): {ids:[entry ids pinned on top], skipped:Set} */
@@ -1119,12 +1147,29 @@ function openShift(id){return shifts.find(s=>s.empId===id&&s.clockOut===null);}
 function daysFor(id){return shifts.filter(s=>s.empId===id).sort((a,b)=>b.clockIn-a.clockIn);}
 function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s.clockIn>=w).reduce((t,s)=>t+netMs(s),0);}
 /* role helpers — managers and co-managers share management powers; co-managers + employees clock in */
-/* OWNER = a normal co-manager whose email is listed here. Full co-manager access + clock features,
-   the one difference being they are never on payroll (salaried). We do NOT use a database "owner"
-   role, so the database's security rules always recognize the account as a co-manager and never
-   hide data. To transfer ownership later, just change the email(s) in this list. */
+/* OWNER (Build 40) = a yes/no flag on the profile (profiles.is_owner), never a database role, so the
+   database's security rules still see the person as a manager / co-manager. Several owners are allowed.
+   Only owners can change roles, pay type, activation and ownership (enforced in the database too).
+   OWNER_EMAILS is only a fallback used until the Build 40 SQL has been run. */
 const OWNER_EMAILS=['lslocum@onetelgem.com'];
-function isOwner(u){return !!u&&OWNER_EMAILS.includes((u.email||'').trim().toLowerCase());}
+function isOwner(u){if(!u)return false;
+  if(u.ownerFlag!==undefined)return !!u.ownerFlag;
+  return OWNER_EMAILS.includes((u.email||'').trim().toLowerCase());}
+/* SALARY vs HOURLY (Build 40): salaried people keep every ability (and the clock-in), they're just
+   off hourly payroll. Before the Build 40 SQL runs, owners are treated as salaried (the old behavior). */
+function isSalaried(u){if(!u)return false; if(u.payType)return u.payType==='salary'; return isOwner(u);}
+function payTypeNow(u){return isSalaried(u)?'salary':'hourly';}
+/* which pay type applied to this person at a moment in time (for payroll) */
+function payTypeAt(id,ts){
+  const list=payChanges.filter(c=>c.empId===id).sort((a,b)=>a.at-b.at);
+  const e=employees.find(x=>x.id===id);
+  if(!list.length)return payTypeNow(e);
+  let t=list[0].payType==='salary'?'hourly':'salary';   /* before the first recorded switch */
+  for(const c of list){if(c.at<=ts)t=c.payType;else break;}
+  return t;
+}
+function salarySince(id){const l=payChanges.filter(c=>c.empId===id&&c.payType==='salary').sort((a,b)=>b.at-a.at);return l.length?l[0].at:null;}
+function ownerCount(){return employees.filter(e=>isOwner(e)&&isActive(e)).length;}
 function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager'||isOwner(u));}
 function clocksIn(u){return !!u&&(u.role!=='manager'||isOwner(u));}
 function lastName(n){const p=(n||'').trim().split(/\s+/);return p.length>1?p[p.length-1]:(p[0]||'');}
@@ -1134,13 +1179,24 @@ function activeAll(){return employees.filter(isActive).sort(byLast);}
 function hourlyStaff(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&isActive(e)).sort(byLast);}
 function inactiveHourly(){return employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&!isActive(e)).sort(byLast);}
 function hadShiftsIn(id,p){return shifts.some(s=>{const k=companyDateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;});}
-/* payroll excludes owners (salaried) — they keep every other ability, just aren't paid hourly */
-function payrollStaff(){return hourlyStaff().filter(e=>!isOwner(e));}
-/* who shows on a pay period: active hourly staff (minus owners), plus any deactivated person who
-   actually worked hours inside this period (so past payroll stays intact) — owners never appear */
+/* payroll = active, currently hourly co-managers & employees (salaried people keep every other ability) */
+function payrollStaff(){return hourlyStaff().filter(e=>!isSalaried(e));}
+const YEAR_MS=365*DAY;
+/* hours that count for pay in a period = shifts worked while the person was hourly */
+function paidMs(id,p){return shifts.filter(s=>{const k=companyDateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end&&payTypeAt(id,s.clockIn)==='hourly';}).reduce((t,s)=>t+netMs(s),0);}
+/* when someone left hourly payroll (deactivated or switched to salary) — records stay visible 1 year after this */
+function leftPayrollAt(e){
+  const times=[];
+  if(!isActive(e))times.push(e.deactivatedAt||Math.max(0,...shifts.filter(s=>s.empId===e.id).map(s=>s.clockOut||s.clockIn)));
+  if(isSalaried(e)){const t=salarySince(e.id);if(t)times.push(t);}
+  return times.length?Math.max(...times):null;
+}
+/* who shows on a pay period: active hourly staff, plus anyone deactivated or switched to salary who
+   has hourly (paid) time inside this period — kept for 1 year after they left hourly payroll, then hidden */
 function periodStaff(p){
   const active=payrollStaff();
-  const past=inactiveHourly().filter(e=>!isOwner(e)&&hadShiftsIn(e.id,p));
+  const past=employees.filter(e=>(e.role==='comanager'||e.role==='employee')&&!active.includes(e)&&paidMs(e.id,p)>0&&(()=>{
+    const t=leftPayrollAt(e);return !t||Date.now()-t<=YEAR_MS;})());
   return [...active,...past].sort(byLast);
 }
 function periodMs(id,p){return shifts.filter(s=>{const k=companyDateKey(s.clockIn);return s.empId===id&&k>=p.start&&k<=p.end;}).reduce((t,s)=>t+netMs(s),0);}
@@ -1195,7 +1251,7 @@ let authMode='signin', authBusy=false;
    Lets you click "Sign in" (no credentials) to preview. Seeds the team in memory; resets on refresh. */
 function demoEnter(){
   employees=[
-    {id:'u_landon', name:'Landon Slocum',    email:'lslocum@onetelgem.com',   role:'owner',     rate:0},
+    {id:'u_landon', name:'Landon Slocum',    email:'lslocum@onetelgem.com',   role:'comanager', rate:0, ownerFlag:true, payType:'salary'},
     {id:'u_sarah',  name:'Sarah Vance',       email:'svance@onetelgem.org',    role:'manager',   rate:0},
     {id:'u_mason',  name:'Mason Merrill',     email:'mmerrill@onetelgem.org',  role:'employee',  rate:17.00},
     {id:'u_connor', name:'Connor Williams',   email:'cwilliams@onetelgem.org', role:'employee',  rate:17.00}
@@ -1226,7 +1282,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 39 · Randomizer pins questions to the top · skip &amp; swap</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 40 · owners &amp; salary controls · goals · my hours check · leaders edit own times</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1263,7 +1319,9 @@ async function loadProfiles(){
   const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
   if(error)throw error;
   employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role,rate:Number(p.rate)||0,
-    avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||'',active:p.active!==false,timezone:p.timezone||''}));
+    avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||'',active:p.active!==false,timezone:p.timezone||'',
+    ownerFlag:('is_owner' in p)?!!p.is_owner:undefined, payType:p.pay_type||'',
+    deactivatedAt:p.deactivated_at?new Date(p.deactivated_at).getTime():null}));
 }
 async function loadPendingRoles(){
   if(!canManage(currentUser)){pendingRoles=[];return;}
@@ -1310,6 +1368,17 @@ async function _saveScheduleNow(empId){
   if(delErr){toast('Schedule not saved: '+delErr.message);return;}
   if(rows.length){ const {error:insErr}=await sb.from('schedule_slots').insert(rows);
     if(insErr)toast('Schedule not saved: '+insErr.message); }
+}
+async function loadPayChanges(){
+  const {data,error}=await sb.from('pay_type_changes').select('*');
+  if(error)throw error;
+  payChanges=(data||[]).filter(r=>r.user_id&&r.pay_type).map(r=>({id:r.id,empId:r.user_id,payType:r.pay_type,at:new Date(r.effective_at).getTime(),byName:r.changed_by_name||''}));
+}
+function goalFromRow(r){return {kind:r.kind,target:Number(r.target)||0,period:r.period,start:r.start_date||'',end:r.end_date||''};}
+async function loadGoals(){
+  const {data,error}=await sb.from('goals').select('*');
+  if(error)throw error;
+  goals={};(data||[]).forEach(r=>{if(r.user_id)goals[r.user_id]=goalFromRow(r);});
 }
 async function loadPeriods(){
   const {data,error}=await sb.from('pay_periods').select('*');
@@ -1824,6 +1893,8 @@ async function enterApp(session){
   try{ await loadMessages(); }catch(e){ toast('Could not load messages: '+(e.message||e)); }
   try{ await loadWorkLogs(); }catch(e){ toast('Could not load work logs: '+(e.message||e)); }
   try{ await loadStrikes(); }catch(e){ toast('Could not load strikes: '+(e.message||e)); }
+  try{ await loadPayChanges(); }catch(e){ payChanges=[]; }   /* table arrives with the Build 40 SQL */
+  try{ await loadGoals(); }catch(e){ goals={}; }
   try{ await loadQotw(); }catch(e){ toast('Could not load Questions of the Week: '+(e.message||e)); }
   try{ await loadSurvey(); }catch(e){ toast('Could not load anonymous feedback: '+(e.message||e)); }
   try{ await loadTimeOffCats(); }catch(e){ toast('Could not load time off types: '+(e.message||e)); }
@@ -2746,9 +2817,10 @@ function saveDayAdd(k){
 /* Hours = logged hours (top) + my schedule (below) — merged from the old "My hours" and "My schedule" tabs */
 function hoursTab(){
   return pageHead('Hours','last 7 days · '+tzLabel(tzOf(currentUser.id)))
-    +`<div class="sec first">${dayList(currentUser.id,{logEditable:true})}
+    +`<div class="sec first hrs-top">${goalCard(currentUser.id,true)}${myHoursCheckBar()}</div>
+      <div class="sec">${dayList(currentUser.id,{logEditable:true})}
       <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div>${strikeStat(currentUser.id,false)}${timeOffStat(currentUser.id,false)}</div>
-      <div class="note" style="margin-top:22px">Your times are read-only. If something is wrong, ask a manager — every correction is recorded.</div></div>
+      <div class="note" style="margin-top:22px">${canManage(currentUser)?'To fix your own clock times, open Team → your name and use the pencil — every correction is recorded.':'Your times are read-only. You can add to your daily work log, but if a time is wrong, ask a manager — every correction is recorded.'}</div></div>
       <div class="sec" id="mySchedule"><div class="sec-head"><h2>My schedule</h2><span class="ml meta">visible to your manager</span></div>
       ${scheduleTab(currentUser.id,true,true)}</div>`;
 }
@@ -2846,8 +2918,8 @@ function teamTab(){
     const s=openShift(e.id);
     const st=s?`<span class="st on"><i></i>On the clock</span>`:`<span class="st off"><i></i>Clocked out</span>`;
     let hcCell='';
-    if(hc&&isOwner(e)){hcCell=`<td class="num"><span class="hc-detail">Salaried</span></td>`;}
-    else if(hc){const r=hoursCheckFor(e.id);r.ok?nMet++:nShort++;
+    if(hc&&isSalaried(e)){hcCell=`<td class="num"><span class="hc-detail">Salaried</span></td>`;}
+    else if(hc){const r=hoursCheckFor(e.id,hc);r.ok?nMet++:nShort++;
       hcCell=`<td class="num"><span class="hc-light ${r.ok?'ok':'no'}"><i></i>${r.ok?'Met':'Short'}</span>
         <span class="hc-detail">${fmtDur(r.worked)} / ${fmtHrs(r.reqH)}${r.off?` · ${r.off} day${r.off>1?'s':''} off`:''}</span></td>`;}
     const since=s?`<span class="mini mono" style="margin-left:10px">${fmtTimeFor(e.id,s.clockIn)}</span>`:'';
@@ -2875,27 +2947,43 @@ function teamTab(){
     +inactiveSec
     +rolesCard();
 }
+/* People & roles — everyone in leadership can see it; only OWNERS can change anything here */
+function roleLabel(r){return r==='comanager'?'Co-manager':r==='manager'?'Manager':'Employee';}
+function isLeaderRole(e){return e.role==='manager'||e.role==='comanager';}
 function rolesCard(){
+  const own=isOwner(currentUser);
   const people=employees.slice().sort(byLast).map(e=>{
-    const off=e.active===false, me=e.id===currentUser.id;
-    const btn=me?'':(off?`<button class="btn btn-line btn-sm" onclick="setActive('${e.id}',true)">Reactivate</button>`
-                        :`<button class="btn btn-line btn-sm rl-deact" onclick="askDeactivate('${e.id}')">Deactivate</button>`);
-    return `<div class="role-row ${off?'inactive':''}">
-      <span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b>${isOwner(e)?' <span class="owner-tag">Owner</span>':''}${off?' <span class="inactive-tag">Inactive</span>':''}<span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>
-      <select class="role-sel" ${off?'disabled':''} onchange="changeRole('${e.id}',this.value)">
+    const off=e.active===false, me=e.id===currentUser.id, sal=isSalaried(e), onPay=e.role!=='manager';
+    const tags=(isOwner(e)?' <span class="owner-tag">Owner</span>':'')+(onPay&&sal?' <span class="sal-tag">Salary</span>':'')+(off?' <span class="inactive-tag">Inactive</span>':'');
+    const who=`<span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b>${tags}<span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>`;
+    if(!own){
+      return `<div class="role-row ${off?'inactive':''}">${who}<span class="role-ro">${roleLabel(e.role)}${onPay?' · '+(sal?'Salary':'Hourly'):''}</span></div>`;
+    }
+    const roleSel=`<select class="role-sel" ${off?'disabled':''} onchange="changeRole('${e.id}',this.value)" title="Role">
         <option value="employee" ${e.role==='employee'?'selected':''}>Employee</option>
         <option value="comanager" ${e.role==='comanager'?'selected':''}>Co-manager</option>
-        <option value="manager" ${e.role==='manager'?'selected':''}>Manager</option>
-      </select>${btn}</div>`;
+        <option value="manager" ${e.role==='manager'?'selected':''}>Manager</option></select>`;
+    const paySel=onPay?`<select class="role-sel pay-sel" ${off?'disabled':''} onchange="setPayType('${e.id}',this.value)" title="Pay type">
+        <option value="hourly" ${!sal?'selected':''}>Hourly</option><option value="salary" ${sal?'selected':''}>Salary</option></select>`
+      :`<span class="role-na" title="Managers are never on hourly payroll">No payroll</span>`;
+    const ownBtn=(!off&&isLeaderRole(e))
+      ?(isOwner(e)?`<button class="btn btn-line btn-sm" onclick="setOwner('${e.id}',false)" ${ownerCount()<=1?'disabled title="There must always be at least one Owner"':''}>Remove owner</button>`
+                 :`<button class="btn btn-line btn-sm" onclick="setOwner('${e.id}',true)">Make owner</button>`)
+      :'';
+    const actBtn=me?'':(off?`<button class="btn btn-line btn-sm" onclick="setActive('${e.id}',true)">Reactivate</button>`
+                        :`<button class="btn btn-line btn-sm rl-deact" onclick="askDeactivate('${e.id}')">Deactivate</button>`);
+    return `<div class="role-row ${off?'inactive':''}">${who}<span class="role-ctrls">${roleSel}${paySel}${ownBtn}${actBtn}</span></div>`;
   }).join('');
   const pend=pendingRoles.length?pendingRoles.map(p=>`<div class="role-row">
       <span><b>${esc(p.email)}</b><span class="mini" style="display:block">hasn't signed up yet</span></span>
       <span class="mini" style="text-transform:capitalize">${p.role==='comanager'?'Co-manager':p.role}</span>
-      <button class="pri-x" onclick="removePendingRole('${esc(p.email)}')" title="Remove">&times;</button></div>`).join('')
+      ${own?`<button class="pri-x" onclick="removePendingRole('${esc(p.email)}')" title="Remove">&times;</button>`:''}</div>`).join('')
     :'<div class="empty">No pre-assigned roles waiting.</div>';
-  return `<div class="sec"><div class="sec-head"><h2>People &amp; roles</h2><span class="ml meta">leadership only</span></div>
-      ${people||'<div class="empty">No accounts yet.</div>'}
-      <div class="role-pre">
+  const head=own
+    ?`<p class="lede">You're an Owner: change roles, pay type (hourly or salary), ownership, and activation here. Switching someone to salary keeps their clock-in and takes them off hourly payroll from that moment — hours they worked while hourly stay on payroll. Owners must be a manager or co-manager.</p>
+      <div style="margin:0 0 14px"><button class="btn btn-primary btn-sm" onclick="openTransferOwner()">Transfer ownership</button></div>`
+    :`<p class="lede">Only an Owner can change roles, pay type, activation or ownership.</p>`;
+  const pre=own?`<div class="role-pre">
         <div class="sec-head" style="margin-top:22px"><h2>Pre-assign a role</h2></div>
         <p class="mini" style="margin:0 0 12px">Set someone's role before they sign up. When they create their account with this email, the role applies automatically — then send them the site link.</p>
         <div class="inline-form">
@@ -2904,31 +2992,100 @@ function rolesCard(){
           <button class="btn btn-primary btn-sm" onclick="addPendingRole()">Pre-assign</button>
         </div><div class="err" id="prErr"></div>
         <div style="margin-top:14px">${pend}</div>
-      </div></div>`;
+      </div>`:(pendingRoles.length?`<div class="role-pre"><div class="sec-head" style="margin-top:22px"><h2>Pre-assigned roles</h2></div>${pend}</div>`:'');
+  return `<div class="sec"><div class="sec-head"><h2>People &amp; roles</h2><span class="ml meta">${own?'owner controls':'leadership only · view'}</span></div>
+      ${head}${people||'<div class="empty">No accounts yet.</div>'}${pre}</div>`;
 }
+function ownerOnly(){if(isOwner(currentUser))return true;toast('Only an Owner can change this');render();return false;}
+function profileErr(error){const m=(error&&error.message)||'';
+  return /column|schema cache|pay_type|is_owner|deactivated_at/i.test(m)?'Run the Build 40 SQL in Supabase first ('+m+')':m;}
 async function setActive(id,activeVal){
-  const e=employees.find(x=>x.id===id); if(e)e.active=activeVal;
-  if(live())sb.from('profiles').update({active:activeVal}).eq('id',id).then(({error})=>{ if(error)toast('Not saved: '+error.message); });
-  closeModal();render();toast(activeVal?'Person reactivated':'Person deactivated');
+  if(!ownerOnly())return;
+  const e=employees.find(x=>x.id===id); if(!e)return;
+  if(!activeVal&&isOwner(e)&&ownerCount()<=1){toast('There must always be at least one active Owner');return;}
+  const at=activeVal?null:Date.now();
+  if(live()){
+    let {error}=await sb.from('profiles').update({active:activeVal,deactivated_at:at?new Date(at).toISOString():null}).eq('id',id);
+    if(error&&/deactivated_at|column|schema cache/i.test(error.message||'')) ({error}=await sb.from('profiles').update({active:activeVal}).eq('id',id));
+    if(error){toast('Not saved: '+profileErr(error));return;}
+  }
+  e.active=activeVal; e.deactivatedAt=at;
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:e.name,field:activeVal?'Reactivated':'Deactivated',old:activeVal?'Inactive':'Active',new:activeVal?'Active':'Inactive',reason:''});
+  closeModal();render();toast(activeVal?'Person reactivated':'Person deactivated — past payroll stays visible for 1 year');
 }
 function askDeactivate(id){
+  if(!ownerOnly())return;
   const e=employees.find(x=>x.id===id);if(!e)return;
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Deactivate ${esc(e.name)}?</h3>
-    <p class="sub">They won't be able to sign in, and they'll be removed from schedules, messaging, and payroll. Their past hours and history are kept, and you can reactivate them anytime.</p>
+    <p class="sub">They won't be able to sign in, and they'll be removed from schedules, messaging, and current payroll. Their past payroll stays visible for 1 year, their history is kept, and you can reactivate them anytime.</p>
     <div class="modal-actions edit-actions"><span></span><span class="ea-right">
       <button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
       <button class="btn btn-danger btn-sm" onclick="setActive('${id}',false)">Deactivate</button></span></div></div></div>`;
 }
 async function changeRole(id,role){
+  if(!ownerOnly())return;
+  const e=employees.find(x=>x.id===id); if(!e)return;
+  if(isOwner(e)&&role==='employee'){toast('Owners must be a manager or co-manager — remove Owner first');render();return;}
   if(id===currentUser.id&&role==='employee'&&!confirm('This removes your own leadership access. Continue?')){render();return;}
-  const {error}=await sb.from('profiles').update({role}).eq('id',id);
-  if(error){toast('Could not change role: '+error.message);render();return;}
-  const e=employees.find(x=>x.id===id); if(e)e.role=role;
-  if(id===currentUser.id)currentUser.role=role;
+  const old=e.role;
+  if(live()){const {error}=await sb.from('profiles').update({role}).eq('id',id);
+    if(error){toast('Could not change role: '+profileErr(error));render();return;}}
+  e.role=role; if(id===currentUser.id)currentUser.role=role;
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:e.name,field:'Role changed',old:roleLabel(old),new:roleLabel(role),reason:''});
   toast('Role updated'); render();
 }
+async function setPayType(id,type){
+  if(!ownerOnly())return;
+  const e=employees.find(x=>x.id===id); if(!e)return;
+  const old=payTypeNow(e); if(old===type)return;
+  const at=Date.now();
+  if(live()){
+    const {error}=await sb.from('profiles').update({pay_type:type}).eq('id',id);
+    if(error){toast('Could not change pay type: '+profileErr(error));render();return;}
+    const {data,error:e2}=await sb.from('pay_type_changes').insert({user_id:id,pay_type:type,effective_at:new Date(at).toISOString(),changed_by:currentUser.id,changed_by_name:currentUser.name}).select().single();
+    if(e2)toast('Pay type saved, but its history date was not: '+e2.message);
+    else payChanges.push({id:data.id,empId:id,payType:type,at,byName:currentUser.name});
+  }else payChanges.push({id:'pc'+at,empId:id,payType:type,at,byName:currentUser.name});
+  /* first recorded switch for someone with no history: remember what they were before it */
+  e.payType=type;
+  logAudit({ts:at,manager:currentUser.name,emp:e.name,field:'Pay type',old:old==='salary'?'Salary':'Hourly',new:type==='salary'?'Salary':'Hourly',reason:''});
+  render();toast(type==='salary'?e.name.split(' ')[0]+' is now salaried — hours from now on are off payroll':e.name.split(' ')[0]+' is now hourly — hours from now on are on payroll');
+}
+async function setOwner(id,flag){
+  if(!ownerOnly())return false;
+  const e=employees.find(x=>x.id===id); if(!e)return false;
+  if(flag&&!isLeaderRole(e)){toast('Make them a manager or co-manager first — owners need leadership access');return false;}
+  if(!flag&&isOwner(e)&&ownerCount()<=1){toast('There must always be at least one Owner');return false;}
+  if(live()){const {error}=await sb.from('profiles').update({is_owner:flag}).eq('id',id);
+    if(error){toast('Could not change owner: '+profileErr(error));return false;}}
+  e.ownerFlag=flag;
+  logAudit({ts:Date.now(),manager:currentUser.name,emp:e.name,field:'Ownership',old:flag?'—':'Owner',new:flag?'Owner':'—',reason:''});
+  render();toast(flag?e.name.split(' ')[0]+' is now an Owner':e.name.split(' ')[0]+' is no longer an Owner');
+  return true;
+}
+function openTransferOwner(){
+  if(!ownerOnly())return;
+  const cands=activeAll().filter(e=>e.id!==currentUser.id&&isLeaderRole(e));
+  const opts=cands.map(e=>`<option value="${e.id}">${esc(e.name)} · ${roleLabel(e.role)}${isOwner(e)?' (already Owner)':''}</option>`).join('');
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Transfer ownership</h3><p class="sub">Hand your Owner controls to someone else</p>
+    ${cands.length?`<div class="field"><label>New owner</label><select id="toWho">${opts}</select></div>
+    <label class="chk-line"><input type="checkbox" id="toKeep"> Keep me as an Owner too</label>
+    <p class="mini" style="margin:0">Only managers and co-managers can be owners. To hand it to an employee, make them a co-manager first.</p>`
+    :'<div class="empty">There are no other active managers or co-managers yet. Make someone a co-manager first.</div>'}
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      ${cands.length?'<button class="btn btn-primary btn-sm" onclick="doTransferOwner()">Transfer</button>':''}</div></div></div>`;
+}
+async function doTransferOwner(){
+  const to=document.getElementById('toWho').value, keep=document.getElementById('toKeep').checked;
+  const t=employees.find(x=>x.id===to); if(!t)return;
+  if(!isOwner(t)&&!(await setOwner(to,true)))return;
+  if(!keep&&!(await setOwner(currentUser.id,false)))return;
+  closeModal();render();toast('Ownership transferred to '+t.name);
+}
 async function addPendingRole(){
+  if(!ownerOnly())return;
   const email=(document.getElementById('prEmail').value||'').trim().toLowerCase();
   const role=document.getElementById('prRole').value;
   const err=document.getElementById('prErr');
@@ -2939,6 +3096,7 @@ async function addPendingRole(){
   await loadPendingRoles(); render(); toast('Role pre-assigned');
 }
 async function removePendingRole(email){
+  if(!ownerOnly())return;
   await sb.from('pending_roles').delete().eq('email',email);
   await loadPendingRoles(); render();
 }
@@ -2967,7 +3125,8 @@ function employeeDetail(id){
       <div class="totals"><div class="stat"><div class="k">Worked this week</div><div class="v">${fmtDur(workedThisWeek(id))}</div></div>
         <div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(weekHours(id))}</div></div>
         ${strikeStat(id,true)}${timeOffStat(id,true)}</div>
-      <div style="margin-top:24px"><button class="btn btn-line btn-sm" onclick="openAdd('${id}')">Add a missing day</button></div></div>
+      <div style="margin-top:24px"><button class="btn btn-line btn-sm" onclick="openAdd('${id}')">Add a missing day</button></div>
+      ${goals[id]?`<div style="margin-top:26px">${goalCard(id,false)}</div>`:''}</div>
       <div class="sec"><div class="sec-head"><h2>Their schedule</h2><span class="ml meta">set by ${e.name.split(' ')[0]}</span></div>
         <table><thead><tr><th>Day</th><th class="num">Hours</th><th class="num">Total</th></tr></thead><tbody>${schedRows}</tbody></table></div>`;
 }
@@ -2987,9 +3146,9 @@ function payTab(){
   });
   const periods=ordered.map(p=>{
     const current=todayK>=p.start&&todayK<=p.end;
-    const rows=periodStaff(p).map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
+    const rows=periodStaff(p).map(e=>{const ms=paidMs(e.id,p),amt=(ms/HR)*e.rate;
       const rbTotal=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((t,r)=>t+r.amount,0);
-      const tag=isActive(e)?'':' <span class="inactive-tag">Inactive</span>';
+      const tag=(isActive(e)?'':' <span class="inactive-tag">Inactive</span>')+(isActive(e)&&isSalaried(e)?' <span class="inactive-tag">Now salaried</span>':'');
       return `<tr><td><button class="emp-link" onclick="openReimb('${p.id}','${e.id}')" title="Add a reimbursement">${esc(e.name)}</button>${tag}</td><td class="num">${fmtDur(ms)}</td><td class="num">${money(e.rate)}</td><td class="num">${money(amt)}</td><td class="num">${rbTotal>0?money(rbTotal):'—'}</td><td class="num"><b>${money(amt+rbTotal)}</b></td></tr>`;}).join('');
     return `<div class="period ${current?'current':''}"><div class="period-head">
         <span class="period-title">${fmtDayKey(p.start)} — ${fmtDayKey(p.end)}</span>
@@ -3075,14 +3234,14 @@ function downloadPeriodPDF(id){
   const p=payPeriods.find(x=>x.id===id);if(!p)return;
   const team=periodStaff(p);
   const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
-  const rows=team.map(e=>{const ms=periodMs(e.id,p),amt=(ms/HR)*e.rate;
+  const rows=team.map(e=>{const ms=paidMs(e.id,p),amt=(ms/HR)*e.rate;
     const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id);
     const rbTotal=rb.reduce((t,r)=>t+r.amount,0);
     const main=`<tr${rb.length?' class="rb-parent"':''}><td>${esc(e.name)}</td><td class="n">${fmtDur(ms)}</td><td class="n">${money(e.rate)}/hr</td><td class="n">${money(amt)}</td><td class="n">${rbTotal>0?money(rbTotal):'—'}</td><td class="n"><b>${money(amt+rbTotal)}</b></td></tr>`;
     const sub=rb.length?`<tr class="rb-sub"><td colspan="6">Reimbursements: ${rb.map(r=>esc(r.label)+' — '+money(r.amount)).join(' · ')}</td></tr>`:'';
     return main+sub;}).join('');
-  const totalMs=team.reduce((t,e)=>t+periodMs(e.id,p),0);
-  const totalPay=team.reduce((t,e)=>{const ms=periodMs(e.id,p);const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((s,r)=>s+r.amount,0);return t+(ms/HR)*e.rate+rb;},0);
+  const totalMs=team.reduce((t,e)=>t+paidMs(e.id,p),0);
+  const totalPay=team.reduce((t,e)=>{const ms=paidMs(e.id,p);const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((s,r)=>s+r.amount,0);return t+(ms/HR)*e.rate+rb;},0);
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to download the PDF');return;}
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OTG Payroll ${range}</title>
@@ -3141,8 +3300,8 @@ function downloadPeriodDetailPDF(id){
   const team=periodStaff(p);
   const range=fmtDayKey(p.start)+' — '+fmtDayKey(p.end)+', '+keyToDate(p.end).getFullYear();
   const sections=team.map(e=>{
-    const es=shifts.filter(s=>{const k=companyDateKey(s.clockIn);return s.empId===e.id&&k>=p.start&&k<=p.end;}).sort((a,b)=>a.clockIn-b.clockIn);
-    const ms=periodMs(e.id,p), amt=(ms/HR)*e.rate;
+    const es=shifts.filter(s=>{const k=companyDateKey(s.clockIn);return s.empId===e.id&&k>=p.start&&k<=p.end&&payTypeAt(e.id,s.clockIn)==='hourly';}).sort((a,b)=>a.clockIn-b.clockIn);
+    const ms=paidMs(e.id,p), amt=(ms/HR)*e.rate;
     const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id);
     const rbTotal=rb.reduce((t,r)=>t+r.amount,0);
     const shiftRows=es.length
@@ -3157,8 +3316,8 @@ function downloadPeriodDetailPDF(id){
       ${reimbLine}
     </div>`;
   }).join('');
-  const totalMs=team.reduce((t,e)=>t+periodMs(e.id,p),0);
-  const totalPay=team.reduce((t,e)=>{const ms=periodMs(e.id,p);const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((s,r)=>s+r.amount,0);return t+(ms/HR)*e.rate+rb;},0);
+  const totalMs=team.reduce((t,e)=>t+paidMs(e.id,p),0);
+  const totalPay=team.reduce((t,e)=>{const ms=paidMs(e.id,p);const rb=periodReimb.filter(r=>r.periodId===p.id&&r.empId===e.id).reduce((s,r)=>s+r.amount,0);return t+(ms/HR)*e.rate+rb;},0);
   const w=window.open('','_blank');
   if(!w){toast('Allow pop-ups to download the PDF');return;}
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OTG Payroll (detailed) ${range}</title>
@@ -3680,6 +3839,116 @@ async function skipSurvey(fromPrompt){
   toast('Survey reminder dismissed for '+surveyMonthLabel(m).split(' ')[0]+' — it comes back next month');
 }
 
+/* ================= GOALS (Build 40) =================
+   One goal per person: an hours goal or a pay goal (worked hours x hourly rate, before taxes).
+   Period: this week (Sun–Sat), this pay period, this month (all Utah time), or custom dates.
+   Week / pay period / month goals roll over automatically. Visible to that person and to leaders. */
+function goalRange(g){
+  const t=todayKey();
+  if(g.period==='week'){const a=weekStartKey();return {start:a,end:addDaysKey(a,6),label:'This week'};}
+  if(g.period==='month'){const a=t.slice(0,7)+'-01',d=keyToDate(a);d.setMonth(d.getMonth()+1);d.setDate(0);return {start:a,end:dateKey(d),label:'This month'};}
+  if(g.period==='payperiod'){const p=payPeriods.find(x=>t>=x.start&&t<=x.end);return p?{start:p.start,end:p.end,label:'This pay period'}:null;}
+  return (g.start&&g.end)?{start:g.start,end:g.end,label:'Custom dates'}:null;
+}
+function goalProgress(id,g){
+  const r=goalRange(g); if(!r)return null;
+  const e=employees.find(x=>x.id===id), ms=periodMs(id,r);
+  const have=g.kind==='pay'?(ms/HR)*((e&&e.rate)||0):ms/HR;
+  return {r,have,pct:g.target>0?Math.min(100,have/g.target*100):0,done:have>=g.target};
+}
+function goalFmt(g,v){return g.kind==='pay'?money(v):fmtHrs(v);}
+function goalCard(id,mine){
+  const g=goals[id], first=(nameOf(id)||'').split(' ')[0];
+  if(!g){
+    return mine?`<div class="goal-card empty-goal"><div><span class="ml">My goal</span>
+        <div class="goal-hint">Set an hours or pay goal and watch your progress fill up.</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openGoalForm()">Set a goal</button></div>`:'';
+  }
+  const pr=goalProgress(id,g);
+  const acts=mine?`<span class="goal-acts"><button class="btn btn-line btn-xs" onclick="openGoalForm()">Change</button><button class="btn btn-line btn-xs" onclick="removeGoal()">Remove</button></span>`:'';
+  const what=g.kind==='pay'?'Pay goal':'Hours goal';
+  if(!pr){
+    return `<div class="goal-card"><div class="goal-top"><span class="ml">${mine?'My goal':first+"'s goal"}</span><span class="goal-per">${what} · ${goalFmt(g,g.target)}</span>${acts}</div>
+      <div class="goal-hint">${g.period==='payperiod'?'There is no pay period covering today yet.':'Pick the dates for this goal.'}</div></div>`;
+  }
+  const left=g.target-pr.have;
+  return `<div class="goal-card ${pr.done?'done':''}"><div class="goal-top"><span class="ml">${mine?'My goal':first+"'s goal"}</span>
+      <span class="goal-per">${what} · ${pr.r.label} · ${fmtDayKey(pr.r.start)} – ${fmtDayKey(pr.r.end)}</span>${acts}</div>
+    <div class="goal-nums"><b>${goalFmt(g,pr.have)}</b> of ${goalFmt(g,g.target)}<span class="goal-pct">${Math.floor(pr.pct)}%</span></div>
+    <div class="goal-bar"><span style="width:${pr.pct.toFixed(1)}%"></span></div>
+    <div class="goal-left">${pr.done?'Goal reached — nice work!':goalFmt(g,left)+' to go'}${g.kind==='pay'?' · hours × '+money((employees.find(x=>x.id===id)||{}).rate||0)+'/hr, before taxes':''}</div></div>`;
+}
+let goalDraftKind='hours';
+function openGoalForm(){
+  const g=goals[currentUser.id]||{kind:'hours',target:'',period:'week',start:'',end:''};
+  const canPay=!isSalaried(currentUser)&&currentUser.rate>0;
+  goalDraftKind=canPay?g.kind:'hours';
+  const hasPP=payPeriods.some(x=>todayKey()>=x.start&&todayKey()<=x.end);
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>${goals[currentUser.id]?'Change your goal':'Set a goal'}</h3><p class="sub">Visible to you and to leadership</p>
+    ${canPay?`<div class="seg"><button class="seg-opt ${goalDraftKind==='hours'?'on':''}" id="gkH" onclick="setGoalKind('hours')">Hours</button><button class="seg-opt ${goalDraftKind==='pay'?'on':''}" id="gkP" onclick="setGoalKind('pay')">Pay</button></div>`:''}
+    <div class="field"><label id="gTargetLbl">${goalDraftKind==='pay'?'Pay goal ($)':'Hours goal'}</label>
+      <input type="number" id="gTarget" min="0" step="${goalDraftKind==='pay'?'1':'0.25'}" value="${g.target||''}" placeholder="${goalDraftKind==='pay'?'500':'30'}"></div>
+    <div class="field"><label>Period</label><select id="gPeriod" onchange="document.getElementById('gCustom').classList.toggle('hide',this.value!=='custom')">
+      <option value="week" ${g.period==='week'?'selected':''}>This week (Sun–Sat, resets weekly)</option>
+      <option value="payperiod" ${g.period==='payperiod'?'selected':''}>This pay period${hasPP?'':' (none set right now)'}</option>
+      <option value="month" ${g.period==='month'?'selected':''}>This month (resets monthly)</option>
+      <option value="custom" ${g.period==='custom'?'selected':''}>Custom dates</option></select></div>
+    <div id="gCustom" class="goal-custom ${g.period==='custom'?'':'hide'}">
+      <div class="field"><label>From</label><input type="date" id="gStart" value="${g.start||''}"></div>
+      <div class="field"><label>To</label><input type="date" id="gEnd" value="${g.end||''}"></div></div>
+    ${canPay?'<p class="mini" style="margin:0">Pay goals count worked hours × your hourly rate, before taxes.</p>':''}
+    <div class="err" id="gErr"></div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveGoal()">Save goal</button></div></div></div>`;
+}
+function setGoalKind(k){goalDraftKind=k;
+  document.getElementById('gkH').classList.toggle('on',k==='hours');document.getElementById('gkP').classList.toggle('on',k==='pay');
+  document.getElementById('gTargetLbl').textContent=k==='pay'?'Pay goal ($)':'Hours goal';
+  const t=document.getElementById('gTarget');t.placeholder=k==='pay'?'500':'30';t.step=k==='pay'?'1':'0.25';}
+async function saveGoal(){
+  const err=document.getElementById('gErr');
+  const target=parseFloat(document.getElementById('gTarget').value),period=document.getElementById('gPeriod').value;
+  const start=document.getElementById('gStart').value,end=document.getElementById('gEnd').value;
+  if(!(target>0)){err.textContent='Enter a goal greater than 0.';return;}
+  if(period==='custom'){if(!start||!end){err.textContent='Pick a From and To date.';return;}
+    if(end<start){err.textContent='The To date must be on or after the From date.';return;}}
+  const g={kind:goalDraftKind,target,period,start:period==='custom'?start:'',end:period==='custom'?end:''};
+  if(live()){
+    const {error}=await sb.from('goals').upsert({user_id:currentUser.id,kind:g.kind,target:g.target,period:g.period,
+      start_date:g.start||null,end_date:g.end||null,updated_at:new Date().toISOString()});
+    if(error){err.textContent='Could not save: '+(/goals|schema cache|relation/i.test(error.message)?'run the Build 40 SQL in Supabase first':error.message);return;}
+  }
+  goals[currentUser.id]=g; closeModal();render();toast('Goal saved');
+}
+async function removeGoal(){
+  if(live()){const {error}=await sb.from('goals').delete().eq('user_id',currentUser.id);if(error){toast('Not removed: '+error.message);return;}}
+  delete goals[currentUser.id];render();toast('Goal removed');
+}
+/* ---- a person's OWN hours check (Hours tab) — same tool as the leaders' version, only ever their own hours ---- */
+function myHoursCheckBar(){
+  const c=myHoursCheck, v=c||{start:'',end:'',hours:''};
+  let res='';
+  if(c){const r=hoursCheckFor(currentUser.id,c);
+    res=`<div class="hc-sum"><b>${fmtDayKeyYear(c.start)} – ${fmtDayKeyYear(c.end)}</b> · ${fmtHrs(r.reqH)} required${r.off?` <span class="mini">(lowered for ${r.off} approved weekday${r.off>1?'s':''} off)</span>`:''}
+      <span class="hc-count"><span class="hc-light ${r.ok?'ok':'no'}"><i></i>${r.ok?'Met':'Short'}</span><span class="mono">${fmtDur(r.worked)} worked</span></span></div>`;}
+  return `<div class="hc-bar"><span class="ml hc-title">My hours check</span>
+      <div class="field"><label>From</label><input type="date" id="mhcStart" value="${v.start}"></div>
+      <div class="field"><label>To</label><input type="date" id="mhcEnd" value="${v.end}"></div>
+      <div class="field"><label>Required hours</label><input type="number" id="mhcHours" min="0" step="0.25" value="${v.hours}" placeholder="20" onkeydown="if(event.key==='Enter')runMyHoursCheck()"></div>
+      <button class="btn btn-primary btn-sm hc-pill" onclick="runMyHoursCheck()">Check</button>
+      ${c?'<button class="btn btn-line btn-sm hc-pill" onclick="myHoursCheck=null;render()">Clear</button>':''}</div>
+    <div class="err" id="mhcErr"></div>${res}`;
+}
+function runMyHoursCheck(){
+  const a=document.getElementById('mhcStart').value,b=document.getElementById('mhcEnd').value;
+  const h=parseFloat(document.getElementById('mhcHours').value),err=document.getElementById('mhcErr');
+  if(!a||!b){err.textContent='Pick a From and To date.';return;}
+  if(b<a){err.textContent='The To date must be on or after the From date.';return;}
+  if(!(h>0)){err.textContent='Enter the required hours (more than 0).';return;}
+  myHoursCheck={start:a,end:b,hours:h};render();
+}
+
 /* ================= HOURS CHECK (#6) — managers & co-managers only =================
    Custom From/To dates + custom required hours. Worked = hours whose shifts fall on those company (Utah) days.
    Approved time off lowers the target: required x (weekdays not off / weekdays in range). */
@@ -3689,8 +3958,8 @@ function weekdaysIn(a,b){let n=0;for(let k=a;k<=b;k=addDaysKey(k,1))if(isWeekday
 function offWeekdaysIn(id,a,b){let n=0;
   for(let k=a;k<=b;k=addDaysKey(k,1))if(isWeekdayKey(k)&&timeOff.some(t=>t.empId===id&&t.status==='approved'&&k>=t.start&&k<=t.end))n++;
   return n;}
-function hoursCheckFor(id){
-  const c=hoursCheck,worked=periodMs(id,{start:c.start,end:c.end});
+function hoursCheckFor(id,c){
+  c=c||hoursCheck; const worked=periodMs(id,{start:c.start,end:c.end});
   const W=weekdaysIn(c.start,c.end),off=offWeekdaysIn(id,c.start,c.end);
   const reqH=W?c.hours*(W-off)/W:c.hours;
   return {worked,reqH,off,ok:worked>=Math.round(reqH*HR)};
