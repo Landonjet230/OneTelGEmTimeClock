@@ -923,22 +923,33 @@
   .role-ro{margin-left:auto;font-size:13px;color:var(--muted)}
   .role-na{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:130px;text-align:center}
   .hrs-top{display:flex;flex-direction:column;gap:16px}
-  .goal-card{background:#fff;border:1px solid var(--rule);border-radius:var(--r-lg);padding:18px 20px}
-  .goal-card.empty-goal{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-  .goal-card.done{border-color:#10A34A}
-  .goal-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .goal-per{font-size:12.5px;color:var(--muted)}
-  .goal-acts{margin-left:auto;display:flex;gap:6px}
-  .goal-hint{font-size:13px;color:var(--muted);margin-top:4px}
-  .goal-nums{font-family:"IBM Plex Mono",monospace;font-size:14px;margin-top:12px;display:flex;align-items:baseline;gap:6px}
-  .goal-nums b{font-size:22px;color:var(--purple-deep)}
-  .goal-card.done .goal-nums b{color:#0B6B33}
-  .goal-pct{margin-left:auto;font-weight:600;color:var(--purple-deep)}
-  .goal-card.done .goal-pct{color:#0B6B33}
-  .goal-bar{height:12px;border-radius:var(--r-full);background:#ECE7F1;overflow:hidden;margin:10px 0 8px}
-  .goal-bar span{display:block;height:100%;border-radius:var(--r-full);background:var(--purple);transition:width .4s}
-  .goal-card.done .goal-bar span{background:#10A34A}
-  .goal-left{font-size:12px;color:var(--muted)}
+  .page-head .goals-inline,.page-head .goal-link{align-self:center;margin-left:8px}
+  .goal-link{background:none;border:0;padding:2px 0;font-family:"Archivo",sans-serif;font-weight:600;font-size:13px;color:var(--purple);cursor:pointer;border-bottom:1px dashed rgba(155,100,177,.5)}
+  .goal-link:hover{color:var(--purple-deep);border-bottom-color:var(--purple-deep)}
+  .goals-inline{display:inline-flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .goal-mini{display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:3px 0;font:inherit;color:var(--text);cursor:pointer}
+  .goal-mini.ro{cursor:default}
+  .goal-mini:not(.ro):hover .gm-lbl{color:var(--purple-deep)}
+  .gm-lbl{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .gm-bar{display:inline-block;width:84px;height:6px;border-radius:var(--r-full);background:#ECE7F1;overflow:hidden;vertical-align:middle}
+  .gm-bar i{display:block;height:100%;border-radius:var(--r-full);background:var(--purple);transition:width .4s}
+  .goal-mini.done .gm-bar i,.gm-bar.done i{background:#10A34A}
+  .gm-bar.wide{width:100%;height:8px;margin-top:6px}
+  .gm-num{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--purple-deep)}
+  .goal-mini.done .gm-num{color:#0B6B33}
+  .gm-of{color:var(--muted);font-weight:400}
+  .goals-emp{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:24px}
+  .goal-progs{display:flex;flex-direction:column;gap:12px;margin:0 0 20px;padding-bottom:18px;border-bottom:1px solid var(--rule-soft)}
+  .goal-prog-n{font-size:13px;margin-top:2px}
+  .goal-prog-n b{font-family:"IBM Plex Mono",monospace;color:var(--purple-deep)}
+  .goal-sec{margin-bottom:18px}
+  .goal-sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+  .goal-row{display:flex;gap:12px}
+  .goal-row .field{margin-bottom:0}
+  .goal-row .field:first-child{width:110px;flex:none}
+  .goal-row .grow{flex:1}
+  .goal-custom{margin-top:12px}
+  .goal-clear{margin-top:8px}
   .goal-custom{display:flex;gap:14px}
   .goal-custom .field{flex:1}
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
@@ -1282,7 +1293,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 40 · owners &amp; salary controls · goals · my hours check · leaders edit own times</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 41 · hours &amp; pay goals next to the Hours title</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1374,11 +1385,13 @@ async function loadPayChanges(){
   if(error)throw error;
   payChanges=(data||[]).filter(r=>r.user_id&&r.pay_type).map(r=>({id:r.id,empId:r.user_id,payType:r.pay_type,at:new Date(r.effective_at).getTime(),byName:r.changed_by_name||''}));
 }
-function goalFromRow(r){return {kind:r.kind,target:Number(r.target)||0,period:r.period,start:r.start_date||'',end:r.end_date||''};}
+function goalFromRow(r){return {kind:r.kind==='pay'?'pay':'hours',target:Number(r.target)||0,period:r.period,start:r.start_date||'',end:r.end_date||''};}
+/* goals = { userId: { hours?: goal, pay?: goal } } — Build 41 table; falls back to the Build 40 one-goal table */
 async function loadGoals(){
-  const {data,error}=await sb.from('goals').select('*');
+  let {data,error}=await sb.from('goal_targets').select('*');
+  if(error)({data,error}=await sb.from('goals').select('*'));
   if(error)throw error;
-  goals={};(data||[]).forEach(r=>{if(r.user_id)goals[r.user_id]=goalFromRow(r);});
+  goals={};(data||[]).forEach(r=>{if(!r.user_id)return;const g=goalFromRow(r);(goals[r.user_id]=goals[r.user_id]||{})[g.kind]=g;});
 }
 async function loadPeriods(){
   const {data,error}=await sb.from('pay_periods').select('*');
@@ -2816,8 +2829,8 @@ function saveDayAdd(k){
 /* ================= TIMECARD / HOURS ================= */
 /* Hours = logged hours (top) + my schedule (below) — merged from the old "My hours" and "My schedule" tabs */
 function hoursTab(){
-  return pageHead('Hours','last 7 days · '+tzLabel(tzOf(currentUser.id)))
-    +`<div class="sec first hrs-top">${goalCard(currentUser.id,true)}${myHoursCheckBar()}</div>
+  return `<div class="page-head"><h1>Hours</h1>${goalsInline(currentUser.id,true)}<span class="ml meta">last 7 days · ${tzLabel(tzOf(currentUser.id))}</span></div>`
+    +`<div class="sec first hrs-top">${myHoursCheckBar()}</div>
       <div class="sec">${dayList(currentUser.id,{logEditable:true})}
       <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div>${strikeStat(currentUser.id,false)}${timeOffStat(currentUser.id,false)}</div>
       <div class="note" style="margin-top:22px">${canManage(currentUser)?'To fix your own clock times, open Team → your name and use the pencil — every correction is recorded.':'Your times are read-only. You can add to your daily work log, but if a time is wrong, ask a manager — every correction is recorded.'}</div></div>
@@ -3126,7 +3139,7 @@ function employeeDetail(id){
         <div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(weekHours(id))}</div></div>
         ${strikeStat(id,true)}${timeOffStat(id,true)}</div>
       <div style="margin-top:24px"><button class="btn btn-line btn-sm" onclick="openAdd('${id}')">Add a missing day</button></div>
-      ${goals[id]?`<div style="margin-top:26px">${goalCard(id,false)}</div>`:''}</div>
+      ${goalsOf(id).length?`<div class="goals-emp"><span class="ml">Goals</span>${goalsInline(id,false)}</div>`:''}</div>
       <div class="sec"><div class="sec-head"><h2>Their schedule</h2><span class="ml meta">set by ${e.name.split(' ')[0]}</span></div>
         <table><thead><tr><th>Day</th><th class="num">Hours</th><th class="num">Total</th></tr></thead><tbody>${schedRows}</tbody></table></div>`;
 }
@@ -3839,10 +3852,11 @@ async function skipSurvey(fromPrompt){
   toast('Survey reminder dismissed for '+surveyMonthLabel(m).split(' ')[0]+' — it comes back next month');
 }
 
-/* ================= GOALS (Build 40) =================
-   One goal per person: an hours goal or a pay goal (worked hours x hourly rate, before taxes).
-   Period: this week (Sun–Sat), this pay period, this month (all Utah time), or custom dates.
-   Week / pay period / month goals roll over automatically. Visible to that person and to leaders. */
+/* ================= GOALS (Build 41) =================
+   Each person can have an HOURS goal, a PAY goal, both, or neither (all optional).
+   Pay = worked hours x hourly rate, before taxes. Period per goal: this week (Sun–Sat), this pay period,
+   this month (Utah time) or custom dates; week / pay period / month roll over automatically.
+   Shown small, right next to the "Hours" title; click it to set, change or remove. Leaders see them too. */
 function goalRange(g){
   const t=todayKey();
   if(g.period==='week'){const a=weekStartKey();return {start:a,end:addDaysKey(a,6),label:'This week'};}
@@ -3856,74 +3870,87 @@ function goalProgress(id,g){
   const have=g.kind==='pay'?(ms/HR)*((e&&e.rate)||0):ms/HR;
   return {r,have,pct:g.target>0?Math.min(100,have/g.target*100):0,done:have>=g.target};
 }
-function goalFmt(g,v){return g.kind==='pay'?money(v):fmtHrs(v);}
-function goalCard(id,mine){
-  const g=goals[id], first=(nameOf(id)||'').split(' ')[0];
-  if(!g){
-    return mine?`<div class="goal-card empty-goal"><div><span class="ml">My goal</span>
-        <div class="goal-hint">Set an hours or pay goal and watch your progress fill up.</div></div>
-        <button class="btn btn-primary btn-sm" onclick="openGoalForm()">Set a goal</button></div>`:'';
-  }
+function goalFmt(g,v){return g.kind==='pay'?money(v).replace(/\.00$/,''):(Math.round(v*10)/10)+'h';}
+function goalsOf(id){const m=goals[id]||{};return ['hours','pay'].map(k=>m[k]).filter(Boolean);}
+/* the small inline goal(s) next to the page title */
+function goalMini(id,g,click){
   const pr=goalProgress(id,g);
-  const acts=mine?`<span class="goal-acts"><button class="btn btn-line btn-xs" onclick="openGoalForm()">Change</button><button class="btn btn-line btn-xs" onclick="removeGoal()">Remove</button></span>`:'';
-  const what=g.kind==='pay'?'Pay goal':'Hours goal';
-  if(!pr){
-    return `<div class="goal-card"><div class="goal-top"><span class="ml">${mine?'My goal':first+"'s goal"}</span><span class="goal-per">${what} · ${goalFmt(g,g.target)}</span>${acts}</div>
-      <div class="goal-hint">${g.period==='payperiod'?'There is no pay period covering today yet.':'Pick the dates for this goal.'}</div></div>`;
-  }
-  const left=g.target-pr.have;
-  return `<div class="goal-card ${pr.done?'done':''}"><div class="goal-top"><span class="ml">${mine?'My goal':first+"'s goal"}</span>
-      <span class="goal-per">${what} · ${pr.r.label} · ${fmtDayKey(pr.r.start)} – ${fmtDayKey(pr.r.end)}</span>${acts}</div>
-    <div class="goal-nums"><b>${goalFmt(g,pr.have)}</b> of ${goalFmt(g,g.target)}<span class="goal-pct">${Math.floor(pr.pct)}%</span></div>
-    <div class="goal-bar"><span style="width:${pr.pct.toFixed(1)}%"></span></div>
-    <div class="goal-left">${pr.done?'Goal reached — nice work!':goalFmt(g,left)+' to go'}${g.kind==='pay'?' · hours × '+money((employees.find(x=>x.id===id)||{}).rate||0)+'/hr, before taxes':''}</div></div>`;
+  const lbl=g.kind==='pay'?'Pay':'Hours';
+  const tip=pr?`${lbl} goal · ${pr.r.label} (${fmtDayKey(pr.r.start)} – ${fmtDayKey(pr.r.end)}) · ${Math.floor(pr.pct)}%${pr.done?' · reached!':''}`
+             :`${lbl} goal · ${g.period==='payperiod'?'no pay period covers today yet':'pick dates'}`;
+  const inner=`<span class="gm-lbl">${lbl}</span><span class="gm-bar"><i style="width:${pr?pr.pct.toFixed(1):0}%"></i></span>
+    <span class="gm-num">${pr?goalFmt(g,pr.have):'—'}<span class="gm-of"> / ${goalFmt(g,g.target)}</span></span>`;
+  return click?`<button class="goal-mini ${pr&&pr.done?'done':''}" title="${esc(tip)} — click to change" onclick="openGoalForm()">${inner}</button>`
+              :`<span class="goal-mini ro ${pr&&pr.done?'done':''}" title="${esc(tip)}">${inner}</span>`;
 }
-let goalDraftKind='hours';
+function goalsInline(id,mine){
+  const list=goalsOf(id);
+  if(!list.length)return mine?`<button class="goal-link" onclick="openGoalForm()">Goals</button>`:'';
+  return `<span class="goals-inline">${list.map(g=>goalMini(id,g,mine)).join('')}</span>`;
+}
+function goalFields(kind,g,hasPP){
+  const pay=kind==='pay', v=g||{target:'',period:'week',start:'',end:''}, P=pay?'gp':'gh';
+  return `<div class="goal-sec"><div class="goal-sec-h"><span class="ml">${pay?'Pay goal':'Hours goal'}</span>
+      <span class="mini">${pay?'hours × your rate, before taxes':''}${g?'':' optional'}</span></div>
+    <div class="goal-row">
+      <div class="field"><label>${pay?'Amount ($)':'Hours'}</label><input type="number" id="${P}Target" min="0" step="${pay?'1':'0.25'}" value="${v.target||''}" placeholder="${pay?'500':'30'}"></div>
+      <div class="field grow"><label>Period</label><select id="${P}Period" onchange="document.getElementById('${P}Custom').classList.toggle('hide',this.value!=='custom')">
+        <option value="week" ${v.period==='week'?'selected':''}>This week (resets weekly)</option>
+        <option value="payperiod" ${v.period==='payperiod'?'selected':''}>This pay period${hasPP?'':' (none right now)'}</option>
+        <option value="month" ${v.period==='month'?'selected':''}>This month (resets monthly)</option>
+        <option value="custom" ${v.period==='custom'?'selected':''}>Custom dates</option></select></div></div>
+    <div id="${P}Custom" class="goal-custom ${v.period==='custom'?'':'hide'}">
+      <div class="field"><label>From</label><input type="date" id="${P}Start" value="${v.start||''}"></div>
+      <div class="field"><label>To</label><input type="date" id="${P}End" value="${v.end||''}"></div></div>
+    ${g?`<button class="linkish goal-clear" onclick="clearGoalField('${P}')">Clear this goal</button>`:''}</div>`;
+}
+function clearGoalField(P){document.getElementById(P+'Target').value='';}
 function openGoalForm(){
-  const g=goals[currentUser.id]||{kind:'hours',target:'',period:'week',start:'',end:''};
+  const m=goals[currentUser.id]||{};
   const canPay=!isSalaried(currentUser)&&currentUser.rate>0;
-  goalDraftKind=canPay?g.kind:'hours';
   const hasPP=payPeriods.some(x=>todayKey()>=x.start&&todayKey()<=x.end);
+  const prog=goalsOf(currentUser.id).map(g=>{const pr=goalProgress(currentUser.id,g);if(!pr)return '';
+    return `<div class="goal-prog"><span class="ml">${g.kind==='pay'?'Pay':'Hours'} · ${pr.r.label}</span>
+      <div class="goal-prog-n"><b>${goalFmt(g,pr.have)}</b> of ${goalFmt(g,g.target)} · ${Math.floor(pr.pct)}%${pr.done?' — reached!':' — '+goalFmt(g,g.target-pr.have)+' to go'}</div>
+      <div class="gm-bar wide ${pr.done?'done':''}"><i style="width:${pr.pct.toFixed(1)}%"></i></div></div>`;}).join('');
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>${goals[currentUser.id]?'Change your goal':'Set a goal'}</h3><p class="sub">Visible to you and to leadership</p>
-    ${canPay?`<div class="seg"><button class="seg-opt ${goalDraftKind==='hours'?'on':''}" id="gkH" onclick="setGoalKind('hours')">Hours</button><button class="seg-opt ${goalDraftKind==='pay'?'on':''}" id="gkP" onclick="setGoalKind('pay')">Pay</button></div>`:''}
-    <div class="field"><label id="gTargetLbl">${goalDraftKind==='pay'?'Pay goal ($)':'Hours goal'}</label>
-      <input type="number" id="gTarget" min="0" step="${goalDraftKind==='pay'?'1':'0.25'}" value="${g.target||''}" placeholder="${goalDraftKind==='pay'?'500':'30'}"></div>
-    <div class="field"><label>Period</label><select id="gPeriod" onchange="document.getElementById('gCustom').classList.toggle('hide',this.value!=='custom')">
-      <option value="week" ${g.period==='week'?'selected':''}>This week (Sun–Sat, resets weekly)</option>
-      <option value="payperiod" ${g.period==='payperiod'?'selected':''}>This pay period${hasPP?'':' (none set right now)'}</option>
-      <option value="month" ${g.period==='month'?'selected':''}>This month (resets monthly)</option>
-      <option value="custom" ${g.period==='custom'?'selected':''}>Custom dates</option></select></div>
-    <div id="gCustom" class="goal-custom ${g.period==='custom'?'':'hide'}">
-      <div class="field"><label>From</label><input type="date" id="gStart" value="${g.start||''}"></div>
-      <div class="field"><label>To</label><input type="date" id="gEnd" value="${g.end||''}"></div></div>
-    ${canPay?'<p class="mini" style="margin:0">Pay goals count worked hours × your hourly rate, before taxes.</p>':''}
+    <h3>Goals</h3><p class="sub">Set one, both, or neither · visible to you and leadership</p>
+    ${prog?`<div class="goal-progs">${prog}</div>`:''}
+    ${goalFields('hours',m.hours,hasPP)}
+    ${canPay?goalFields('pay',m.pay,hasPP):''}
+    <p class="mini" style="margin:4px 0 0">Leave a goal blank to not use it.</p>
     <div class="err" id="gErr"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="saveGoal()">Save goal</button></div></div></div>`;
+      <button class="btn btn-primary btn-sm" onclick="saveGoals()">Save</button></div></div></div>`;
 }
-function setGoalKind(k){goalDraftKind=k;
-  document.getElementById('gkH').classList.toggle('on',k==='hours');document.getElementById('gkP').classList.toggle('on',k==='pay');
-  document.getElementById('gTargetLbl').textContent=k==='pay'?'Pay goal ($)':'Hours goal';
-  const t=document.getElementById('gTarget');t.placeholder=k==='pay'?'500':'30';t.step=k==='pay'?'1':'0.25';}
-async function saveGoal(){
+function readGoalField(P,kind){
+  const el=document.getElementById(P+'Target'); if(!el)return {skip:true};
+  const raw=(el.value||'').trim(); if(!raw)return {g:null};
+  const target=parseFloat(raw),period=document.getElementById(P+'Period').value;
+  const start=document.getElementById(P+'Start').value,end=document.getElementById(P+'End').value;
+  const nm=kind==='pay'?'pay goal':'hours goal';
+  if(!(target>0))return {err:'Enter a '+nm+' greater than 0, or leave it blank.'};
+  if(period==='custom'){if(!start||!end)return {err:'Pick From and To dates for the '+nm+'.'};
+    if(end<start)return {err:'For the '+nm+', the To date must be on or after the From date.'};}
+  return {g:{kind,target,period,start:period==='custom'?start:'',end:period==='custom'?end:''}};
+}
+async function saveGoals(){
   const err=document.getElementById('gErr');
-  const target=parseFloat(document.getElementById('gTarget').value),period=document.getElementById('gPeriod').value;
-  const start=document.getElementById('gStart').value,end=document.getElementById('gEnd').value;
-  if(!(target>0)){err.textContent='Enter a goal greater than 0.';return;}
-  if(period==='custom'){if(!start||!end){err.textContent='Pick a From and To date.';return;}
-    if(end<start){err.textContent='The To date must be on or after the From date.';return;}}
-  const g={kind:goalDraftKind,target,period,start:period==='custom'?start:'',end:period==='custom'?end:''};
-  if(live()){
-    const {error}=await sb.from('goals').upsert({user_id:currentUser.id,kind:g.kind,target:g.target,period:g.period,
-      start_date:g.start||null,end_date:g.end||null,updated_at:new Date().toISOString()});
-    if(error){err.textContent='Could not save: '+(/goals|schema cache|relation/i.test(error.message)?'run the Build 40 SQL in Supabase first':error.message);return;}
+  const res={hours:readGoalField('gh','hours'),pay:readGoalField('gp','pay')};
+  for(const k in res)if(res[k].err){err.textContent=res[k].err;return;}
+  const cur=goals[currentUser.id]||{}, next={...cur};
+  for(const k of ['hours','pay']){
+    if(res[k].skip)continue;
+    const g=res[k].g;
+    if(live()){
+      const q=g?sb.from('goal_targets').upsert({user_id:currentUser.id,kind:k,target:g.target,period:g.period,start_date:g.start||null,end_date:g.end||null,updated_at:new Date().toISOString()})
+               :sb.from('goal_targets').delete().eq('user_id',currentUser.id).eq('kind',k);
+      const {error}=await q;
+      if(error){err.textContent='Could not save: '+(/goal_targets|schema cache|relation/i.test(error.message)?'run the Build 41 SQL in Supabase first':error.message);return;}
+    }
+    if(g)next[k]=g; else delete next[k];
   }
-  goals[currentUser.id]=g; closeModal();render();toast('Goal saved');
-}
-async function removeGoal(){
-  if(live()){const {error}=await sb.from('goals').delete().eq('user_id',currentUser.id);if(error){toast('Not removed: '+error.message);return;}}
-  delete goals[currentUser.id];render();toast('Goal removed');
+  goals[currentUser.id]=next; closeModal();render();toast(goalsOf(currentUser.id).length?'Goals saved':'Goals cleared');
 }
 /* ---- a person's OWN hours check (Hours tab) — same tool as the leaders' version, only ever their own hours ---- */
 function myHoursCheckBar(){
