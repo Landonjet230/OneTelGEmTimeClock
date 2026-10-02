@@ -1101,6 +1101,37 @@
   .pp-v{font-size:15px;padding-top:6px}
   @media (max-width:600px){ .an-term-s,.an-term-p{display:none} .an-term-h{padding:12px 14px} .res-half-t{font-size:20px} .res-split{min-height:180px} .th-tab{font-size:20px} .an-chips{margin-left:0} .pd-dates{margin-left:0} }
   .emp-top-stats{padding:18px 0 22px;border-bottom:1px solid var(--rule-soft)}
+  /* ---- Build 44: Google sign-in + Security page ---- */
+  .auth-google{width:100%;justify-content:center;gap:12px;background:#fff;color:#1F1F1F;border:1px solid #fff;font-family:"Archivo",sans-serif;font-weight:600;font-size:15px;padding:13px 22px;margin-top:22px}
+  .auth-google:hover{background:#F2EFF6}
+  .auth-google:disabled{opacity:.7}
+  .g-mark{width:24px;height:24px;border-radius:50%;background:var(--purple);color:#fff;display:inline-grid;place-items:center;font-family:"Archivo";font-weight:700;font-size:13px}
+  .auth-sub{font-size:12px;color:#9A94A4;margin:10px 0 0;text-align:center}
+  .auth-backup{display:block;margin:26px auto 0;background:none;border:0;color:#8B8496;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:4px}
+  .auth-backup:hover{color:#fff}
+  .auth-backup.back{margin:18px 0 0;padding:0}
+  .um-tag.sec{color:#FF9A9A;border-color:rgba(255,120,120,.55)}
+  .sec-top{display:flex;gap:34px;align-items:flex-end;flex-wrap:wrap;margin-bottom:26px}
+  .sec-top .v.sec-h{color:#A81E27}.sec-top .v.sec-m{color:#8A6D1B}.sec-top .v.sec-t{font-size:15px;padding-top:6px}
+  .sec-run{margin-left:auto}
+  .sec-tabs{display:flex;gap:6px}
+  .sec-head .linkish{margin-left:auto}
+  .sec-ev{display:flex;gap:14px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--rule-soft)}
+  .sec-ev.done{opacity:.6}
+  .sec-sev{flex:none;width:68px;text-align:center;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;border-radius:var(--r-full);padding:3px 0;margin-top:1px}
+  .sec-sev.high{background:#F6E0E1;color:#A81E27}
+  .sec-sev.medium{background:#FBEED2;color:#8A6D1B}
+  .sec-sev.low{background:#F0EEF3;color:#6E6B77}
+  .sec-ev-m{flex:1;min-width:0}
+  .sec-ev-t{font-weight:600;font-size:14px}
+  .sec-ev-d{font-size:13px;color:var(--text);margin-top:1px;word-break:break-word}
+  .sec-ev-w{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:3px}
+  .sec-chks{display:flex;flex-direction:column;gap:10px}
+  .sec-chk{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--rule);border-radius:var(--r-lg);background:#fff}
+  .sec-chk-i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:#F0EEF3;color:#8A8792}
+  .sec-chk.ok .sec-chk-i{background:#E6F4EA;color:#0B6B33}
+  .sec-chk b{display:block;font-size:13.5px}
+  .sec-chk span{font-size:12.5px;color:var(--muted)}
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
@@ -1124,7 +1155,7 @@
     </div>
     <p class="sub">OneTelGem</p>
     <div class="login-rule"></div>
-    <p class="login-note">Sign in with your OneTelGem account, or create one. New accounts start as Employee until leadership assigns your role.</p>
+    <p class="login-note">Sign in with your OneTelGem Google account. New team members start as Employee until leadership assigns a role.</p>
     <div id="acctList"></div>
   </div>
 </div>
@@ -1174,7 +1205,7 @@ let sb=null;
 /* Session lives in per-tab sessionStorage: a refresh keeps you signed in, closing the tab/browser or
    IDLE_LIMIT_MS of inactivity requires signing in again. Only the login token is stored — never timecard data. */
 const IDLE_LIMIT_MS=2*60*60*1000;   /* 2 hours — change this one number to adjust */
-try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,storage:window.sessionStorage}}); }catch(e){ sb=null; }
+try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,storage:window.sessionStorage,flowType:'pkce',detectSessionInUrl:true}}); }catch(e){ sb=null; }
 function markActive(){try{sessionStorage.setItem('otgLastActive',String(Date.now()));}catch(e){}}
 function idleTooLong(){try{const t=+sessionStorage.getItem('otgLastActive')||0;return t>0&&(Date.now()-t)>IDLE_LIMIT_MS;}catch(e){return false;}}
 ['click','keydown','pointerdown','touchstart'].forEach(ev=>document.addEventListener(ev,markActive,{capture:true,passive:true}));
@@ -1434,8 +1465,30 @@ function demoEnter(){
 }
 function pwEyeBtn(id){return `<button type="button" class="pw-eye" tabindex="-1" aria-label="Show password" onclick="togglePw('${id}',this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button>`;}
 function togglePw(id,btn){const el=document.getElementById(id);if(!el)return;const show=el.type==='password';el.type=show?'text':'password';btn.classList.toggle('on',show);btn.setAttribute('aria-label',show?'Hide password':'Show password');}
+/* ===== Build 44: Sign in with Google (company accounts only; Google handles 2-Step Verification) ===== */
+const COMPANY_DOMAINS=['onetelgem.com'];
+let authBackup=false;   /* email + password backup — only works while the Email provider is still on in Supabase */
+function companyEmail(e){e=(e||'').toLowerCase();return COMPANY_DOMAINS.some(d=>e.endsWith('@'+d));}
+async function authGoogle(){
+  if(authBusy||!sb)return;
+  authBusy=true;const g=document.getElementById('authGoogle');if(g){g.disabled=true;g.lastChild.textContent='Opening Google…';}
+  try{
+    const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,
+      queryParams:{hd:COMPANY_DOMAINS[0],prompt:'select_account'}}});
+    if(error){authBusy=false;renderLogin(/provider is not enabled|Unsupported provider/i.test(error.message)?'Google sign-in isn\'t switched on in Supabase yet — use the backup sign-in below for now.':error.message,true);}
+  }catch(e){authBusy=false;renderLogin('Can\'t reach the server — check your internet and try again.',true);}
+}
 function renderLogin(msg,isErr){
   const el=document.getElementById('acctList'); if(!el)return;
+  if(!authBackup){
+    const note0=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
+    const down0=!sb?`<div class="auth-msg err">Can't load the sign-in service. Check your internet connection and refresh.</div>`:'';
+    el.innerHTML=`${down0}<button class="btn auth-google" id="authGoogle" onclick="authGoogle()"><span class="g-mark" aria-hidden="true">G</span><span>Sign in with Google</span></button>
+      <p class="auth-sub">Use your @onetelgem.com account. Google asks for your 2-Step code.</p>${note0}
+      <button class="auth-backup" onclick="authBackup=true;authMode='signin';renderLogin()">Backup sign-in with email &amp; password</button>
+      <p class="build-tag">Build 44 · Sign in with Google · security watchdog</p>`;
+    return;
+  }
   const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
   const svcDown=!sb?`<div class="auth-msg err">Can't load the sign-in service. Check your internet connection and refresh.</div>`:'';
   const form=authMode==='signin'
@@ -1446,10 +1499,9 @@ function renderLogin(msg,isErr){
        <div class="afield"><label>Email</label><input type="email" id="auEmail" autocomplete="email"></div>
        <div class="afield"><label>Password <span class="opt2">8+ characters</span></label><div class="pw-wrap"><input type="password" id="auPass" autocomplete="new-password" onkeydown="if(event.key==='Enter')authSignUp()">${pwEyeBtn('auPass')}</div></div>
        <button class="btn btn-primary auth-go" id="authGo" onclick="authSignUp()">Create account</button>`;
-  el.innerHTML=`<div class="auth-tabs">
-      <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
-      <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 43 · person page stats moved to the top</p>`;
+  el.innerHTML=`<button class="auth-backup back" onclick="authBackup=false;renderLogin()">&larr; Back to Sign in with Google</button>
+    <p class="auth-sub">Backup only — this stops working once password sign-in is turned off in Supabase.</p>
+    ${svcDown}${form}${note}<p class="build-tag">Build 44 · Sign in with Google · security watchdog</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -2038,7 +2090,12 @@ function openNewGroup(){
 function backArrow(){return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>`;}
 function sendArrow(){return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 11.5 21 3l-8.5 18-2.2-7.3z"/></svg>`;}
 function groupGlyph(){return `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;}
+let authProvider='';
 async function enterApp(session){
+  const u=session&&session.user||{};
+  authProvider=((u.app_metadata&&u.app_metadata.provider)||'')+'';
+  const viaGoogle=authProvider==='google'||((u.identities||[]).some(i=>i.provider==='google')&&authProvider!=='email');
+  if(viaGoogle&&!companyEmail(u.email)){ try{await sb.auth.signOut();}catch(e){} renderLogin('Only @'+COMPANY_DOMAINS[0]+' Google accounts can sign in. You used '+(u.email||'another account')+'.',true); return; }
   try{ await loadProfiles(); }
   catch(e){ renderLogin('Could not load team profiles: '+(e.message||e),true); return; }
   currentUser=employees.find(x=>x.id===session.user.id);
@@ -2065,7 +2122,8 @@ async function enterApp(session){
   try{ await loadStrikes(); }catch(e){ toast('Could not load strikes: '+(e.message||e)); }
   try{ await loadPayChanges(); }catch(e){ payChanges=[]; }   /* table arrives with the Build 40 SQL */
   try{ await loadGoals(); }catch(e){ goals={}; }
-  try{ await loadResources(); }catch(e){ resItems=[]; }          /* Build 42 tables — optional until its SQL runs */
+  try{ await loadResources(); }catch(e){ resItems=[]; }
+  if(isOwner(currentUser)){ try{ await loadSecurity(); }catch(e){ secEvents=[]; } }          /* Build 42 tables — optional until its SQL runs */
   try{ await loadPersonDetails(); }catch(e){ personDetails={}; }
   if(canManage(currentUser)){
     try{ await loadLeaderData(); }catch(e){ /* tables arrive with the Build 42 SQL */ }
@@ -2092,10 +2150,13 @@ async function enterApp(session){
   checkTimezone();
 }
 async function initAuth(){
-  renderLogin();
+  const qs=new URLSearchParams(location.search+'&'+location.hash.replace(/^#/,''));
+  const oauthErr=qs.get('error_description');
+  renderLogin(oauthErr?('Google sign-in didn\'t finish: '+oauthErr):undefined,!!oauthErr);
   if(!sb)return;
   try{
     const {data:{session}}=await sb.auth.getSession();
+    if(location.search.includes('code=')||location.hash.includes('access_token')||oauthErr)history.replaceState(null,'',location.pathname);   /* tidy the address bar after Google */
     if(session){
       if(idleTooLong()){ try{await sb.auth.signOut();}catch(e){} renderLogin('Signed out after a period of inactivity — please sign in again.'); }
       else await enterApp(session);
@@ -2119,7 +2180,7 @@ function closeMenu(){menuOpen=false;paintMenu();}
 function paintMenu(){
   const p=document.getElementById('menuPanel'),b=document.getElementById('menuBtn');
   if(!currentUser){p.classList.add('hide');b.classList.remove('open');return;}
-  const tabs=TABS[currentUser.role]||TABS.comanager;   /* never crash on an unexpected role */
+  const tabs=(TABS[currentUser.role]||TABS.comanager).concat(isOwner(currentUser)?[{id:'security',label:'Security'}]:[]);   /* never crash on an unexpected role */
   p.innerHTML=tabs.map(t=>
     `<button class="menu-item ${activeTab===t.id&&!selectedEmpId?'active':''}" onclick="goTab('${t.id}')">${t.label}<span class="tick">&#9642;</span></button>`
   ).join('');
@@ -2166,7 +2227,7 @@ function openProfile(ev){ev.stopPropagation();closeUserMenu();profileTarget='bg'
       <div class="field grow"><label>Phone</label><input type="text" id="pfPhone" value="${esc(detailsOf(u.id).phone)}" placeholder="555-555-5555"></div></div>
     <p class="pf-note">Only you and leadership can see these.${detailsOf(u.id).start?' · Start date '+fmtDayKeyYear(detailsOf(u.id).start):''}${detailsOf(u.id).raise?' · Last raise '+fmtDayKeyYear(detailsOf(u.id).raise):''}</p>
     ${showRate?`<div class="field"><label>Hourly rate</label><div class="pf-ro">${money(u.rate||0)} / hr</div></div>`:''}
-    <div class="field"><label>New password <span class="opt">8+ characters, optional</span></label><div class="pw-wrap"><input type="password" id="pfPass" autocomplete="new-password">${pwEyeBtn('pfPass')}</div></div>
+    ${authProvider==='google'?'<p class="pf-note">You sign in with Google — your password and 2-Step Verification are managed in your Google account.</p>':`<div class="field"><label>New password <span class="opt">8+ characters, optional</span></label><div class="pw-wrap"><input type="password" id="pfPass" autocomplete="new-password">${pwEyeBtn('pfPass')}</div></div>`}
     <div class="err" id="pfErr"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button>
       <button class="btn btn-primary btn-sm" onclick="saveProfile()">Save</button></div></div></div>`;
@@ -2192,7 +2253,7 @@ async function saveProfile(){
   const err=document.getElementById('pfErr');
   const name=(document.getElementById('pfName').value||'').trim();
   const tzEl=document.getElementById('pfTz'),tzNew=tzEl?tzEl.value:currentUser.timezone;
-  const pass=document.getElementById('pfPass').value||'';
+  const pass=(document.getElementById('pfPass')||{}).value||'';
   if(!name){err.textContent='Name can\'t be blank.';return;}
   if(pass&&pass.length<8){err.textContent='Password needs at least 8 characters.';return;}
   currentUser.name=name; if(tzNew)currentUser.timezone=tzNew;
@@ -2289,6 +2350,7 @@ function renderBody(){
     case 'team':return teamTab();
     case 'pay':return payTab();
     case 'audit':return auditTab();
+    case 'security':return isOwner(currentUser)?securityTab():homeTab();
     default:return homeTab();
   }
 }
@@ -2307,8 +2369,10 @@ function paintUserMenu(){
   const svLine=svDue?`<button class="um-item um-click um-sv" onclick="event.stopPropagation();closeUserMenu();openSurveyPrompt()"><span class="um-tag">Monthly</span><b>Survey reminder</b></button>`:'';
   const qwDue=qotwReminderDue();
   const qwLine=qwDue?`<button class="um-item um-click" onclick="event.stopPropagation();closeUserMenu();goTab('qotw')"><span class="um-tag">Reminder</span><b>Add your Question of the Week</b> — due ${fmtDayKey(qwDue)}.</button>`:'';
-  const body=(reqLine+svLine+qwLine+msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
-  const count=myMsgs.length+mgrNotices.length+pReq+(qwDue?1:0)+(svDue?1:0);
+  const secOpen=isOwner(currentUser)?secEvents.filter(e=>!e.reviewed&&e.severity!=='low').length:0;
+  const secLine=secOpen?`<button class="um-item um-click" onclick="event.stopPropagation();closeUserMenu();goTab('security')"><span class="um-tag sec">Security</span><b>${secOpen} alert${secOpen>1?'s':''}</b> to review</button>`:'';
+  const body=(secLine+reqLine+svLine+qwLine+msgItems+noticeItems)||'<div class="um-empty">No new notifications.</div>';
+  const count=myMsgs.length+mgrNotices.length+pReq+(qwDue?1:0)+(svDue?1:0)+(secOpen?1:0);
   dot.classList.toggle('hide',count===0);
   const reqBtn=!canManage(currentUser)?`<button class="um-req" onclick="openTimeOffRequest(event)">Request time off</button>`:'';
   const inbox=`<div class="um-notif"><div class="um-label"><button class="um-open" onclick="openChatPage(event)" title="Open messages">Notifications${count?` <span class="um-ct">${count}</span>`:''}</button>`
@@ -4838,6 +4902,68 @@ async function saveTermCell(yr,term,id,remove,name){
     if(i>=0)termPay[i]=n; else termPay.push(n);
   }
   anOpen[y+'-'+tt]=true;closeModal();render();toast('Saved');
+}
+
+
+/* ================= SECURITY (Build 44) — owners only =================
+   The database watchdog (Build 44 SQL) logs sensitive changes instantly and scans every 15 minutes
+   for new accounts, outside / new-network / late-night sign-ins, sign-in bursts, reset requests and mass deletes. */
+let secEvents=[], secLastRun=null, secShowAll=false, secBusy=false;
+const SEV_LABEL={high:'High',medium:'Medium',low:'Low'};
+async function loadSecurity(){
+  const {data,error}=await sb.from('security_events').select('*').order('at',{ascending:false}).limit(300);
+  if(error)throw error;
+  secEvents=(data||[]).map(r=>({id:r.id,at:new Date(r.at).getTime(),severity:r.severity,kind:r.kind,title:r.title,detail:r.detail||'',actor:r.actor_name||'',reviewed:!!r.reviewed,by:r.reviewed_by_name||''}));
+  try{const {data:t}=await sb.rpc('otg_security_status');secLastRun=t?new Date(t).getTime():null;}catch(e){}
+}
+function securityTab(){
+  const open=secEvents.filter(e=>!e.reviewed), list=secShowAll?secEvents:open;
+  const cnt=k=>open.filter(e=>e.severity===k).length;
+  const google=authProvider==='google';
+  const chk=(ok,t,how)=>`<div class="sec-chk ${ok===true?'ok':ok===false?'no':'todo'}"><span class="sec-chk-i">${ok===true?'&#10003;':ok===false?'!':'&#9675;'}</span><div><b>${t}</b><span>${how}</span></div></div>`;
+  const rows=list.length?list.map(e=>`<div class="sec-ev ${e.reviewed?'done':''}"><span class="sec-sev ${e.severity}">${SEV_LABEL[e.severity]||e.severity}</span>
+      <div class="sec-ev-m"><div class="sec-ev-t">${esc(e.title)}</div><div class="sec-ev-d">${esc(e.detail)}</div>
+        <div class="sec-ev-w">${fmtDay(e.at)} · ${fmtTime(e.at)}${e.actor?' · by '+esc(e.actor):''}${e.reviewed&&e.by?' · reviewed by '+esc(e.by):''}</div></div>
+      ${e.reviewed?'':`<button class="btn btn-line btn-xs" onclick="reviewSec(${e.id})">Mark reviewed</button>`}</div>`).join('')
+    :`<div class="empty">${secShowAll?'No alerts yet.':'Nothing to review — all clear.'}</div>`;
+  return pageHead('Security','owners only')
+    +`<div class="sec first"><div class="sec-top">
+        <div class="stat"><div class="k">Open alerts</div><div class="v">${open.length}</div></div>
+        <div class="stat"><div class="k">High</div><div class="v sec-h">${cnt('high')}</div></div>
+        <div class="stat"><div class="k">Medium</div><div class="v sec-m">${cnt('medium')}</div></div>
+        <div class="stat"><div class="k">Last scan</div><div class="v sec-t">${secLastRun?fmtDay(secLastRun)+' · '+fmtTime(secLastRun):'not yet'}</div></div>
+        <button class="btn btn-primary btn-sm sec-run" onclick="runSecScan()" ${secBusy?'disabled':''}>${secBusy?'Scanning…':'Run scan now'}</button></div>
+      <div class="sec-head"><h2>Alerts</h2><span class="sec-tabs"><button class="an-chip ${!secShowAll?'on':''}" onclick="secShowAll=false;render()">To review</button><button class="an-chip ${secShowAll?'on':''}" onclick="secShowAll=true;render()">All</button></span>
+        ${open.length>1?'<button class="linkish" onclick="reviewAllSec()">Mark all reviewed</button>':''}</div>
+      <div class="sec-list">${rows}</div></div>
+      <div class="sec"><div class="sec-head"><h2>Setup checklist</h2><span class="ml meta">steps that live outside the app</span></div>
+        <div class="sec-chks">
+          ${chk(google?true:null,'Sign in with Google',google?'You\'re signed in with Google right now.':'Turn on the Google provider in Supabase, then sign in with Google once.')}
+          ${chk(null,'Require Google 2-Step Verification','Google Admin (admin.google.com) → Security → Authentication → 2-Step Verification → turn on enforcement for everyone.')}
+          ${chk(null,'Turn off password sign-in','After everyone has signed in with Google once: Supabase → Authentication → Sign In / Providers → Email → turn off.')}
+          ${chk(null,'Breach alerts for @onetelgem.com','haveibeenpwned.com → Domain search → verify onetelgem.com to get emailed if company addresses show up in a breach.')}
+          ${chk(null,'Google suspicious sign-in alerts','Google Admin → Security → Alert center — Google already flags suspicious sign-ins and password leaks for company accounts.')}
+        </div></div>`;
+}
+async function runSecScan(){
+  if(!live()){toast('Scans run on the live site');return;}
+  secBusy=true;render();
+  try{const {data,error}=await sb.rpc('otg_run_watchdog');
+    if(error)toast('Scan failed: '+(/otg_run_watchdog|schema cache|function/i.test(error.message)?'run the Build 44 SQL in Supabase first':error.message));
+    else{await loadSecurity();toast(data?data+' new alert'+(data>1?'s':''):'Scan done — nothing new');}}
+  finally{secBusy=false;render();paintUserMenu();}
+}
+async function reviewSec(id){
+  const e=secEvents.find(x=>x.id===id);if(!e)return;
+  if(live()){const {error}=await sb.from('security_events').update({reviewed:true,reviewed_by_name:currentUser.name,reviewed_at:new Date().toISOString()}).eq('id',id);
+    if(error){toast('Not saved: '+error.message);return;}}
+  e.reviewed=true;e.by=currentUser.name;render();paintUserMenu();
+}
+async function reviewAllSec(){
+  const ids=secEvents.filter(e=>!e.reviewed).map(e=>e.id);if(!ids.length)return;
+  if(live()){const {error}=await sb.from('security_events').update({reviewed:true,reviewed_by_name:currentUser.name,reviewed_at:new Date().toISOString()}).in('id',ids);
+    if(error){toast('Not saved: '+error.message);return;}}
+  secEvents.forEach(e=>{if(!e.reviewed){e.reviewed=true;e.by=currentUser.name;}});render();paintUserMenu();toast('All marked reviewed');
 }
 
 /* ================= CORRECTIONS ================= */
