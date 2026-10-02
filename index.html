@@ -1100,6 +1100,7 @@
   .period-tag.wait{color:#8A6D1B;border-color:#D9A93C;background:#FBEED2}
   .pp-v{font-size:15px;padding-top:6px}
   @media (max-width:600px){ .an-term-s,.an-term-p{display:none} .an-term-h{padding:12px 14px} .res-half-t{font-size:20px} .res-split{min-height:180px} .th-tab{font-size:20px} .an-chips{margin-left:0} .pd-dates{margin-left:0} }
+  .emp-top-stats{padding:18px 0 22px;border-bottom:1px solid var(--rule-soft)}
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
@@ -1448,7 +1449,7 @@ function renderLogin(msg,isErr){
   el.innerHTML=`<div class="auth-tabs">
       <button class="auth-tab ${authMode==='signin'?'on':''}" onclick="authMode='signin';renderLogin()">Sign in</button>
       <button class="auth-tab ${authMode==='signup'?'on':''}" onclick="authMode='signup';renderLogin()">Create account</button>
-    </div>${svcDown}${form}${note}<p class="build-tag">Build 42 · Resources page · Analytics · laptop benefit · person details · pay dates</p>`;
+    </div>${svcDown}${form}${note}<p class="build-tag">Build 43 · person page stats moved to the top</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -3304,12 +3305,12 @@ function employeeDetail(id){
   return `<button class="back" onclick="closeEmp()">&larr; Team</button>`
     +heading
     +personDetailsBlock(id)
+    +`<div class="totals emp-top-stats"><div class="stat"><div class="k">Worked this week</div><div class="v">${fmtDur(workedThisWeek(id))}</div></div>
+        <div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(weekHours(id))}</div></div>
+        ${strikeStat(id,true)}${timeOffStat(id,true)}</div>`
     +`<div class="sec first"><div class="tz-row"><span class="ml">Time zone</span>${tzSelect('tzEmp',tzOf(id),`setPersonTZ('${id}',this.value)`)}<span class="mini">Their clock times and schedule show in this zone for everyone.</span></div>
       <p class="lede">Tap the pencil on a day to edit clock times. Open a day to edit its work log.</p>
       ${dayList(id,{logEditable:true,editTimes:true})}
-      <div class="totals"><div class="stat"><div class="k">Worked this week</div><div class="v">${fmtDur(workedThisWeek(id))}</div></div>
-        <div class="stat"><div class="k">Scheduled per week</div><div class="v">${fmtHrs(weekHours(id))}</div></div>
-        ${strikeStat(id,true)}${timeOffStat(id,true)}</div>
       <div style="margin-top:24px"><button class="btn btn-line btn-sm" onclick="openAdd('${id}')">Add a missing day</button></div>
       ${goalsOf(id).length?`<div class="goals-emp"><span class="ml">Goals</span>${goalsInline(id,false)}</div>`:''}</div>
       <div class="sec"><div class="sec-head"><h2>Their schedule</h2><span class="ml meta">set by ${e.name.split(' ')[0]}</span></div>
