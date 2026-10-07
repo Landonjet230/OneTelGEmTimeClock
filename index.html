@@ -1137,6 +1137,67 @@
   .auth-wait span{font-size:12.5px;color:#9A94A4}
   .auth-spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--purple);animation:otgspin .8s linear infinite;margin-bottom:6px}
   @keyframes otgspin{to{transform:rotate(360deg)}}
+  /* ---- Build 46: survey questions + leader availability ---- */
+  .svq{margin-bottom:14px}
+  .svq-p{font-weight:600;font-size:14px;margin-bottom:8px}
+  .svq-open{margin-top:6px}
+  .svq-rate{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .svq-n{width:40px;height:40px;border-radius:50%;border:1px solid var(--hair-strong);background:#fff;font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;cursor:pointer;color:var(--text)}
+  .svq-n:hover{border-color:var(--purple)}
+  .svq-n.on{background:var(--purple);border-color:var(--purple);color:#fff}
+  .svq-scale{font-size:11.5px;color:var(--muted);margin-left:4px}
+  .modal.sv-form{max-width:480px}
+  .svm{border:1px solid var(--rule);border-radius:var(--r-lg);padding:12px 14px;margin-bottom:16px}
+  .svm-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .svm-q{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--rule-soft)}
+  .svm-n{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);width:16px}
+  .svm-t{flex:1;font-size:13.5px}
+  .svm-k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--purple-deep);background:var(--purple-wash);border-radius:var(--r-full);padding:2px 8px;white-space:nowrap}
+  .svm-lock{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .svm-empty{font-size:12.5px;color:var(--muted);padding:6px 0}
+  .svr{margin-bottom:16px}
+  .svr-p{font-weight:600;font-size:13.5px;padding-bottom:6px;border-bottom:1px solid var(--rule)}
+  .svr-rate{display:flex;gap:22px;align-items:center;padding:10px 0;flex-wrap:wrap}
+  .svr-avg{display:flex;flex-direction:column}
+  .svr-avg b{font-family:"IBM Plex Mono",monospace;font-size:28px;color:var(--purple-deep);line-height:1}
+  .svr-avg span{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .svr-dist{flex:1;min-width:180px;display:flex;flex-direction:column;gap:3px}
+  .svr-bar{display:flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+  .svr-track{flex:1;height:8px;background:#ECE7F1;border-radius:4px;overflow:hidden}
+  .svr-track i{display:block;height:100%;background:var(--purple);border-radius:4px}
+  .svr-k,.svr-c{width:14px;text-align:center}
+  .tb-live{display:flex;align-items:center;margin-left:18px;min-width:0}
+  .tb-live-btn{display:flex;align-items:center;gap:6px;background:none;border:0;padding:4px 6px;border-radius:var(--r-full);cursor:pointer}
+  .tb-live-btn:hover{background:rgba(255,255,255,.08)}
+  .tb-live-k{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#8B8496;margin-right:4px}
+  .tb-av{position:relative;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);color:#fff;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;margin-left:-6px;box-shadow:0 0 0 2px #000}
+  .tb-av:first-of-type{margin-left:0}
+  .tb-av i{position:absolute;right:-2px;bottom:-2px;width:9px;height:9px;border-radius:50%;background:#10A34A;box-shadow:0 0 0 2px #000}
+  .tb-av.busy i{background:#E0A526}
+  .lt-list{display:flex;flex-direction:column}
+  .lt-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--rule-soft)}
+  .lt-row:last-of-type{border-bottom:0}
+  .lt-av{position:relative;flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--black);color:#fff;font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:600}
+  .lt-av i{position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 2px #fff;background:#C9C5D0}
+  .lt-av i.ok{background:#10A34A}.lt-av i.busy{background:#E0A526}.lt-av i.later{background:#C9A6D8}
+  .lt-main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .lt-main b{font-size:13.5px}
+  .lt-you{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+  .lt-hours{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lt-chip{flex:none;font-family:"IBM Plex Mono",monospace;font-size:10px;border-radius:var(--r-full);padding:3px 9px;white-space:nowrap;background:#F0EEF3;color:#6E6B77}
+  .lt-chip em{font-style:normal;opacity:.8}
+  .lt-chip.ok{background:#E6F4EA;color:#0B6B33}.lt-chip.busy{background:#FBEED2;color:#8A6D1B}.lt-chip.later{background:var(--purple-wash);color:var(--purple-deep)}
+  .lt-set{margin-top:10px;align-self:flex-start}
+  .w-lt .lt-row{padding:7px 0}
+  .ms-now{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .ms-now b{color:var(--text)}
+  .ms-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ms-opt{display:flex;align-items:center;gap:9px;padding:11px 14px;border:1px solid var(--rule);border-radius:var(--r-md);background:#fff;font:inherit;font-size:14px;cursor:pointer;text-align:left}
+  .ms-opt:hover{border-color:var(--purple)}
+  .ms-opt i{width:10px;height:10px;border-radius:50%;background:#C9C5D0}
+  .ms-opt.ok i{background:#10A34A}.ms-opt.busy i{background:#E0A526}
+  .ms-opt.on{border-color:var(--purple);box-shadow:0 0 0 1px var(--purple);background:var(--purple-wash)}
+  @media (max-width:600px){ .tb-live-k{display:none} .tb-live{margin-left:8px} }
 .build-tag{margin:16px 0 0;font-size:11px;color:var(--muted);text-align:center;letter-spacing:.05em}
 </style>
 </head>
@@ -1170,6 +1231,7 @@
   <div class="topbar">
     <div class="topbar-in">
       <div class="wordmark">ot<span class="g">g</span></div>
+      <div class="tb-live" id="tbLive"></div>
       <div class="spacer"></div>
       <div class="usermenu" id="userMenu">
         <button class="user-btn" onclick="toggleUserMenu(event)">
@@ -1241,6 +1303,8 @@ let strikes=[];   /* #1 strike ledger: {id,empId,action:'add'|'remove',reason,da
 let qotwEntries=[], qotwGuests={}, qwDraft=null;   /* #2 Questions of the Week */
 let qRand=null;   /* Randomizer round (leaders, this screen only): {ids:[entry ids pinned on top], skipped:Set} */
 let surveyResponses=[], surveyRounds={}, surveyMine=new Set();   /* #3 anonymous survey */
+let surveyQuestions=[];   /* Build 46: leader-written questions {id,month,sort,kind:'text'|'rating',prompt} */
+let leaderStatus={}, leaderClock={}, leaderPollTimer=null;   /* Build 46: leader availability */
 let timeOffCat={};   /* #7 time_off id -> 'regular' | 'emergency' (leaders see all; employees only their own) */
 
 /* weekly schedule — employee sets their own */
@@ -1491,7 +1555,7 @@ function renderLogin(msg,isErr){
     el.innerHTML=`${down0}<button class="btn auth-google" id="authGoogle" onclick="authGoogle()"><span class="g-mark" aria-hidden="true">G</span><span>Sign in with Google</span></button>
       <p class="auth-sub">Use your @onetelgem.com account. Google asks for your 2-Step code.</p>${note0}
       <button class="auth-backup" onclick="authBackup=true;authMode='signin';renderLogin()">Backup sign-in with email &amp; password</button>
-      <p class="build-tag">Build 45 · faster, smoother Google sign-in</p>`;
+      <p class="build-tag">Build 46 · survey questions · leaders on now</p>`;
     return;
   }
   const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
@@ -1506,7 +1570,7 @@ function renderLogin(msg,isErr){
        <button class="btn btn-primary auth-go" id="authGo" onclick="authSignUp()">Create account</button>`;
   el.innerHTML=`<button class="auth-backup back" onclick="authBackup=false;renderLogin()">&larr; Back to Sign in with Google</button>
     <p class="auth-sub">Backup only — this stops working once password sign-in is turned off in Supabase.</p>
-    ${svcDown}${form}${note}<p class="build-tag">Build 45 · faster, smoother Google sign-in</p>`;
+    ${svcDown}${form}${note}<p class="build-tag">Build 46 · survey questions · leaders on now</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1712,14 +1776,21 @@ async function loadMyState(){
   widgetStore[currentUser.id]={reminders:[],todos:rawTodos.map(t=>typeof t==='string'?{id:tuid(),text:t,done:false}:{id:t.id||tuid(),text:t.text||'',done:!!t.done})};
   homeSize[currentUser.id]=(d.sizes&&typeof d.sizes==='object')?d.sizes:{};
   recentColors=Array.isArray(d.recentColors)?d.recentColors.slice(0,5):[];
+  /* Build 46: put "Leaders today" on everyone's dashboard once (they can remove it after) */
+  if(!d.leadersAdded){ myFlags.leadersAdded=true;
+    const arr=userWidgets(currentUser);
+    if(!arr.includes('leaders')){const spot=firstFree(currentUser,'leaders',null); if(spot){arr.push('leaders');posMap(currentUser).leaders=spot;}}
+    saveMyState(); }
+  else myFlags.leadersAdded=true;
 }
+const myFlags={};
 let myStateTimer=null;
 function saveMyState(){
   if(!live())return;
   clearTimeout(myStateTimer);
   myStateTimer=setTimeout(async()=>{
     const payload={widgets:userWidgets(currentUser),pos:posMap(currentUser),
-      todos:userStore(currentUser).todos,recentColors:recentColors,sizes:homeSize[currentUser.id]||{}};
+      todos:userStore(currentUser).todos,recentColors:recentColors,sizes:homeSize[currentUser.id]||{},leadersAdded:!!myFlags.leadersAdded};
     const {error}=await sb.from('user_state').upsert({user_id:currentUser.id,data:payload,updated_at:new Date().toISOString()});
     if(error)toast('Widgets not saved: '+error.message);
   },500);
@@ -1739,6 +1810,12 @@ function subscribeMisc(){
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'survey_responses'},()=>{
       loadSurvey().then(()=>{paintUserMenu();}).catch(()=>{});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'leader_status'},()=>{
+      loadLeaderPresence().then(()=>{paintLive();refreshLeadersWidget();}).catch(()=>{});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'survey_questions'},()=>{
+      loadSurvey().catch(()=>{});
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'survey_rounds'},()=>{
       loadSurvey().then(()=>{paintUserMenu();}).catch(()=>{});
@@ -2133,10 +2210,12 @@ async function enterApp(session){
     step(loadTimeOffCats,'Could not load time off types'), step(loadTimeOff,'Could not load time off'),
     step(loadPriorities,'Could not load projects'), step(loadNotices,'Could not load notices'),
     step(loadAudit,'Could not load change log'), step(loadMyState,'Could not load your widgets'),
-    step(loadChat,'Could not load messages')
+    step(loadChat,'Could not load messages'),
+    step(loadLeaderPresence,null)
   ]);
   /* leader data last: the laptop benefit check needs pay periods + reimbursements loaded first */
   if(canManage(currentUser)){ try{ await loadLeaderData(); }catch(e){ /* Build 42 tables */ } }
+  startLeaderPolling();
   subscribeShifts();
   subscribePayroll();
   subscribeMisc();
@@ -2347,7 +2426,7 @@ document.addEventListener('click',()=>{if(menuOpen)closeMenu();closeUserMenu();}
 function render(){
   document.body.classList.toggle('home-bg', activeTab==='home' && !selectedEmpId && !chatPageOpen);
   document.getElementById('view').innerHTML=renderBody();
-  paintMenu();paintUserMenu();
+  paintMenu();paintUserMenu();paintLive();
 }
 function renderBody(){
   if(chatPageOpen)return messagingPage();
@@ -2363,6 +2442,7 @@ function renderBody(){
     case 'team':return teamTab();
     case 'pay':return payTab();
     case 'audit':return auditTab();
+    case 'myschedule':return canManage(currentUser)?myScheduleTab():homeTab();
     case 'security':return isOwner(currentUser)?securityTab():homeTab();
     default:return homeTab();
   }
@@ -2392,6 +2472,7 @@ function paintUserMenu(){
     +`<button class="um-send" onclick="openSendNotif(event)" title="Send a message" aria-label="Send a message"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M3 11.5 21 3l-8.5 18-2.2-7.3z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></button>`
     +`</div>${reqBtn}${body}</div><div class="um-div"></div>`;
   panel.innerHTML=inbox
+    +(canManage(currentUser)?`<button class="menu-item" onclick="event.stopPropagation();closeUserMenu();openMyStatus()">Set my status</button>`:'')
     +`<button class="menu-item" onclick="openProfile(event)">Profile</button>`
     +`<button class="menu-item" onclick="signOut()">Sign out</button>`;
 }
@@ -2408,6 +2489,7 @@ const WIDGETS=[
   {key:'todos',label:'To-do list'},
   {key:'strikes',label:'Strikes'},
   {key:'timeoff',label:'Time off'},
+  {key:'leaders',label:'Leaders today'},
 ];
 function defaultWidgets(u){return u.role==='manager'?['time','priorities','notifications']:['clock','break','time','priorities'];}
 function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u).slice();
@@ -2416,7 +2498,7 @@ function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u
 function userStore(u){if(!widgetStore[u.id])widgetStore[u.id]={reminders:[],todos:[]};return widgetStore[u.id];}
 function availableWidgets(u){return WIDGETS.filter(w=>!w.clockOnly||clocksIn(u));}
 const GRID_COLS=4, GRID_MAXR=40; /* 4 columns wide; board grows down */
-const WDIM={time:{w:4,h:1},clock:{w:2,h:2},break:{w:1,h:1},priorities:{w:1,h:2},notifications:{w:2,h:1},calendar:{w:2,h:2},todos:{w:2,h:2},strikes:{w:1,h:1},timeoff:{w:2,h:1}};
+const WDIM={time:{w:4,h:1},clock:{w:2,h:2},break:{w:1,h:1},priorities:{w:1,h:2},notifications:{w:2,h:1},calendar:{w:2,h:2},todos:{w:2,h:2},strikes:{w:1,h:1},timeoff:{w:2,h:1},leaders:{w:2,h:2}};
 let homeSize={};   /* userId -> { widgetKey: {w,h} } chosen sizes */
 function dimOf(k){const s=(homeSize[currentUser.id]||{})[k];return s||WDIM[k]||{w:2,h:1};}
 function posMap(u){if(!homePos[u.id])homePos[u.id]={};return homePos[u.id];}
@@ -2583,6 +2665,7 @@ function widgetBody(k){
       <div class="w-strk-n">${st.n}<span> / ${STRIKE_MAX}</span></div>
       <div class="w-sub">${st.last?'Last strike '+timeSinceKey(st.last)+' ago':'No strikes on record'}</div></div>`;
   }
+  if(k==='leaders'){return `<div class="lt-list w-lt" id="wLeaders">${leadersTodayHTML()}</div>`;}
   if(k==='timeoff'){   /* always the signed-in person's own; leaders also see their own red bar */
     return `<div class="w-pto">${timeOffBlocks(u.id,canManage(u))}</div>`;
   }
@@ -4004,14 +4087,18 @@ async function loadSurvey(){
   if(canManage(currentUser)){
     const [r1,r2]=await Promise.all([sb.from('survey_responses').select('*'),sb.from('survey_rounds').select('*')]);
     if(r1.error)throw r1.error; if(r2.error)throw r2.error;
-    (r1.data||[]).forEach(r=>resp.push({id:r.id,month:r.month,body:r.body||''}));
+    (r1.data||[]).forEach(r=>resp.push({id:r.id,month:r.month,body:r.body||'',answers:Array.isArray(r.answers)?r.answers:[]}));
     (r2.data||[]).forEach(r=>{rounds[r.month]={by:r.sent_by_name||'',at:new Date(r.sent_at).getTime(),status:r.status||'sent'};});
   }
   const r3=await sb.from('survey_submissions').select('month').eq('user_id',currentUser.id);
   if(r3.error)throw r3.error;
   (r3.data||[]).forEach(r=>mine.add(r.month));
   surveyResponses=resp;surveyRounds=rounds;surveyMine=mine;
+  try{const {data,error}=await sb.from('survey_questions').select('*');   /* Build 46 table */
+    if(!error)surveyQuestions=(data||[]).map(r=>({id:r.id,month:r.month,sort:Number(r.sort)||0,kind:r.kind,prompt:r.prompt||''}));}catch(e){}
 }
+function questionsFor(m){return surveyQuestions.filter(q=>q.month===m).sort((a,b)=>a.sort-b.sort||a.prompt.localeCompare(b.prompt));}
+function questionAnswered(q){return surveyResponses.some(r=>r.month===q.month&&(r.answers||[]).some(a=>a.q===q.id));}
 function surveyReminderDue(){const m=surveyMonth();return (canManage(currentUser)&&!surveyRounds[m])?m:null;}
 function surveyButton(){
   const sent=isQParticipant(currentUser)&&surveyMine.has(surveyMonth());
@@ -4029,22 +4116,35 @@ function openSurveyForm(){
       <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div></div></div>`;
     return;
   }
-  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal compose">
-    <h3>Anonymous feedback</h3><p class="cmp-sub">${surveyMonthLabel(m)} · one per month</p>
-    <div class="cmp-field"><textarea id="svBody" rows="7" aria-label="Your anonymous feedback"></textarea></div>
+  const qs=questionsFor(m);
+  const qHTML=qs.map((q,i)=>q.kind==='rating'
+    ?`<div class="svq"><div class="svq-p">${i+1}. ${esc(q.prompt)}</div><div class="svq-rate" data-q="${q.id}">
+        ${[1,2,3,4,5].map(n=>`<button type="button" class="svq-n" onclick="pickRating('${q.id}',${n})" id="svr_${q.id}_${n}">${n}</button>`).join('')}
+        <span class="svq-scale">1 = low · 5 = high</span></div></div>`
+    :`<div class="svq"><div class="svq-p">${i+1}. ${esc(q.prompt)}</div><div class="cmp-field"><textarea id="svt_${q.id}" rows="3"></textarea></div></div>`).join('');
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal compose sv-form">
+    <h3>Anonymous feedback</h3><p class="cmp-sub">${surveyMonthLabel(m)} · one per month${qs.length?' · answer what you like':''}</p>
+    ${qHTML}
+    ${qs.length?`<div class="svq-p svq-open">Anything else? <span class="opt">optional</span></div>`:''}
+    <div class="cmp-field"><textarea id="svBody" rows="${qs.length?4:7}" aria-label="Your anonymous feedback"></textarea></div>
     <div class="sv-privacy">Your name is never attached to this — not in the app and not in the database. Leadership only sees what you write.</div>
     <div class="err" id="svErr"></div>
     <div class="cmp-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary btn-sm" onclick="submitSurvey()">Send anonymously</button></div></div></div>`;
 }
+const svRatings={};
+function pickRating(qid,n){svRatings[qid]=svRatings[qid]===n?null:n;
+  [1,2,3,4,5].forEach(k=>{const b=document.getElementById('svr_'+qid+'_'+k);if(b)b.classList.toggle('on',svRatings[qid]===k);});}
 async function submitSurvey(){
   const err=document.getElementById('svErr'),body=(document.getElementById('svBody').value||'').trim();
-  if(!body){err.textContent='Write a comment first.';return;}
-  const m=surveyMonth();
+  const m=surveyMonth(), qs=questionsFor(m);
+  const answers=qs.map(q=>({q:q.id,v:q.kind==='rating'?(svRatings[q.id]?String(svRatings[q.id]):''):((document.getElementById('svt_'+q.id)||{}).value||'').trim()})).filter(a=>a.v);
+  if(!body&&!answers.length){err.textContent=qs.length?'Answer at least one question first.':'Write a comment first.';return;}
   if(live()){
-    const {error}=await sb.rpc('otg_submit_survey',{p_body:body});
-    if(error){err.textContent=error.message;return;}
-  }else if(canManage(currentUser)){surveyResponses.push({id:'sv'+Date.now(),month:m,body});}
+    const {error}=qs.length?await sb.rpc('otg_submit_survey_v2',{p_body:body,p_answers:answers}):await sb.rpc('otg_submit_survey',{p_body:body});
+    if(error){err.textContent=/otg_submit_survey_v2|schema cache|function/i.test(error.message)?'Survey questions need the Build 46 SQL in Supabase first.':error.message;return;}
+  }else if(canManage(currentUser)){surveyResponses.push({id:'sv'+Date.now(),month:m,body,answers});}
+  qs.forEach(q=>{delete svRatings[q.id];});
   surveyMine.add(m);closeModal();render();toast('Feedback sent anonymously');
 }
 function openSurveyReader(month){
@@ -4058,16 +4158,76 @@ function openSurveyReader(month){
     :round.status==='skipped'
       ?`<div class="sv-skip"><span>This month's survey was skipped${round.by?' by '+esc(round.by):''} · the reminder returns next month.</span><button class="btn btn-line btn-sm" onclick="sendOutSurvey()">Send it anyway</button></div>`
       :`<div class="sv-sent">This month's survey was sent out ${fmtDay(round.at)}${round.by?' by '+esc(round.by):''}.</div>`;
-  const rows=list.length?list.map(r=>`<div class="sv-row"><div class="sv-body">${esc(r.body).replace(/\n/g,'<br>')}</div></div>`).join('')
-    :'<div class="empty">No feedback for this month yet.</div>';
+  const qs=questionsFor(m), editable=m===cur;
+  const qManage=editable?`<div class="svm"><div class="svm-h"><span class="ml">${surveyMonthLabel(cur)} questions</span>
+      <button class="btn btn-line btn-xs" onclick="openSurveyQuestion(null)">+ Add question</button></div>
+      ${qs.length?qs.map((q,i)=>`<div class="svm-q"><span class="svm-n">${i+1}</span><span class="svm-t">${esc(q.prompt)}</span>
+        <span class="svm-k">${q.kind==='rating'?'1–5 rating':'Written'}</span>
+        ${questionAnswered(q)?'<span class="svm-lock" title="Someone already answered this — it can\'t be changed">answered</span>':`<button class="day-edit" title="Edit" onclick="openSurveyQuestion('${q.id}')">${penIcon}</button>`}</div>`).join('')
+        :'<div class="svm-empty">No questions yet — employees will just see the open comment box.</div>'}</div>`:'';
+  const results=qs.map((q,i)=>{
+    const ans=list.map(r=>(r.answers||[]).find(a=>a.q===q.id)).filter(Boolean).map(a=>a.v);
+    if(q.kind==='rating'){
+      const nums=ans.map(Number).filter(n=>n>=1&&n<=5), avg=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0;
+      const dist=[1,2,3,4,5].map(n=>nums.filter(x=>x===n).length), mx=Math.max(1,...dist);
+      return `<div class="svr"><div class="svr-p">${i+1}. ${esc(q.prompt)}</div>
+        <div class="svr-rate"><div class="svr-avg"><b>${nums.length?avg.toFixed(1):'—'}</b><span>average · ${nums.length} answer${nums.length===1?'':'s'}</span></div>
+          <div class="svr-dist">${dist.map((c,k)=>`<div class="svr-bar"><span class="svr-k">${k+1}</span><span class="svr-track"><i style="width:${(c/mx*100).toFixed(0)}%"></i></span><span class="svr-c">${c}</span></div>`).join('')}</div></div></div>`;
+    }
+    return `<div class="svr"><div class="svr-p">${i+1}. ${esc(q.prompt)}</div>
+      ${ans.length?ans.map(v=>`<div class="sv-row"><div class="sv-body">${esc(v).replace(/\n/g,'<br>')}</div></div>`).join(''):'<div class="svm-empty">No answers yet.</div>'}</div>`;
+  }).join('');
+  const open=list.filter(r=>(r.body||'').trim());
+  const openRows=open.length?open.map(r=>`<div class="sv-row"><div class="sv-body">${esc(r.body).replace(/\n/g,'<br>')}</div></div>`).join(''):'<div class="svm-empty">Nothing here yet.</div>';
+  const rows=list.length?results+`<div class="svr"><div class="svr-p">${qs.length?'Anything else':'Comments'}</div>${openRows}</div>`
+    :(qs.length?`<div class="empty">No responses yet.</div>`:'<div class="empty">No feedback for this month yet.</div>');
   const own=isQParticipant(currentUser)?`<button class="btn btn-line btn-sm" onclick="openSurveyForm()">${surveyMine.has(cur)?'Your feedback ✓':'Share your own'}</button>`:'';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal sv-modal">
     <h3>Anonymous feedback</h3><p class="sub">Names are never stored · managers &amp; co-managers only</p>
-    ${sendBox}
+    ${sendBox}${qManage}
     <div class="sv-head"><select class="role-sel" onchange="openSurveyReader(this.value)">${months.map(x=>`<option value="${x}" ${x===m?'selected':''}>${surveyMonthLabel(x)}</option>`).join('')}</select>
       <span class="sv-count">${list.length} response${list.length===1?'':'s'}</span></div>
     <div class="sv-list">${rows}</div>
     <div class="modal-actions edit-actions">${own||'<span></span>'}<span class="ea-right"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></span></div></div></div>`;
+}
+function openSurveyQuestion(id){
+  if(!canManage(currentUser))return;
+  const q=id?surveyQuestions.find(x=>x.id===id):{prompt:'',kind:'text'};
+  if(!q)return;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)openSurveyReader()"><div class="modal">
+    <h3>${id?'Edit question':'Add a question'}</h3><p class="sub">${surveyMonthLabel(surveyMonth())} survey · answers stay anonymous</p>
+    <div class="field"><label>Question</label><textarea class="log-area" id="sqPrompt" rows="3" placeholder="e.g. How supported do you feel by leadership this month?">${esc(q.prompt)}</textarea></div>
+    <div class="field"><label>Answer type</label><div class="seg" style="margin:0">
+      <button class="seg-opt ${q.kind==='text'?'on':''}" id="sqText" onclick="sqKind('text')">Written answer</button>
+      <button class="seg-opt ${q.kind==='rating'?'on':''}" id="sqRate" onclick="sqKind('rating')">1–5 rating</button></div></div>
+    <div class="err" id="sqErr"></div>
+    <div class="modal-actions edit-actions"><span>${id?`<button class="btn btn-line btn-sm rl-deact" onclick="saveSurveyQuestion('${id}',true)">Remove</button>`:''}</span>
+      <span class="ea-right"><button class="btn btn-line btn-sm" onclick="openSurveyReader()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveSurveyQuestion(${id?`'${id}'`:'null'})">Save</button></span></div></div></div>`;
+  sqDraftKind=q.kind;
+}
+let sqDraftKind='text';
+function sqKind(k){sqDraftKind=k;document.getElementById('sqText').classList.toggle('on',k==='text');document.getElementById('sqRate').classList.toggle('on',k==='rating');}
+async function saveSurveyQuestion(id,remove){
+  const err=document.getElementById('sqErr'), m=surveyMonth();
+  const prompt=remove?'':(document.getElementById('sqPrompt').value||'').trim();
+  if(!remove&&!prompt){err.textContent='Write the question.';return;}
+  const sqErr=e=>/survey_questions|schema cache|relation/i.test(e.message||'')?'Run the Build 46 SQL in Supabase first':e.message;
+  if(live()){
+    let res;
+    if(remove)res=await sb.from('survey_questions').delete().eq('id',id);
+    else if(id)res=await sb.from('survey_questions').update({prompt,kind:sqDraftKind}).eq('id',id).select().single();
+    else res=await sb.from('survey_questions').insert({month:m,sort:questionsFor(m).length+1,kind:sqDraftKind,prompt,created_by:currentUser.id,created_by_name:currentUser.name}).select().single();
+    if(res.error){err.textContent='Could not save: '+sqErr(res.error);return;}
+    if(remove)surveyQuestions=surveyQuestions.filter(x=>x.id!==id);
+    else{const d=res.data,n={id:d.id,month:d.month,sort:Number(d.sort)||0,kind:d.kind,prompt:d.prompt};
+      const i=surveyQuestions.findIndex(x=>x.id===n.id); if(i>=0)surveyQuestions[i]=n; else surveyQuestions.push(n);}
+  }else{
+    if(remove)surveyQuestions=surveyQuestions.filter(x=>x.id!==id);
+    else if(id)Object.assign(surveyQuestions.find(x=>x.id===id),{prompt,kind:sqDraftKind});
+    else surveyQuestions.push({id:'sq'+Date.now(),month:m,sort:questionsFor(m).length+1,kind:sqDraftKind,prompt});
+  }
+  openSurveyReader();toast(remove?'Question removed':'Question saved');
 }
 async function sendOutSurvey(fromPrompt){
   if(!canManage(currentUser))return;
@@ -4977,6 +5137,107 @@ async function reviewAllSec(){
   if(live()){const {error}=await sb.from('security_events').update({reviewed:true,reviewed_by_name:currentUser.name,reviewed_at:new Date().toISOString()}).in('id',ids);
     if(error){toast('Not saved: '+error.message);return;}}
   secEvents.forEach(e=>{if(!e.reviewed){e.reviewed=true;e.by=currentUser.name;}});render();paintUserMenu();toast('All marked reviewed');
+}
+
+/* ================= LEADER AVAILABILITY (Build 46) =================
+   Who's a leader: active managers & co-managers (owners included).
+   Live = clocked in, OR status Available / In a meeting today, OR inside today's scheduled hours
+   (unless the leader set Away / Off today). Status only counts on the day it was set (Utah time).
+   Everyone sees live leaders in the top bar and a "Leaders today" dashboard widget. */
+const LEADER_STATUS={available:{label:'Available',live:true,tone:'ok'},meeting:{label:'In a meeting',live:true,tone:'busy'},
+  away:{label:'Away',live:false,tone:'away'},off:{label:'Off today',live:false,tone:'off'}};
+function leaderList(){return employees.filter(e=>isActive(e)&&(e.role==='manager'||e.role==='comanager')).sort(byLast);}
+async function loadLeaderPresence(){
+  const [st,oc]=await Promise.all([sb.from('leader_status').select('*'),sb.rpc('otg_leaders_on_clock')]);
+  if(!st.error){leaderStatus={};(st.data||[]).forEach(r=>{leaderStatus[r.user_id]={status:r.status,note:r.note||'',setOn:r.set_on};});}
+  if(!oc.error){leaderClock={};(oc.data||[]).forEach(r=>{leaderClock[r.user_id]=new Date(r.since).getTime();});}
+}
+function startLeaderPolling(){
+  clearInterval(leaderPollTimer);
+  leaderPollTimer=setInterval(async()=>{ if(!currentUser)return;
+    if(live()){try{await loadLeaderPresence();}catch(e){}}
+    paintLive(); if(activeTab==='home'&&!selectedEmpId&&!chatPageOpen)refreshLeadersWidget(); },60000);
+}
+/* a leader's slots for today in their own time zone → {start,end} timestamps */
+function leaderSlotsToday(e){
+  const tz=tzOf(e.id), p=partsIn(Date.now(),tz), day=(schedules[e.id]||{})[DOW[p.dow]];
+  return (Array.isArray(day)?day:[]).map(sl=>{const [sh,sm]=sl.start.split(':').map(Number),[eh,em]=sl.end.split(':').map(Number);
+    return {start:wallToTs(p.y,p.mo,p.d,sh,sm,tz),end:wallToTs(p.y,p.mo,p.d,eh,em,tz)};}).sort((a,b)=>a.start-b.start);
+}
+function leaderPresence(e){
+  const now=Date.now(), st=leaderStatus[e.id], today=st&&st.setOn===todayKey()?st:null;
+  const since=leaderClock[e.id]||(openShift(e.id)?openShift(e.id).clockIn:null);
+  const slots=leaderSlotsToday(e), inSlot=slots.find(s=>now>=s.start&&now<s.end), next=slots.find(s=>s.start>now);
+  const me=currentUser?currentUser.id:null, t=ts=>fmtTimeFor(me,ts);
+  const hours=slots.length?slots.map(s=>t(s.start)+' – '+t(s.end)).join(', '):'';
+  const note=today&&today.note?today.note:'';
+  if(since){
+    const busy=today&&(today.status==='meeting'||today.status==='away');
+    return {live:true,tone:busy?'busy':'ok',label:busy?LEADER_STATUS[today.status].label:'Clocked in',sub:'since '+t(since),hours,note};
+  }
+  if(today){const d=LEADER_STATUS[today.status];
+    return {live:d.live,tone:d.tone,label:d.label,sub:d.live&&inSlot?'until '+t(inSlot.end):(d.live?'':(next&&today.status!=='off'?'back '+t(next.start):'')),hours,note};}
+  if(inSlot)return {live:true,tone:'ok',label:'Working',sub:'until '+t(inSlot.end),hours,note};
+  if(next)return {live:false,tone:'later',label:'Later today',sub:'starts '+t(next.start),hours,note};
+  return {live:false,tone:'off',label:slots.length?'Done for today':'Not scheduled today',sub:'',hours,note};
+}
+/* top bar: small avatars of the leaders who are on right now (nothing shows when nobody is) */
+function paintLive(){
+  const el=document.getElementById('tbLive'); if(!el)return;
+  if(!currentUser){el.innerHTML='';return;}
+  const on=leaderList().map(e=>({e,p:leaderPresence(e)})).filter(x=>x.p.live);
+  el.innerHTML=on.length?`<button class="tb-live-btn" onclick="openLeadersToday()" title="Leaders on now — click for today's hours">
+      <span class="tb-live-k">On now</span>${on.map(({e,p})=>`<span class="tb-av ${p.tone}" style="${avatarStyle(e)}" title="${esc(e.name)} · ${esc(p.label)}${p.sub?' '+esc(p.sub):''}${p.note?' · '+esc(p.note):''}">${initials(e.name)}<i></i></span>`).join('')}</button>`:'';
+}
+function leadersTodayHTML(){
+  const list=leaderList();
+  if(!list.length)return '<div class="w-empty">No leaders yet.</div>';
+  return list.map(e=>{const p=leaderPresence(e);
+    return `<div class="lt-row"><span class="lt-av" style="${avatarStyle(e)}">${initials(e.name)}<i class="${p.tone}"></i></span>
+      <span class="lt-main"><b>${esc(e.name)}${e.id===currentUser.id?' <span class="lt-you">you</span>':''}</b>
+        <span class="lt-hours">${p.hours?esc(p.hours):'No hours set for today'}${p.note?' · '+esc(p.note):''}</span></span>
+      <span class="lt-chip ${p.tone}">${esc(p.label)}${p.sub?` <em>${esc(p.sub)}</em>`:''}</span></div>`;}).join('')
+    +(canManage(currentUser)?`<button class="linkish lt-set" onclick="openMyStatus()">Set my status &amp; hours</button>`:'');
+}
+function refreshLeadersWidget(){const w=document.getElementById('wLeaders');if(w)w.innerHTML=leadersTodayHTML();}
+function openLeadersToday(){
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>Leaders today</h3><p class="sub">Times shown in ${esc(tzLabel(tzOf(currentUser.id)))}</p>
+    <div class="lt-list">${leadersTodayHTML()}</div>
+    <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Close</button></div></div></div>`;
+}
+function openMyStatus(){
+  if(!canManage(currentUser))return;
+  const cur=leaderStatus[currentUser.id], today=cur&&cur.setOn===todayKey()?cur:null, p=leaderPresence(currentUser);
+  const opt=k=>`<button class="ms-opt ${today&&today.status===k?'on':''} ${LEADER_STATUS[k].tone}" onclick="saveMyStatus('${k}')"><i></i>${LEADER_STATUS[k].label}</button>`;
+  document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
+    <h3>My status</h3><p class="sub">Shown to everyone · resets at midnight</p>
+    <div class="ms-now">Right now you show as <b>${esc(p.label)}</b>${p.sub?' '+esc(p.sub):''}${p.live?' and appear in the top bar':''}.</div>
+    <div class="ms-opts">${opt('available')}${opt('meeting')}${opt('away')}${opt('off')}</div>
+    <div class="field" style="margin-top:16px"><label>Note <span class="opt">optional · e.g. "Back at 2"</span></label><input type="text" id="msNote" maxlength="120" value="${esc(today?today.note:'')}"></div>
+    <p class="mini" style="margin:0">With no status set, your weekly hours decide: you show as working during them${clocksIn(currentUser)?', and always while you\'re clocked in':''}.</p>
+    <div class="err" id="msErr"></div>
+    <div class="modal-actions edit-actions"><span><button class="btn btn-line btn-sm" onclick="closeModal();goTab('myschedule')">Edit my weekly hours</button></span>
+      <span class="ea-right">${today?'<button class="btn btn-line btn-sm" onclick="saveMyStatus(null)">Clear status</button>':''}
+      <button class="btn btn-primary btn-sm" onclick="saveMyStatus(${today?`'${today.status}'`:'null'},true)">Done</button></span></div></div></div>`;
+}
+async function saveMyStatus(status,keepOpen){
+  const note=((document.getElementById('msNote')||{}).value||'').trim();
+  const err=document.getElementById('msErr');
+  if(live()){
+    const res=status?await sb.from('leader_status').upsert({user_id:currentUser.id,status,note:note||null,set_on:todayKey(),updated_at:new Date().toISOString()})
+                    :await sb.from('leader_status').delete().eq('user_id',currentUser.id);
+    if(res.error){if(err)err.textContent='Could not save: '+(/leader_status|schema cache|relation/i.test(res.error.message)?'run the Build 46 SQL in Supabase first':res.error.message);return;}
+  }
+  if(status)leaderStatus[currentUser.id]={status,note,setOn:todayKey()}; else delete leaderStatus[currentUser.id];
+  paintLive(); render();
+  if(keepOpen){closeModal();toast(status?'Status saved':'Done');} else openMyStatus();
+}
+function myScheduleTab(){
+  return `<button class="back" onclick="goTab('home')">&larr; Dashboard</button>`
+    +pageHead('My schedule','shown to the whole team · '+tzLabel(tzOf(currentUser.id)))
+    +`<div class="sec first"><p class="lede">Set the hours you're usually working. Employees see these on the Dashboard, and you show in the top bar during them. For one-off changes, use <button class="linkish" onclick="openMyStatus()">Set my status</button>.</p>
+      ${scheduleTab(currentUser.id,true,true)}</div>`;
 }
 
 /* ================= CORRECTIONS ================= */
