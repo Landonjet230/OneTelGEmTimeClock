@@ -1413,7 +1413,8 @@ function netMs(s){return (s.clockOut||Date.now())-s.clockIn;}
 function openShift(id){return shifts.find(s=>s.empId===id&&s.clockOut===null);}
 function daysFor(id){return shifts.filter(s=>s.empId===id).sort((a,b)=>b.clockIn-a.clockIn);}
 function weekTotal(id){const w=now-7*DAY;return shifts.filter(s=>s.empId===id&&s.clockIn>=w).reduce((t,s)=>t+netMs(s),0);}
-/* role helpers — managers and co-managers share management powers; co-managers + employees clock in */
+/* role helpers (Build 47) — two roles only: Employee and Co-manager. Every co-manager has the full controls
+   (roles, pay type, activation, rates, adding accounts). 'manager' from old data is read as co-manager. */
 /* OWNER (Build 40) = a yes/no flag on the profile (profiles.is_owner), never a database role, so the
    database's security rules still see the person as a manager / co-manager. Several owners are allowed.
    Only owners can change roles, pay type, activation and ownership (enforced in the database too).
@@ -1437,8 +1438,8 @@ function payTypeAt(id,ts){
 }
 function salarySince(id){const l=payChanges.filter(c=>c.empId===id&&c.payType==='salary').sort((a,b)=>b.at-a.at);return l.length?l[0].at:null;}
 function ownerCount(){return employees.filter(e=>isOwner(e)&&isActive(e)).length;}
-function canManage(u){return !!u&&(u.role==='manager'||u.role==='comanager'||isOwner(u));}
-function clocksIn(u){return !!u&&(u.role!=='manager'||isOwner(u));}
+function canManage(u){return !!u&&(u.role==='comanager'||u.role==='manager'||isOwner(u));}
+function clocksIn(u){return !!u;}   /* Build 47: everyone has the clock-in (salaried people just aren't on hourly payroll) */
 function lastName(n){const p=(n||'').trim().split(/\s+/);return p.length>1?p[p.length-1]:(p[0]||'');}
 function byLast(a,b){return lastName(a.name).localeCompare(lastName(b.name))||a.name.localeCompare(b.name);}
 function isActive(e){return !!e&&e.active!==false;}
@@ -1519,7 +1520,7 @@ let authMode='signin', authBusy=false;
 function demoEnter(){
   employees=[
     {id:'u_landon', name:'Landon Slocum',    email:'lslocum@onetelgem.com',   role:'comanager', rate:0, ownerFlag:true, payType:'salary'},
-    {id:'u_sarah',  name:'Sarah Vance',       email:'svance@onetelgem.org',    role:'manager',   rate:0},
+    {id:'u_sarah',  name:'Sarah Vance',       email:'svance@onetelgem.org',    role:'comanager', rate:19},
     {id:'u_mason',  name:'Mason Merrill',     email:'mmerrill@onetelgem.org',  role:'employee',  rate:17.00},
     {id:'u_connor', name:'Connor Williams',   email:'cwilliams@onetelgem.org', role:'employee',  rate:17.00}
   ];
@@ -1555,7 +1556,7 @@ function renderLogin(msg,isErr){
     el.innerHTML=`${down0}<button class="btn auth-google" id="authGoogle" onclick="authGoogle()"><span class="g-mark" aria-hidden="true">G</span><span>Sign in with Google</span></button>
       <p class="auth-sub">Use your @onetelgem.com account. Google asks for your 2-Step code.</p>${note0}
       <button class="auth-backup" onclick="authBackup=true;authMode='signin';renderLogin()">Backup sign-in with email &amp; password</button>
-      <p class="build-tag">Build 46 · survey questions · leaders on now</p>`;
+      <p class="build-tag">Build 47 · co-managers run everything</p>`;
     return;
   }
   const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
@@ -1570,7 +1571,7 @@ function renderLogin(msg,isErr){
        <button class="btn btn-primary auth-go" id="authGo" onclick="authSignUp()">Create account</button>`;
   el.innerHTML=`<button class="auth-backup back" onclick="authBackup=false;renderLogin()">&larr; Back to Sign in with Google</button>
     <p class="auth-sub">Backup only — this stops working once password sign-in is turned off in Supabase.</p>
-    ${svcDown}${form}${note}<p class="build-tag">Build 46 · survey questions · leaders on now</p>`;
+    ${svcDown}${form}${note}<p class="build-tag">Build 47 · co-managers run everything</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -1606,7 +1607,7 @@ async function authSignUp(){
 async function loadProfiles(){
   const {data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:true});
   if(error)throw error;
-  employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role,rate:Number(p.rate)||0,
+  employees=(data||[]).map(p=>({id:p.id,name:p.name||p.email,email:p.email,role:p.role==='manager'?'comanager':p.role,rate:Number(p.rate)||0,
     avatarColor:p.avatar_bg||'',initialsColor:p.avatar_fg||'',active:p.active!==false,timezone:p.timezone||'',
     ownerFlag:('is_owner' in p)?!!p.is_owner:undefined, payType:p.pay_type||'',
     deactivatedAt:p.deactivated_at?new Date(p.deactivated_at).getTime():null}));
@@ -1614,7 +1615,7 @@ async function loadProfiles(){
 async function loadPendingRoles(){
   if(!canManage(currentUser)){pendingRoles=[];return;}
   const {data}=await sb.from('pending_roles').select('*').order('email');
-  pendingRoles=data||[];
+  pendingRoles=(data||[]).map(r=>r.role==='manager'?{...r,role:'comanager'}:r);
 }
 async function loadShifts(){
   const {data,error}=await sb.from('shifts').select('*');
@@ -2012,7 +2013,7 @@ function pendingRequests(){return timeOff.filter(t=>t.status==='pending');}
 function pendingRequestCount(){return canManage(currentUser)?pendingRequests().length:0;}
 function openTimeOffRequest(ev){ if(ev)ev.stopPropagation(); closeUserMenu();
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
-    <h3>Request time off</h3><p class="sub">Your manager will approve or deny it.</p>
+    <h3>Request time off</h3><p class="sub">A co-manager will approve or deny it.</p>
     <div class="field"><label>First day</label><input type="date" id="toStart"></div>
     <div class="field"><label>Last day</label><input type="date" id="toEnd"></div>
     <div class="field"><label>Reason</label><input type="text" id="toReason" placeholder="e.g. Family trip"></div>
@@ -2037,7 +2038,7 @@ function openRequestDetail(id){
   const t=timeOff.find(x=>x.id===id);if(!t)return;
   const mgr=canManage(currentUser), pending=t.status==='pending';
   const statusChip=`<span class="rq-chip ${t.status}">${t.status[0].toUpperCase()+t.status.slice(1)}</span>`;
-  const decided=t.status!=='pending'?`<p class="rq-decided">${t.status==='approved'?'Approved':'Denied'} by ${esc(t.decidedByName||'a manager')}${t.response?' · “'+esc(t.response)+'”':''}</p>`:'';
+  const decided=t.status!=='pending'?`<p class="rq-decided">${t.status==='approved'?'Approved':'Denied'} by ${esc(t.decidedByName||'a co-manager')}${t.response?' · “'+esc(t.response)+'”':''}</p>`:'';
   const addNote=t.decidedByName?`<p class="rq-added">Added to the calendar by ${esc(t.decidedByName)} (approved this request)</p>`:(t.addedBy?`<p class="rq-added">Added to the calendar by ${esc(t.addedBy)}</p>`:'');
   const del=mgr?`<button class="del-shift" title="Delete this request" onclick="deleteTimeOff('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`:'';
   const typeCtl=mgr?`<div class="field"><label>Type <span class="opt">leaders only</span></label>${offTypePicker('rqType',offCat(t.id),(!pending&&t.status==='approved')?`changeOffType('${id}',this)`:'')}</div>`:'';
@@ -2192,7 +2193,7 @@ async function enterApp(session){
     }catch(e){/* fall through to message below */}
   }
   if(!currentUser){ renderLogin('Signed in, but your profile could not be created. Run supabase-fix-login.sql, then sign in again.',true); await sb.auth.signOut(); return; }
-  if(currentUser.active===false){ await sb.auth.signOut(); renderLogin('This account has been deactivated. Please contact your manager.'); return; }
+  if(currentUser.active===false){ await sb.auth.signOut(); renderLogin('This account has been deactivated. Please contact a co-manager.'); return; }
   renderSigningIn();
   await loadPendingRoles();
   liveSession=true;
@@ -2257,7 +2258,6 @@ async function initAuth(){
 }
 const TABS={
   owner:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'Hours'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Resources'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
-  manager:[{id:'home',label:'Dashboard'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Resources'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   comanager:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'Hours'},{id:'team',label:'Team'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Resources'},{id:'pay',label:'Payroll'},{id:'audit',label:'Change log'}],
   employee:[{id:'home',label:'Dashboard'},{id:'today',label:'TimeCard'},{id:'hours',label:'Hours'},{id:'calendar',label:'Calendar'},{id:'qotw',label:'Questions of the Week'},{id:'trainings',label:'Resources'}]
 };
@@ -2374,7 +2374,7 @@ function openSendNotif(ev){ev.stopPropagation();closeUserMenu();
        </div><input type="hidden" id="ntTo" value="all">`;
   const whoHidden = role==='employee' ? '' : 'hide';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal compose">
-    <h3>New message</h3><p class="cmp-sub" id="ntSub">${role==='employee'?'Sent to a manager or co-manager.':"Appears in your team's notifications."}</p>
+    <h3>New message</h3><p class="cmp-sub" id="ntSub">${role==='employee'?'Sent to a co-manager.':"Appears in your team's notifications."}</p>
     ${seg}
     <div class="cmp-field ${whoHidden}" id="ntWhoWrap"><label>${role==='employee'?'To':'Recipient'}</label>
       <input type="text" id="ntWho" list="ntNames" placeholder="Type a name" autocomplete="off">
@@ -2403,7 +2403,7 @@ function sendNotification(){
     const nm=(document.getElementById('ntWho').value||'').trim().toLowerCase();
     let who=activeAll().find(e=>e.id!==u.id&&e.name.toLowerCase()===nm);
     if(u.role==='employee'&&who&&!(who.role==='manager'||who.role==='comanager'||who.role==='owner'))who=null;
-    if(!who){err.textContent=u.role==='employee'?'Pick a manager or co-manager.':'Pick a valid name from your team.';return;}
+    if(!who){err.textContent=u.role==='employee'?'Pick a co-manager.':'Pick a valid name from your team.';return;}
     recips=[who];
   }
   if(live()){
@@ -2491,7 +2491,7 @@ const WIDGETS=[
   {key:'timeoff',label:'Time off'},
   {key:'leaders',label:'Leaders today'},
 ];
-function defaultWidgets(u){return u.role==='manager'?['time','priorities','notifications']:['clock','break','time','priorities'];}
+function defaultWidgets(u){return ['clock','break','time','priorities'];}
 function userWidgets(u){if(!homeWidgets[u.id])homeWidgets[u.id]=defaultWidgets(u).slice();
   const arr=homeWidgets[u.id]; const i=arr.indexOf('reminders'); if(i>=0)arr.splice(i,1);
   return arr;}
@@ -3164,7 +3164,7 @@ function hoursTab(){
       <div class="sec">${dayList(currentUser.id,{logEditable:true})}
       <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div>${payPeriodStat()}${strikeStat(currentUser.id,false)}${timeOffStat(currentUser.id,false)}</div>
       <div class="note" style="margin-top:22px">${canManage(currentUser)?'To fix your own clock times, open Team → your name and use the pencil — every correction is recorded.':'Your times are read-only. You can add to your daily work log, but if a time is wrong, ask a manager — every correction is recorded.'}</div></div>
-      <div class="sec" id="mySchedule"><div class="sec-head"><h2>My schedule</h2><span class="ml meta">visible to your manager</span></div>
+      <div class="sec" id="mySchedule"><div class="sec-head"><h2>My schedule</h2><span class="ml meta">visible to co-managers</span></div>
       ${scheduleTab(currentUser.id,true,true)}</div>`;
 }
 function timecardTab(){
@@ -3199,7 +3199,7 @@ function timecardTab(){
         ${breakNote}
         <span class="sched-today">${sched.length?'Scheduled today '+sched.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join(', '):'Not scheduled today'}</span>
       </div>${brk}${reminder}
-      <div class="sec"><div class="sec-head"><h2>Work log</h2><span class="ml meta">visible to your manager</span></div>
+      <div class="sec"><div class="sec-head"><h2>Work log</h2><span class="ml meta">visible to co-managers</span></div>
       ${logPanel(currentUser.id,dk,true)}</div>
       <div style="margin-top:26px"><button class="btn-ghost" onclick="testAlarm()">Test alarm sound</button></div>`;
 }
@@ -3231,7 +3231,7 @@ function scheduleTab(empId,editable,embed){
         <div class="stat"><div class="k">Worked so far this week</div><div class="v">${fmtDur(workedThisWeek(empId))}</div></div>
         <div class="stat"><div class="k">Days working</div><div class="v">${DOW.filter(k=>Array.isArray(s[k])&&s[k].length).length}</div></div></div>`;
   if(embed)return inner;
-  return pageHead(editable?'My schedule':'Schedule',(editable?'visible to your manager':nameOf(empId))+' · '+tzLabel(tzOf(empId)))
+  return pageHead(editable?'My schedule':'Schedule',(editable?'visible to co-managers':nameOf(empId))+' · '+tzLabel(tzOf(empId)))
     +`<div class="sec first">${inner}</div>`;
 }
 function ensureWeek(empId){if(!schedules[empId])schedules[empId]=blankWeek();
@@ -3292,26 +3292,26 @@ function teamTab(){
     +laptopSection()
     +rolesCard();
 }
-/* People & roles — everyone in leadership can see it; only OWNERS can change anything here */
-function roleLabel(r){return r==='comanager'?'Co-manager':r==='manager'?'Manager':'Employee';}
+/* People & roles (Build 47) — every co-manager can change roles, pay type, activation and add accounts.
+   The Owner's account can only be changed by an Owner; making / removing Owners is Owner-only. */
+function roleLabel(r){return r==='employee'?'Employee':'Co-manager';}
 function isLeaderRole(e){return e.role==='manager'||e.role==='comanager';}
 function rolesCard(){
-  const own=isOwner(currentUser);
+  const own=canManage(currentUser), boss=isOwner(currentUser);
   const people=employees.slice().sort(byLast).map(e=>{
-    const off=e.active===false, me=e.id===currentUser.id, sal=isSalaried(e), onPay=e.role!=='manager';
+    const off=e.active===false, me=e.id===currentUser.id, sal=isSalaried(e), onPay=true, locked=isOwner(e)&&!boss;
     const tags=(isOwner(e)?' <span class="owner-tag">Owner</span>':'')+(onPay&&sal?' <span class="sal-tag">Salary</span>':'')+(off?' <span class="inactive-tag">Inactive</span>':'');
     const who=`<span class="person"><span class="sq-av" style="${avatarStyle(e)}">${initials(e.name)}</span><span><b>${esc(e.name)}</b>${tags}<span class="mini" style="display:block">${esc(e.email||'')}</span></span></span>`;
-    if(!own){
-      return `<div class="role-row ${off?'inactive':''}">${who}<span class="role-ro">${roleLabel(e.role)}${onPay?' · '+(sal?'Salary':'Hourly'):''}</span></div>`;
+    if(!own||locked){
+      return `<div class="role-row ${off?'inactive':''}">${who}<span class="role-ro">${roleLabel(e.role)}${onPay?' · '+(sal?'Salary':'Hourly'):''}${locked?'<span class="mini" style="display:block">Only the Owner can change this account</span>':''}</span></div>`;
     }
     const roleSel=`<select class="role-sel" ${off?'disabled':''} onchange="changeRole('${e.id}',this.value)" title="Role">
         <option value="employee" ${e.role==='employee'?'selected':''}>Employee</option>
-        <option value="comanager" ${e.role==='comanager'?'selected':''}>Co-manager</option>
-        <option value="manager" ${e.role==='manager'?'selected':''}>Manager</option></select>`;
+        <option value="comanager" ${e.role!=='employee'?'selected':''}>Co-manager</option></select>`;
     const paySel=onPay?`<select class="role-sel pay-sel" ${off?'disabled':''} onchange="setPayType('${e.id}',this.value)" title="Pay type">
         <option value="hourly" ${!sal?'selected':''}>Hourly</option><option value="salary" ${sal?'selected':''}>Salary</option></select>`
-      :`<span class="role-na" title="Managers are never on hourly payroll">No payroll</span>`;
-    const ownBtn=(!off&&isLeaderRole(e))
+      :'';
+    const ownBtn=(boss&&!off&&isLeaderRole(e))
       ?(isOwner(e)?`<button class="btn btn-line btn-sm" onclick="setOwner('${e.id}',false)" ${ownerCount()<=1?'disabled title="There must always be at least one Owner"':''}>Remove owner</button>`
                  :`<button class="btn btn-line btn-sm" onclick="setOwner('${e.id}',true)">Make owner</button>`)
       :'';
@@ -3321,31 +3321,38 @@ function rolesCard(){
   }).join('');
   const pend=pendingRoles.length?pendingRoles.map(p=>`<div class="role-row">
       <span><b>${esc(p.email)}</b><span class="mini" style="display:block">hasn't signed up yet</span></span>
-      <span class="mini" style="text-transform:capitalize">${p.role==='comanager'?'Co-manager':p.role}</span>
+      <span class="mini">${roleLabel(p.role)}</span>
       ${own?`<button class="pri-x" onclick="removePendingRole('${esc(p.email)}')" title="Remove">&times;</button>`:''}</div>`).join('')
     :'<div class="empty">No pre-assigned roles waiting.</div>';
-  const head=own
-    ?`<p class="lede">You're an Owner: change roles, pay type (hourly or salary), ownership, and activation here. Switching someone to salary keeps their clock-in and takes them off hourly payroll from that moment — hours they worked while hourly stay on payroll. Owners must be a manager or co-manager.</p>
+  const head=boss
+    ?`<p class="lede">You're the Owner: change roles, pay type (hourly or salary), ownership, and activation here. Switching someone to salary keeps their clock-in and takes them off hourly payroll from that moment — hours they worked while hourly stay on payroll. Every co-manager has these same controls — except changing your account or making Owners, which only an Owner can do.</p>
       <div style="margin:0 0 14px"><button class="btn btn-primary btn-sm" onclick="openTransferOwner()">Transfer ownership</button></div>`
-    :`<p class="lede">Only an Owner can change roles, pay type, activation or ownership.</p>`;
+    :own?`<p class="lede">As a co-manager you can change roles, pay type (hourly or salary) and activation, and add new accounts below. Switching someone to salary keeps their clock-in and takes them off hourly payroll from that moment. The Owner's account can only be changed by the Owner.</p>`
+    :`<p class="lede">Only a co-manager can change roles, pay type or activation.</p>`;
   const pre=own?`<div class="role-pre">
         <div class="sec-head" style="margin-top:22px"><h2>Pre-assign a role</h2></div>
         <p class="mini" style="margin:0 0 12px">Set someone's role before they sign up. When they create their account with this email, the role applies automatically — then send them the site link.</p>
         <div class="inline-form">
           <div class="field grow"><label>Email</label><input type="email" id="prEmail" placeholder="name@onetelgem.com"></div>
-          <div class="field"><label>Role</label><select id="prRole"><option value="employee">Employee</option><option value="comanager">Co-manager</option><option value="manager">Manager</option></select></div>
+          <div class="field"><label>Role</label><select id="prRole"><option value="employee">Employee</option><option value="comanager">Co-manager</option></select></div>
           <button class="btn btn-primary btn-sm" onclick="addPendingRole()">Pre-assign</button>
         </div><div class="err" id="prErr"></div>
         <div style="margin-top:14px">${pend}</div>
       </div>`:(pendingRoles.length?`<div class="role-pre"><div class="sec-head" style="margin-top:22px"><h2>Pre-assigned roles</h2></div>${pend}</div>`:'');
-  return `<div class="sec"><div class="sec-head"><h2>People &amp; roles</h2><span class="ml meta">${own?'owner controls':'leadership only · view'}</span></div>
+  return `<div class="sec"><div class="sec-head"><h2>People &amp; roles</h2><span class="ml meta">${boss?'owner controls':own?'co-manager controls':'view only'}</span></div>
       ${head}${people||'<div class="empty">No accounts yet.</div>'}${pre}</div>`;
 }
 function ownerOnly(){if(isOwner(currentUser))return true;toast('Only an Owner can change this');render();return false;}
+/* Build 47: co-managers may change accounts — except the Owner's, which only an Owner can change */
+function adminOk(id){
+  if(!canManage(currentUser)){toast('Only a co-manager can change this');render();return false;}
+  const e=id?employees.find(x=>x.id===id):null;
+  if(e&&isOwner(e)&&!isOwner(currentUser)){toast('Only the Owner can change the Owner\'s account');render();return false;}
+  return true;}
 function profileErr(error){const m=(error&&error.message)||'';
   return /column|schema cache|pay_type|is_owner|deactivated_at/i.test(m)?'Run the Build 40 SQL in Supabase first ('+m+')':m;}
 async function setActive(id,activeVal){
-  if(!ownerOnly())return;
+  if(!adminOk(id))return;
   const e=employees.find(x=>x.id===id); if(!e)return;
   if(!activeVal&&isOwner(e)&&ownerCount()<=1){toast('There must always be at least one active Owner');return;}
   const at=activeVal?null:Date.now();
@@ -3359,7 +3366,7 @@ async function setActive(id,activeVal){
   closeModal();render();toast(activeVal?'Person reactivated':'Person deactivated — past payroll stays visible for 1 year');
 }
 function askDeactivate(id){
-  if(!ownerOnly())return;
+  if(!adminOk(id))return;
   const e=employees.find(x=>x.id===id);if(!e)return;
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>Deactivate ${esc(e.name)}?</h3>
@@ -3369,9 +3376,10 @@ function askDeactivate(id){
       <button class="btn btn-danger btn-sm" onclick="setActive('${id}',false)">Deactivate</button></span></div></div></div>`;
 }
 async function changeRole(id,role){
-  if(!ownerOnly())return;
+  if(!adminOk(id))return;
+  if(role!=='employee')role='comanager';
   const e=employees.find(x=>x.id===id); if(!e)return;
-  if(isOwner(e)&&role==='employee'){toast('Owners must be a manager or co-manager — remove Owner first');render();return;}
+  if(isOwner(e)&&role==='employee'){toast('An Owner must stay a co-manager — remove Owner first');render();return;}
   if(id===currentUser.id&&role==='employee'&&!confirm('This removes your own leadership access. Continue?')){render();return;}
   const old=e.role;
   if(live()){const {error}=await sb.from('profiles').update({role}).eq('id',id);
@@ -3381,7 +3389,7 @@ async function changeRole(id,role){
   toast('Role updated'); render();
 }
 async function setPayType(id,type){
-  if(!ownerOnly())return;
+  if(!adminOk(id))return;
   const e=employees.find(x=>x.id===id); if(!e)return;
   const old=payTypeNow(e); if(old===type)return;
   const at=Date.now();
@@ -3400,7 +3408,7 @@ async function setPayType(id,type){
 async function setOwner(id,flag){
   if(!ownerOnly())return false;
   const e=employees.find(x=>x.id===id); if(!e)return false;
-  if(flag&&!isLeaderRole(e)){toast('Make them a manager or co-manager first — owners need leadership access');return false;}
+  if(flag&&!isLeaderRole(e)){toast('Make them a co-manager first — owners need leadership access');return false;}
   if(!flag&&isOwner(e)&&ownerCount()<=1){toast('There must always be at least one Owner');return false;}
   if(live()){const {error}=await sb.from('profiles').update({is_owner:flag}).eq('id',id);
     if(error){toast('Could not change owner: '+profileErr(error));return false;}}
@@ -3417,8 +3425,8 @@ function openTransferOwner(){
     <h3>Transfer ownership</h3><p class="sub">Hand your Owner controls to someone else</p>
     ${cands.length?`<div class="field"><label>New owner</label><select id="toWho">${opts}</select></div>
     <label class="chk-line"><input type="checkbox" id="toKeep"> Keep me as an Owner too</label>
-    <p class="mini" style="margin:0">Only managers and co-managers can be owners. To hand it to an employee, make them a co-manager first.</p>`
-    :'<div class="empty">There are no other active managers or co-managers yet. Make someone a co-manager first.</div>'}
+    <p class="mini" style="margin:0">Only co-managers can be owners. To hand it to an employee, make them a co-manager first.</p>`
+    :'<div class="empty">There are no other active co-managers yet. Make someone a co-manager first.</div>'}
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Cancel</button>
       ${cands.length?'<button class="btn btn-primary btn-sm" onclick="doTransferOwner()">Transfer</button>':''}</div></div></div>`;
 }
@@ -3430,18 +3438,18 @@ async function doTransferOwner(){
   closeModal();render();toast('Ownership transferred to '+t.name);
 }
 async function addPendingRole(){
-  if(!ownerOnly())return;
+  if(!adminOk(null))return;
   const email=(document.getElementById('prEmail').value||'').trim().toLowerCase();
   const role=document.getElementById('prRole').value;
   const err=document.getElementById('prErr');
   if(!email||!email.includes('@')){err.textContent='Enter a valid email.';return;}
-  const rate=(role==='manager'||role==='owner')?0:role==='comanager'?19.00:17.00;
+  const rate=role==='comanager'?19.00:17.00;
   const {error}=await sb.from('pending_roles').upsert({email,role,rate});
   if(error){err.textContent=error.message;return;}
   await loadPendingRoles(); render(); toast('Role pre-assigned');
 }
 async function removePendingRole(email){
-  if(!ownerOnly())return;
+  if(!adminOk(null))return;
   await sb.from('pending_roles').delete().eq('email',email);
   await loadPendingRoles(); render();
 }
@@ -3482,7 +3490,7 @@ function closeEmp(){selectedEmpId=null;openDay=null;render();}
 function payTab(){
   const team=payrollStaff();
   const rateRows=team.map(e=>`<tr><td>${e.name}</td>
-    <td class="num"><input type="number" class="rate-in" min="0" step="0.25" value="${e.rate.toFixed(2)}" onchange="setRate('${e.id}',this.value)"></td>
+    <td class="num"><input type="number" class="rate-in" min="0" step="0.25" value="${e.rate.toFixed(2)}" ${isOwner(e)&&!isOwner(currentUser)?'disabled title="Only the Owner can change this"':''} onchange="setRate('${e.id}',this.value)"></td>
     <td class="ml" style="text-align:left;width:60px">/ hr</td></tr>`).join('');
   const todayK=dateKey(now);
   /* current period first; then any finished period (from the rule date on) still waiting for its "Est. received"
@@ -3518,6 +3526,7 @@ function payTab(){
         ${periods||'<div class="empty">No pay periods yet.</div>'}</div>`;
 }
 function setRate(id,v){
+  if(!adminOk(id))return;
   const rate=parseFloat(v)||0;
   const e=employees.find(x=>x.id===id);
   if(e&&rate>e.rate)saveDetails(id,{last_raise_date:todayKey()},true);   /* a raise: remember the date */
@@ -3777,7 +3786,7 @@ function openStrikeForm(id,action){
   if(!canManage(currentUser))return;
   const e=employees.find(x=>x.id===id);if(!e)return;
   const add=action==='add',n=strikeCount(id),today=dateKey(Date.now());
-  const warn=(add&&n+1>=STRIKE_MAX)?`<div class="note warn" style="margin-bottom:18px">This will be strike ${n+1} of ${STRIKE_MAX}. All managers and co-managers will be notified.</div>`:'';
+  const warn=(add&&n+1>=STRIKE_MAX)?`<div class="note warn" style="margin-bottom:18px">This will be strike ${n+1} of ${STRIKE_MAX}. All co-managers will be notified.</div>`:'';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">
     <h3>${add?'Add a strike':'Remove a strike'}</h3><p class="sub">${esc(e.name)} · currently ${n} / ${STRIKE_MAX}</p>
     ${warn}
@@ -4183,7 +4192,7 @@ function openSurveyReader(month){
     :(qs.length?`<div class="empty">No responses yet.</div>`:'<div class="empty">No feedback for this month yet.</div>');
   const own=isQParticipant(currentUser)?`<button class="btn btn-line btn-sm" onclick="openSurveyForm()">${surveyMine.has(cur)?'Your feedback ✓':'Share your own'}</button>`:'';
   document.getElementById('modalMount').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal sv-modal">
-    <h3>Anonymous feedback</h3><p class="sub">Names are never stored · managers &amp; co-managers only</p>
+    <h3>Anonymous feedback</h3><p class="sub">Names are never stored · co-managers only</p>
     ${sendBox}${qManage}
     <div class="sv-head"><select class="role-sel" onchange="openSurveyReader(this.value)">${months.map(x=>`<option value="${x}" ${x===m?'selected':''}>${surveyMonthLabel(x)}</option>`).join('')}</select>
       <span class="sv-count">${list.length} response${list.length===1?'':'s'}</span></div>
@@ -4725,7 +4734,7 @@ async function runLaptopAuto(){
   if(lapAutoBusy||!canManage(currentUser))return; lapAutoBusy=true;
   try{
     for(const rec of laptopRecs){
-      const e=lapEmp(rec); if(!e||!isActive(e)||isSalaried(e)||e.role==='manager')continue;
+      const e=lapEmp(rec); if(!e||!isActive(e)||isSalaried(e))continue;
       for(const k of ['r4','r1']){
         if(rec[k]!=='pending'||rec[k+'x'])continue;
         const due=lapDue(rec,k); if(!due)continue;
@@ -4809,7 +4818,7 @@ async function removeLap(id){
 /* ---------- PERSON DETAILS on Team → person (leaders) ---------- */
 function personDetailsBlock(id){
   const e=employees.find(x=>x.id===id), d=detailsOf(id), n=personNotes[id];
-  const pay=isSalaried(e)?'Salary':(e.role==='manager'?'—':money(e.rate)+' / hr');
+  const pay=isSalaried(e)?'Salary':money(e.rate)+' / hr';
   const cell=(k,v,empty)=>`<div class="pd-cell"><span class="ml">${k}</span><span class="pd-v ${v?'':'empty'}">${v||empty||'—'}</span></div>`;
   const lap=lapFor(id);
   return `<div class="pd-wrap"><div class="pd-strip">
@@ -5349,7 +5358,7 @@ function askNotify(ts){
   const line=slots.length?`You're scheduled ${slots.map(sl=>fmtHM(sl.start)+' – '+fmtHM(sl.end)).join(', ')} today.`:`You're not scheduled to work today.`;
   document.getElementById('modalMount').innerHTML=`<div class="overlay"><div class="modal">
     <h3>Working outside your schedule</h3><p class="sub">Clocked in ${fmtTimeFor(currentUser.id,ts)}</p>
-    <p style="margin:0 0 20px;font-size:14px">${line} Send your manager a notice so they know?</p>
+    <p style="margin:0 0 20px;font-size:14px">${line} Send the co-managers a notice so they know?</p>
     <div class="field"><label>Reason (optional)</label><input type="text" id="nfReason" placeholder="Covering for Devin"></div>
     <div class="modal-actions"><button class="btn btn-line btn-sm" onclick="closeModal()">Not now</button>
       <button class="btn btn-primary btn-sm" onclick="sendNotice(${ts})">Send notice</button></div></div></div>`;
@@ -5364,7 +5373,7 @@ function sendNotice(ts){
   }else{
     notices.push({id:'n'+Date.now(),empId:currentUser.id,ts,reason:r});
   }
-  closeModal();render();toast('Notice sent to your manager');
+  closeModal();render();toast('Notice sent to the co-managers');
 }
 async function clockOut(){
   const s=openShift(currentUser.id);if(!s)return;
