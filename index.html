@@ -1331,8 +1331,8 @@ let homePos={};       /* userId -> { key:{r,c} }  explicit 4x4 placement */
 
 /* ================= STATE ================= */
 let currentUser=null, selectedEmpId=null, activeTab='today';
-let breakTimer=null, breakEndsAt=null, breakActive=false, breakUsed={};
-const BREAK_BUDGET=30*MIN;
+let breakTimer=null, breakEndsAt=null, breakActive=false, brkSig='';
+const BREAK_BUDGET=30*MIN, BREAK_EVERY=4*HR, BREAK_GAP=60*MIN;
 let audioCtx=null, alarmLoop=null, openDay=null, menuOpen=false;
 let calCursor=new Date(now).getFullYear()+'-'+pad(new Date(now).getMonth()+1);
 let logReminder=false;
@@ -1531,6 +1531,7 @@ function demoEnter(){
   document.getElementById('app').classList.remove('hide');
   paintTopAvatar();
   document.getElementById('tbName').textContent=currentUser.name;
+  restoreBreak();
   render();
 }
 function pwEyeBtn(id){return `<button type="button" class="pw-eye" tabindex="-1" aria-label="Show password" onclick="togglePw('${id}',this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button>`;}
@@ -1556,7 +1557,7 @@ function renderLogin(msg,isErr){
     el.innerHTML=`${down0}<button class="btn auth-google" id="authGoogle" onclick="authGoogle()"><span class="g-mark" aria-hidden="true">G</span><span>Sign in with Google</span></button>
       <p class="auth-sub">Use your @onetelgem.com account. Google asks for your 2-Step code.</p>${note0}
       <button class="auth-backup" onclick="authBackup=true;authMode='signin';renderLogin()">Backup sign-in with email &amp; password</button>
-      <p class="build-tag">Build 47 · co-managers run everything</p>`;
+      <p class="build-tag">Build 48 · a break every 4 hours</p>`;
     return;
   }
   const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
@@ -1571,7 +1572,7 @@ function renderLogin(msg,isErr){
        <button class="btn btn-primary auth-go" id="authGo" onclick="authSignUp()">Create account</button>`;
   el.innerHTML=`<button class="auth-backup back" onclick="authBackup=false;renderLogin()">&larr; Back to Sign in with Google</button>
     <p class="auth-sub">Backup only — this stops working once password sign-in is turned off in Supabase.</p>
-    ${svcDown}${form}${note}<p class="build-tag">Build 47 · co-managers run everything</p>`;
+    ${svcDown}${form}${note}<p class="build-tag">Build 48 · a break every 4 hours</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -2217,6 +2218,7 @@ async function enterApp(session){
   /* leader data last: the laptop benefit check needs pay periods + reimbursements loaded first */
   if(canManage(currentUser)){ try{ await loadLeaderData(); }catch(e){ /* Build 42 tables */ } }
   startLeaderPolling();
+  restoreBreak();
   subscribeShifts();
   subscribePayroll();
   subscribeMisc();
@@ -2604,16 +2606,14 @@ function widgetBody(k){
       <div style="text-align:center">${mainBtn}</div>`;
   }
   if(k==='break'){
-    const s=openShift(u.id),rem=breakRemaining();
+    const s=openShift(u.id);
     if(!s) return `<div class="w-brk"><div class="w-sub" style="margin:0">Clock in first.</div></div>`;
     if(breakActive){
       const left=breakEndsAt?breakEndsAt-Date.now():0;
       return `<div class="w-brk"><div class="w-brk-count" id="brkCount">${fmtWatch(left)}</div>
         <button class="btn btn-line btn-sm" onclick="endBreak()">End</button></div>`;
     }
-    if(rem<=0) return `<div class="w-brk"><div class="w-sub" style="margin:0">Break used.</div></div>`;
-    const label=rem>=BREAK_BUDGET?'Start break':'Resume · '+Math.ceil(rem/MIN)+'m';
-    return `<div class="w-brk"><button class="btn btn-primary btn-sm" onclick="startBreak()">${label}</button></div>`;
+    return `<div class="w-brk" id="wBrk">${breakBtnHTML('w')}</div>`;
   }
   if(k==='time'){
     const d=new Date();
@@ -3163,7 +3163,7 @@ function hoursTab(){
     +`<div class="sec first hrs-top">${myHoursCheckBar()}</div>
       <div class="sec">${dayList(currentUser.id,{logEditable:true})}
       <div class="totals"><div class="stat"><div class="k">This week</div><div class="v">${fmtDur(weekTotal(currentUser.id))}</div></div>${payPeriodStat()}${strikeStat(currentUser.id,false)}${timeOffStat(currentUser.id,false)}</div>
-      <div class="note" style="margin-top:22px">${canManage(currentUser)?'To fix your own clock times, open Team → your name and use the pencil — every correction is recorded.':'Your times are read-only. You can add to your daily work log, but if a time is wrong, ask a manager — every correction is recorded.'}</div></div>
+      <div class="note" style="margin-top:22px">${canManage(currentUser)?'To fix your own clock times, open Team → your name and use the pencil — every correction is recorded.':'Your times are read-only. You can add to your daily work log, but if a time is wrong, ask a co-manager — every correction is recorded.'}</div></div>
       <div class="sec" id="mySchedule"><div class="sec-head"><h2>My schedule</h2><span class="ml meta">visible to co-managers</span></div>
       ${scheduleTab(currentUser.id,true,true)}</div>`;
 }
@@ -3171,23 +3171,17 @@ function timecardTab(){
   const dk=todayKey(),s=openShift(currentUser.id);
   const sched=slotsForDate(currentUser.id,now);
   const status=s?(breakActive?'On paid break':'On the clock'):'Clocked out';
-  const rem=breakRemaining();
-  let breakBtn='';
-  if(s&&!breakActive&&rem>0){
-    const label=rem>=BREAK_BUDGET?'Start 30-min break':'Resume break · '+Math.ceil(rem/MIN)+'m left';
-    breakBtn=`<button class="btn btn-clock btn-brand-line" onclick="startBreak()">${label}</button>`;
-  }
   const actions=s
-    ? `<button class="btn btn-clock btn-primary" onclick="clockOut()">Clock out</button>`+(breakActive?'':breakBtn)
+    ? `<button class="btn btn-clock btn-primary" onclick="clockOut()">Clock out</button><span id="tcBrk" style="display:contents">${breakBtnHTML('tc')}</span>`
     : `<button class="btn btn-clock btn-primary" onclick="clockIn()">Clock in</button>`;
-  const breakNote=(s&&!breakActive&&rem<=0)?'<span class="mini">Your 30-minute paid break is used up for today.</span>':'';
+  const breakNote=`<span id="tcBrkNote" style="display:contents">${breakNoteHTML()}</span>`;
   let brk='';
   if(breakActive){
     const left=breakEndsAt?breakEndsAt-Date.now():0;
     brk=`<div class="brk-strip"><span class="ml">Paid break · back in</span>
       <span class="brk-count" id="brkCount">${fmtWatch(left)}</span>
       <button class="btn btn-line btn-sm" onclick="endBreak()">End break</button>
-      <span class="mini">30-minute daily break — end early and the rest stays for later today. An alarm sounds at zero; keep this tab open.</span></div>`;
+      <span class="mini">End early and the rest stays for later (after 1 hour of work — no back-to-back breaks). An alarm sounds at zero; keep this tab open.</span></div>`;
   }
   const reminder=logReminder?`<div class="note warn" style="margin-top:22px">Don't forget to submit your work log for today.</div>`:'';
   return pageHead('TimeCard',new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+' · '+tzLabel(tzOf(currentUser.id)))
@@ -5407,19 +5401,87 @@ async function wlDone(){
   logReminder=!v;
   closeModal();render();toast(v?'Work log saved':'Work log still empty');
 }
-function breakKey(){return currentUser.id+'|'+dateKey(now);}
-function breakRemaining(){return Math.max(0,BREAK_BUDGET-(breakUsed[breakKey()]||0));}
+/* ===== BREAKS (Build 48) =====
+   One 30-minute paid break for every 4 hours worked today: the 1st is ready as soon as you clock in,
+   the 2nd unlocks at 4 hours worked, the 3rd at 8 hours, and so on. Unused breaks wait for later that day.
+   No back-to-back breaks: after a break ends, the next one (or the rest of an unfinished one) unlocks
+   after 1 hour of work. End a break early and the leftover minutes can be finished later.
+   Remembered on this device only (survives a refresh; another device starts fresh). */
+const BRK_STORE='otg_breaks_v1';
+let breakLog=(()=>{try{const o=JSON.parse(localStorage.getItem(BRK_STORE)||'{}');return (o&&typeof o==='object')?o:{};}catch(e){return {};}})();
+function brkSave(){
+  try{const keep={},cut=Date.now()-3*DAY;
+    Object.keys(breakLog).forEach(k=>{if((breakLog[k].touched||0)>cut)keep[k]=breakLog[k];});
+    breakLog=keep; localStorage.setItem(BRK_STORE,JSON.stringify(keep));}catch(e){}
+}
+function breakKey(){return currentUser.id+'|'+todayKey();}
+function brkDay(){const k=breakKey(); if(!breakLog[k])breakLog[k]={used:[],lastEnd:null,active:null}; breakLog[k].touched=Date.now(); return breakLog[k];}
+function workedTodayMs(){const dk=todayKey();
+  return shifts.filter(s=>s.empId===currentUser.id&&companyDateKey(s.clockIn)===dk).reduce((t,s)=>t+netMs(s),0);}
+/* where this person stands right now: can they take a break, and if not, when can they? */
+function breakState(){
+  const d=breakLog[breakKey()]||{used:[],lastEnd:null}, used=d.used||[], t=Date.now();
+  const worked=workedTodayMs(), earned=1+Math.floor(worked/BREAK_EVERY);
+  let idx=used.findIndex(u=>(u||0)<BREAK_BUDGET); if(idx<0)idx=used.length;      /* first break not fully used */
+  const rem=BREAK_BUDGET-(used[idx]||0), taken=used.filter(u=>u>0).length;
+  const gapUntil=d.lastEnd?d.lastEnd+BREAK_GAP:0;
+  if(idx>=earned) return {ok:false,why:'earn',idx,earned,taken,rem,unlockAt:Math.max(t+(idx*BREAK_EVERY-worked),gapUntil)};
+  if(gapUntil>t)  return {ok:false,why:'gap',idx,earned,taken,rem,unlockAt:gapUntil};
+  return {ok:true,idx,earned,taken,rem,partial:rem<BREAK_BUDGET};
+}
+function breakRemaining(){const b=breakState();return b.ok?b.rem:0;}
+/* button + note for the TimeCard ('tc') and the dashboard widget ('w') */
+function breakBtnHTML(kind){
+  const s=openShift(currentUser.id); if(!s||breakActive)return '';
+  const b=breakState();
+  if(b.ok){
+    const label=b.partial?(kind==='w'?'Resume · ':'Resume break · ')+Math.ceil(b.rem/MIN)+'m'+(kind==='w'?'':' left'):(kind==='w'?'Start break':'Start 30-min break');
+    return `<button class="btn ${kind==='w'?'btn-primary btn-sm':'btn-clock btn-brand-line'}" onclick="startBreak()">${label}</button>`;
+  }
+  const at=fmtTimeFor(currentUser.id,b.unlockAt);
+  return kind==='w'?`<div class="w-sub" style="margin:0;text-align:center">Next break<br><b>${at}</b></div>`
+    :`<button class="btn btn-clock btn-brand-line" disabled title="${b.why==='gap'?'Breaks can\'t be back to back':'You earn a break every 4 hours worked'}">Next break at ${at}</button>`;
+}
+function breakNoteHTML(){
+  const s=openShift(currentUser.id); if(!s||breakActive)return '';
+  const b=breakState();
+  const why=b.ok?'':b.why==='gap'?'Breaks can\'t be back to back — 1 hour of work between breaks. ':'Your next break unlocks at '+(b.idx*4)+' hours worked. ';
+  return `<span class="mini brk-note">${why}Breaks today: ${b.taken} taken · ${b.earned} earned (one 30-minute paid break for every 4 hours worked).</span>`;
+}
+/* the 1-second ticker calls this; only repaints the break bits when something actually changed */
+function refreshBreakUI(){
+  const s=openShift(currentUser.id), b=s&&!breakActive?breakState():null;
+  const sig=s?(breakActive?'on':(b.ok+'|'+b.why+'|'+b.idx+'|'+b.earned+'|'+Math.ceil(b.rem/MIN))):'off';
+  if(sig===brkSig)return; brkSig=sig;
+  const a=document.getElementById('tcBrk'); if(a)a.innerHTML=breakBtnHTML('tc');
+  const n=document.getElementById('tcBrkNote'); if(n)n.innerHTML=breakNoteHTML();
+  const w=document.getElementById('wBrk'); if(w&&!breakActive)w.innerHTML=breakBtnHTML('w');
+}
 function startBreak(){
-  const rem=breakRemaining();
-  if(rem<=0){toast('Your 30-minute break is used up for today');return;}
-  breakActive=true;breakEndsAt=Date.now()+rem;startCountdown();render();
+  if(!openShift(currentUser.id)){toast('Clock in first');return;}
+  const b=breakState();
+  if(!b.ok){toast(b.why==='gap'?'Breaks can\'t be back to back — your next break is at '+fmtTimeFor(currentUser.id,b.unlockAt)
+                               :'Your next break unlocks at '+fmtTimeFor(currentUser.id,b.unlockAt)+' (one for every 4 hours worked)');render();return;}
+  breakActive=true; breakEndsAt=Date.now()+b.rem;
+  const d=brkDay(); d.active={endsAt:breakEndsAt,idx:b.idx}; brkSave();
+  startCountdown(); render();
 }
 function endBreak(silent){
-  if(breakEndsAt!=null){
-    /* used = full budget minus whatever time was still left on the clock */
-    breakUsed[breakKey()]=BREAK_BUDGET-Math.max(0,breakEndsAt-Date.now());
+  if(breakEndsAt!=null&&currentUser){
+    const d=brkDay(), idx=d.active?d.active.idx:breakState().idx;
+    const endAt=Math.min(Date.now(),breakEndsAt);                 /* a break can't run past its 30 minutes */
+    for(let i=0;i<idx;i++) if(d.used[i]==null)d.used[i]=BREAK_BUDGET;
+    d.used[idx]=Math.min(BREAK_BUDGET,BREAK_BUDGET-Math.max(0,breakEndsAt-endAt));   /* minus whatever was still left */
+    d.lastEnd=endAt; d.active=null; brkSave();
   }
-  breakActive=false;breakEndsAt=null;clearInterval(breakTimer);breakTimer=null;stopAlarm();if(!silent)render();
+  breakActive=false;breakEndsAt=null;clearInterval(breakTimer);breakTimer=null;stopAlarm();brkSig='';if(!silent)render();
+}
+/* after a refresh: pick a running break back up (or close it out if its time already ran out) */
+function restoreBreak(){
+  const d=breakLog[breakKey()]; if(!d||!d.active)return;
+  breakEndsAt=d.active.endsAt;
+  if(openShift(currentUser.id)&&breakEndsAt>Date.now()){breakActive=true;startCountdown();}
+  else endBreak(true);
 }
 function startCountdown(){clearInterval(breakTimer);breakTimer=setInterval(()=>{
   if(!breakEndsAt){clearInterval(breakTimer);return;}
@@ -5436,7 +5498,7 @@ function pattern(){beep(880,0,0.16);beep(1180,0.22,0.16);beep(880,0.44,0.16);}
 function testAlarm(){ensureAudio();pattern();}
 function fireAlarm(){ensureAudio();pattern();alarmLoop=setInterval(pattern,1400);
   document.getElementById('alarmMount').innerHTML=`<div class="alarm"><b>Break is over</b>
-    <span class="ml" style="color:#fff">30 minutes elapsed</span>
+    <span class="ml" style="color:#fff">Time's up — back to work</span>
     <button class="btn btn-sm o" onclick="stopAlarm()">Dismiss</button>
     <button class="btn btn-sm" onclick="endBreak();stopAlarm()">Back to work</button></div>`;}
 function stopAlarm(){if(alarmLoop){clearInterval(alarmLoop);alarmLoop=null;}document.getElementById('alarmMount').innerHTML='';}
@@ -5448,6 +5510,7 @@ setInterval(()=>{
   const el=document.getElementById('liveClock');if(el&&s)el.textContent=fmtWatch(netMs(s));
   const wc=document.getElementById('wClock');if(wc)wc.textContent=s?fmtWatch(netMs(s)):'00:00:00';
   const wn=document.getElementById('wNow');if(wn)wn.textContent=new Date().toLocaleTimeString();
+  refreshBreakUI();
 },1000);
 initAuth();
 </script>
