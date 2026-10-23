@@ -974,8 +974,19 @@
   .res-group{margin-top:18px}.res-group-h{margin-bottom:4px}
   .res-item{border-bottom:1px solid var(--rule-soft)}
   .res-row{display:flex;align-items:flex-start;gap:12px;padding:13px 2px}
-  .res-table .res-row{cursor:pointer}
-  .res-table .res-row:hover{background:var(--purple-wash)}
+  .res-table .res-row,.res-click .res-row{cursor:pointer;border-radius:8px}
+  .res-table .res-row:hover,.res-click .res-row:hover{background:var(--purple-wash)}
+  .res-row:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+  .res-click .caret{margin-top:3px}
+  .res-hints{display:flex;gap:6px;color:var(--muted);margin-top:4px}
+  .res-hint-i{display:inline-flex}
+  .res-body{padding:0 2px 16px 26px;display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+  .res-body-tbl{padding-bottom:10px}
+  .res-ntext{font-size:13.5px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word;max-width:72ch}
+  .res-ntext a{color:var(--purple-deep)}
+  .res-none{margin:0;font-size:12.5px;color:var(--muted)}
+  .res-open{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .res-open svg{color:currentColor}
   .res-dot{width:7px;height:7px;border-radius:50%;background:var(--purple);flex:none;margin-top:8px}
   .res-table .caret{margin-top:3px}
   .res-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -1557,7 +1568,7 @@ function renderLogin(msg,isErr){
     el.innerHTML=`${down0}<button class="btn auth-google" id="authGoogle" onclick="authGoogle()"><span class="g-mark" aria-hidden="true">G</span><span>Sign in with Google</span></button>
       <p class="auth-sub">Use your @onetelgem.com account. Google asks for your 2-Step code.</p>${note0}
       <button class="auth-backup" onclick="authBackup=true;authMode='signin';renderLogin()">Backup sign-in with email &amp; password</button>
-      <p class="build-tag">Build 48 · a break every 4 hours</p>`;
+      <p class="build-tag">Build 49 · resources open on click</p>`;
     return;
   }
   const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
@@ -1572,7 +1583,7 @@ function renderLogin(msg,isErr){
        <button class="btn btn-primary auth-go" id="authGo" onclick="authSignUp()">Create account</button>`;
   el.innerHTML=`<button class="auth-backup back" onclick="authBackup=false;renderLogin()">&larr; Back to Sign in with Google</button>
     <p class="auth-sub">Backup only — this stops working once password sign-in is turned off in Supabase.</p>
-    ${svcDown}${form}${note}<p class="build-tag">Build 48 · a break every 4 hours</p>`;
+    ${svcDown}${form}${note}<p class="build-tag">Build 49 · resources open on click</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -4583,20 +4594,34 @@ function resItemHTML(it,rows,inSearch){
   const tag=it.audience==='leaders'?'<span class="res-tag">Leaders</span>':'';
   const edit=mgr?`<button class="day-edit" title="Edit" onclick="event.stopPropagation();openResEdit('${it.id}')">${penIcon}</button>`:'';
   if(it.table){
-    const open=!!resOpen[it.id]||(rows&&rows.length>0);
+    const open=!!resOpen[it.id]||(rows&&rows.length>0)||resNoteHit(it);
     const idx=rows||it.table.rows.map((r,i)=>i);
     const n=it.table.rows.length;
-    const body=open?`<div class="res-tbl-wrap"><table class="res-tbl"><thead><tr>${it.table.columns.map(c=>`<th>${esc(c)}</th>`).join('')}${mgr?'<th></th>':''}</tr></thead>
+    const body=open?`${it.notes?`<div class="res-body res-body-tbl">${resNotesHTML(it.notes)}</div>`:''}<div class="res-tbl-wrap"><table class="res-tbl"><thead><tr>${it.table.columns.map(c=>`<th>${esc(c)}</th>`).join('')}${mgr?'<th></th>':''}</tr></thead>
         <tbody>${idx.map(i=>`<tr>${it.table.rows[i].map((c,ci)=>`<td>${resCell(it.table.columns[ci],c)}</td>`).join('')}${mgr?`<td class="res-rowed"><button class="day-edit" title="Edit row" onclick="openResRow('${it.id}',${i})">${penIcon}</button></td>`:''}</tr>`).join('')}</tbody></table>
         ${mgr&&!inSearch?`<button class="linkish res-addrow" onclick="openResRow('${it.id}',-1)">+ Add row</button>`:''}</div>`:'';
-    return `<div class="res-item res-table ${open?'open':''}"><div class="res-row" onclick="resOpen['${it.id}']=!resOpen['${it.id}'];paintResList()">
-        <span class="caret ${open?'open':''}">&#8250;</span><span class="res-main"><span class="res-title">${esc(it.title)}</span>${tag}
-        ${it.notes?`<span class="res-notes">${esc(it.notes)}</span>`:''}</span>
+    return `<div class="res-item res-table ${open?'open':''}"><div class="res-row" ${resToggle(it.id)}>
+        <span class="caret ${open?'open':''}">&#8250;</span><span class="res-main"><span class="res-title">${esc(it.title)}</span>${tag}</span>
         <span class="res-count">${rows&&!resOpen[it.id]?rows.length+' of '+n:n} ${n===1?'row':'rows'}</span>${edit}</div>${body}</div>`;
   }
-  return `<div class="res-item"><div class="res-row">
-      <span class="res-dot"></span><span class="res-main">${it.url?`<a class="res-title res-link" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)} ${extIcon}</a>`:`<span class="res-title">${esc(it.title)}</span>`}${tag}
-      ${it.notes?`<span class="res-notes">${esc(it.notes)}</span>`:''}</span>${edit}</div></div>`;
+  /* Build 49: every item shows just its title until clicked; notes (which can hold the whole training) and the link live inside */
+  const open=!!resOpen[it.id]||resNoteHit(it);
+  const hints=(it.url?`<span class="res-hint-i" title="Has a link">${extIcon}</span>`:'')+(it.notes?`<span class="res-hint-i" title="Has notes">${noteIcon}</span>`:'');
+  const body=open?`<div class="res-body">${it.notes?resNotesHTML(it.notes):(it.url?'':'<p class="res-none">No notes yet.</p>')}
+      ${it.url?`<a class="btn btn-primary btn-sm res-open" href="${esc(it.url)}" target="_blank" rel="noopener">Open link ${extIcon}</a>`:''}</div>`:'';
+  return `<div class="res-item res-click ${open?'open':''}"><div class="res-row" ${resToggle(it.id)}>
+      <span class="caret ${open?'open':''}">&#8250;</span><span class="res-main"><span class="res-title">${esc(it.title)}</span>${tag}</span>
+      <span class="res-hints">${hints}</span>${edit}</div>${body}</div>`;
+}
+const noteIcon=`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>`;
+function resToggle(id){return `role="button" tabindex="0" aria-expanded="${!!resOpen[id]}" onclick="resFlip('${id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();resFlip('${id}')}"`;}
+function resFlip(id){const it=resItems.find(x=>x.id===id); resOpen[id]=!(resOpen[id]||(it&&resNoteHit(it))); if(!resOpen[id]&&it&&resNoteHit(it))resClosed[id]=true; else delete resClosed[id]; paintResList();}
+let resClosed={};
+/* while searching, items whose notes match open on their own (unless you closed them) */
+function resNoteHit(it){const q=resQuery.trim().toLowerCase(); return !!q&&!resClosed[it.id]&&it.notes.toLowerCase().includes(q);}
+/* notes keep their line breaks, and any web address in them becomes a link */
+function resNotesHTML(t){
+  return `<div class="res-ntext">${esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`)}</div>`;
 }
 function resCell(col,v){
   v=v==null?'':String(v);
@@ -4611,7 +4636,7 @@ function openResEdit(id,side){
     <h3>${id?'Edit item':'Add an item'}</h3><p class="sub">${it.table?'Condensed table · edit rows from the list':'Link or note'}</p>
     <div class="field"><label>Title</label><input type="text" id="riTitle" value="${esc(it.title)}"></div>
     ${it.table?'':`<div class="field"><label>Link <span class="opt">optional</span></label><input type="text" id="riUrl" value="${esc(it.url)}" placeholder="https://"></div>`}
-    <div class="field"><label>Notes <span class="opt">optional</span></label><textarea class="log-area" id="riNotes" rows="3">${esc(it.notes)}</textarea></div>
+    <div class="field"><label>Notes <span class="opt">optional · shows when someone opens this item · can hold the whole training</span></label><textarea class="log-area" id="riNotes" rows="8">${esc(it.notes)}</textarea></div>
     <div class="goal-row"><div class="field grow"><label>Side</label><select id="riSide"><option value="trainings" ${it.side==='trainings'?'selected':''}>Trainings</option><option value="resources" ${it.side==='resources'?'selected':''}>Resources</option></select></div>
       <div class="field grow"><label>Who can see it</label><select id="riAud"><option value="everyone" ${it.audience!=='leaders'?'selected':''}>Everyone</option><option value="leaders" ${it.audience==='leaders'?'selected':''}>Leaders only</option></select></div></div>
     <div class="err" id="riErr"></div>
