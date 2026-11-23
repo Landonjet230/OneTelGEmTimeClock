@@ -1146,6 +1146,8 @@
   .auth-wait{display:flex;flex-direction:column;align-items:center;gap:8px;padding:30px 0 10px;color:#fff;text-align:center}
   .auth-wait b{font-family:"Archivo",sans-serif;font-size:16px}
   .auth-wait span{font-size:12.5px;color:#9A94A4}
+  .auth-wait .skew-note{max-width:340px;line-height:1.5;margin-top:6px;color:#C9C3D2}
+  .auth-wait .skew-note em{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#9A94A4}
   .auth-spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--purple);animation:otgspin .8s linear infinite;margin-bottom:6px}
   @keyframes otgspin{to{transform:rotate(360deg)}}
   /* ---- Build 46: survey questions + leader availability ---- */
@@ -1287,17 +1289,45 @@ const IDLE_LIMIT_MS=2*60*60*1000;   /* 2 hours — change this one number to adj
    If Auth's clock runs a little ahead of the database API's clock, the API rejects a brand-new token with
    "JWT issued at future" (PGRST303) until its own clock catches up. Instead of failing sign-in, wait and
    retry the same request a few times (~30s total) — by then the token is valid. */
-const SKEW_RETRY_MS=[2000,3000,5000,8000,12000];
-async function skewSafeFetch(input,init){
-  let res=await fetch(input,init);
-  for(const wait of SKEW_RETRY_MS){
-    if(res.status!==401)return res;
-    let body='';try{body=await res.clone().text();}catch(e){}
-    if(!/issued at future|PGRST303/i.test(body))return res;
-    console.warn('[OTG] login token not valid yet (server clock skew) — retrying in '+(wait/1000)+'s');
-    await new Promise(r=>setTimeout(r,wait));
-    res=await fetch(input,init);
+/* Build 51: 30 seconds wasn't enough — Supabase's skew can last minutes (a known hosted-PostgREST bug).
+   Keep retrying for up to 4 minutes (every 2s → 15s), and show a live "finishing automatically" note on the
+   sign-in screen so nobody clicks Sign in again (a new login just gets a new too-new token). */
+const SKEW_MAX_MS=4*60*1000, SKEW_STEPS=[2000,3000,5000,8000,10000,15000];
+let skewActive=0, skewSince=0, skewTick=null, skewToasted=false;
+function skewStart(){
+  if(skewActive++===0){skewSince=Date.now();skewPaint();clearInterval(skewTick);skewTick=setInterval(skewPaint,1000);}
+}
+function skewStop(){
+  if(skewActive>0&&--skewActive===0){clearInterval(skewTick);skewTick=null;skewToasted=false;
+    const n=document.getElementById('skewNote'); if(n)n.remove();}
+}
+function skewPaint(){
+  const secs=Math.floor((Date.now()-skewSince)/1000), clock=Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
+  const app=document.getElementById('app');
+  if(app&&!app.classList.contains('hide')){   /* already in the app (a token refresh hit the skew): one quiet toast */
+    if(!skewToasted&&secs>=3){skewToasted=true;toast('Reconnecting to Supabase… your changes will save in a moment');}
+    return;
   }
+  const el=document.getElementById('acctList'); if(!el)return;
+  if(!el.querySelector('.auth-wait'))el.innerHTML=`<div class="auth-wait"><span class="auth-spin" aria-hidden="true"></span><b>Signing you in…</b><span>Loading your timecard</span></div>`;
+  let n=document.getElementById('skewNote');
+  if(!n){n=document.createElement('span');n.id='skewNote';n.className='skew-note';el.querySelector('.auth-wait').appendChild(n);}
+  n.innerHTML=`Supabase is slow to accept new logins right now. This finishes on its own — keep this page open and don't click Sign in again.<br><em>Waiting ${clock} (up to 4:00)</em>`;
+}
+async function skewSafeFetch(input,init){
+  let res=await fetch(input,init), tries=0, waiting=false;
+  const t0=Date.now();
+  try{
+    while(res.status===401&&Date.now()-t0<SKEW_MAX_MS){
+      let body='';try{body=await res.clone().text();}catch(e){}
+      if(!/issued at future|PGRST303/i.test(body))break;
+      if(!waiting){waiting=true;skewStart();}
+      const wait=SKEW_STEPS[Math.min(tries++,SKEW_STEPS.length-1)];
+      console.warn('[OTG] login token not valid yet (Supabase clock skew) — retrying in '+(wait/1000)+'s');
+      await new Promise(r=>setTimeout(r,wait));
+      res=await fetch(input,init);
+    }
+  }finally{ if(waiting)skewStop(); }
   return res;
 }
 try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{global:{fetch:skewSafeFetch},auth:{persistSession:true,autoRefreshToken:true,storage:window.sessionStorage,flowType:'pkce',detectSessionInUrl:true}}); }catch(e){ sb=null; }
@@ -1585,7 +1615,7 @@ function renderLogin(msg,isErr){
     el.innerHTML=`${down0}<button class="btn auth-google" id="authGoogle" onclick="authGoogle()"><span class="g-mark" aria-hidden="true">G</span><span>Sign in with Google</span></button>
       <p class="auth-sub">Use your @onetelgem.com account. Google asks for your 2-Step code.</p>${note0}
       <button class="auth-backup" onclick="authBackup=true;authMode='signin';renderLogin()">Backup sign-in with email &amp; password</button>
-      <p class="build-tag">Build 50 · sign-in clock-skew fix</p>`;
+      <p class="build-tag">Build 51 · sign-in waits out Supabase clock skew</p>`;
     return;
   }
   const note=msg?`<div class="auth-msg ${isErr?'err':''}">${esc(msg)}</div>`:'';
@@ -1600,7 +1630,7 @@ function renderLogin(msg,isErr){
        <button class="btn btn-primary auth-go" id="authGo" onclick="authSignUp()">Create account</button>`;
   el.innerHTML=`<button class="auth-backup back" onclick="authBackup=false;renderLogin()">&larr; Back to Sign in with Google</button>
     <p class="auth-sub">Backup only — this stops working once password sign-in is turned off in Supabase.</p>
-    ${svcDown}${form}${note}<p class="build-tag">Build 50 · sign-in clock-skew fix</p>`;
+    ${svcDown}${form}${note}<p class="build-tag">Build 51 · sign-in waits out Supabase clock skew</p>`;
 }
 function authBusyState(b,label){authBusy=b;const g=document.getElementById('authGo');if(g){g.disabled=b;g.textContent=label||(authMode==='signin'?'Sign in':'Create account');}}
 async function authSignIn(){
@@ -2209,7 +2239,7 @@ async function enterApp(session){
   const viaGoogle=authProvider==='google'||((u.identities||[]).some(i=>i.provider==='google')&&authProvider!=='email');
   if(viaGoogle&&!companyEmail(u.email)){ try{await sb.auth.signOut();}catch(e){} renderLogin('Only @'+COMPANY_DOMAINS[0]+' Google accounts can sign in. You used '+(u.email||'another account')+'.',true); return; }
   try{ await loadProfiles(); }
-  catch(e){ const m=(e&&e.message)||String(e); renderLogin(/issued at future/i.test(m)?'Supabase\'s sign-in server clock is ahead of its database right now, so your login was rejected. Wait a minute, then sign in again.':'Could not load team profiles: '+m,true); return; }
+  catch(e){ const m=(e&&e.message)||String(e); renderLogin(/issued at future/i.test(m)?'Supabase (our database host) still rejected your login after 4 minutes because of a clock problem on their side. Please try again in a few minutes — if it keeps happening, let Landon know.':'Could not load team profiles: '+m,true); return; }
   currentUser=employees.find(x=>x.id===session.user.id);
   if(!currentUser){
     // self-heal: the trigger didn't create a profile — make one now (defaults to employee)
@@ -2273,7 +2303,10 @@ async function initAuth(){
   if(returning&&sb)renderSigningIn();
   else renderLogin(oauthErr?('Google sign-in didn\'t finish: '+oauthErr):undefined,!!oauthErr);
   if(!sb)return;
-  const slow=setTimeout(()=>{ if(!currentUser)renderLogin('Signing in is taking longer than usual — check your connection, then try again.',true); },45000);
+  /* the "taking longer" message waits while a Supabase clock-skew retry is in progress */
+  let slow;const slowCheck=()=>{ if(currentUser)return; if(skewActive){slow=setTimeout(slowCheck,15000);return;}
+    renderLogin('Signing in is taking longer than usual — check your connection, then try again.',true); };
+  slow=setTimeout(slowCheck,45000);
   try{
     const {data:{session}}=await sb.auth.getSession();
     if(location.search.includes('code=')||location.hash.includes('access_token')||oauthErr)history.replaceState(null,'',location.pathname);   /* tidy the address bar after Google */
